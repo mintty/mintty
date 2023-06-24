@@ -47,6 +47,35 @@ help() {
 	echo "Note that the command-line option --configdir cannot be considered."
 }
 
+terminaltype () {
+case "$BASH" in
+?*)	# try simplified query as suggested by Brian Inglis:
+	# https://github.com/mintty/mintty/issues/776#issuecomment-475761566
+	read -s -dc -p $'\E[>c' da < /dev/tty
+	da=${da##$'\E'[>}
+	set - ${da//;/ }
+	;;
+*)	# other shells do not have flexible read and string operations
+	# so it's a bit more tricky...
+	test -t 0 && stty=`stty -g`
+	test -t 0 && stty raw -echo min 0 time 5
+
+	echo -n "[>c" > /dev/tty
+	da=`dd < /dev/tty 2> /dev/null`
+
+	test -t 0 && stty "$stty"
+	da=${da#??}
+	type="${da%%;*}"
+	rest="${da#*;}"
+	vers="${rest%%;*}"
+	rest="${rest#*;}"
+	rest="${rest%%c}"
+	set - $type $vers $rest
+;;
+esac
+echo $1
+}
+
 showtheme() {
 	theme="$1"
 	export theme
@@ -194,6 +223,15 @@ showthemes() {
 }
 
 settheme() {
+	case `terminaltype` in
+	83)	# screen
+		pre='P'
+		post='\\'
+		;;
+	*)	pre=
+		post=
+		;;
+	esac
 	sed \
 	    -e 's/^\(ForegroundColour\)[ 	]*=/10;/' \
 	    -e 's/^\(BackgroundColour\)[ 	]*=/11;/' \
@@ -215,7 +253,7 @@ settheme() {
 	    -e 's/^\(BoldCyan\)[ 	]*=/4;14;/' \
 	    -e 's/^\(BoldWhite\)[ 	]*=/4;15;/' \
 	    -e 't ok' -e d -e ': ok' -e 's/[ 	]//g' \
-	    -e "s/^/]/" -e "s/$//" "$1" |
+	    -e "s/^/$pre]/" -e "s/$/$post/" "$1" |
 	tr -d '\012'
 	#]4;A;colour	set ANSI colour A=0..15
 	#]10;colour	set foreground colour
@@ -249,8 +287,24 @@ query() {
 }
 
 conftheme() {
-	themefile=`cygpath -wa "$1"`
-	for conffile in ~/.minttyrc ~/.config/mintty/config "$APPDATA/mintty/config" /etc/minttyrc
+	if [ `uname` = "Linux" ] && type wslpath 2> /dev/null 1>&2
+	then
+		themefile=`wslpath -ma "$1"`
+	elif type cygpath 2> /dev/null 1>&2
+	then
+		themefile=`cygpath -wa "$1"`
+	else
+		echo "cannot save to config file in this system environment"
+		exit
+	fi
+	if [ `uname` = "Linux" ] && type wslpath 1>&2
+	then
+		ls "$APPDATA/mintty/config"
+	elif type cygpath 1>&2
+	then
+		ls ~/.minttyrc ~/.config/mintty/config "$APPDATA/mintty/config" /etc/minttyrc
+	fi 2> /dev/null |
+	while read conffile
 	do	if [ -w "$conffile" ]
 		then
 			newconf=/tmp/minttyrc.$$

@@ -1,5 +1,629 @@
+Pathname handling
+  * Fix file link detection (#1208), tweak URL detection (#1209).
+  * Restore opening of Windows path names (#1219; broken since 2.8.1).
+
+Terminal features
+  * Fix setup of initial status line if monitor DPI is 96.
+
+Window handling
+  * Revamp window operations, esp max/fullscreen, to not raise to foreground.
+  * Group taskbar icons by setting -o Class (#1207).
+
+Configuration
+  * New user-definable function compose (#1211).
+  * New option setting ComposeKey=capslock (#1211).
+  * New option ConfirmReset to guard confirm dialog on interactive reset (#1173).
+
+### 3.6.4 (25 Mar 2023) ###
+
+Terminal features
+  * Tweak response code to XTQALLOWED OSC 60 and XTQDISALLOWED OSC 61 (xterm 378).
+  * Readline mouse modes (DECSET 2001 / 2002 / 2003, xterm 379).
+  * Hover and open URL: support parentheses (#1196).
+  * Fix cursor artefacts in connection with ClicksPlaceCursor=yes.
+  * Fix mouse-paste while still selecting.
+  * Support multi-line progress detection.
+
+Windows integration
+  * Manage user-set HOME for calling Windows from WSL (mintty/wsltty#324, ~mintty/wsltty#76).
+  * Support OSC 7 directory cloning if cloning WSL window while in rootfs.
+
+Configuration
+  * Status line is configurable in Options menu, switchable from context menu.
+  * New user-definable function toggle-tabbar (#1201).
+  * Setting ClicksPlaceCursor presets all readline mouse modes.
+  * Dynamic support for flags emojis, deployment script (~mintty/wsltty#321).
+  * `MINTTY_DEBUG=C mintty ...` will list loaded config files (#1181).
+  * New option ProgressScan.
+
+### 3.6.3 (18 Dec 2022) ###
+
+Terminal features
+  * Fixed double-width characters not to wrap if auto-wrap disabled.
+  * TAB may wrap to next line, or cause subsequent wrap, if enabled (#1182).
+  * Fixed auto-wrap behaviour in double-width lines.
+  * Overstriking character writing mode also switched with DECSET 20 (VK100, #1184).
+  * Fixed OSC 7 (set working directory) to handle ~ prefix.
+  * Added XTQMODKEYS state query (xterm 373).
+  * Withdrawn DEC private SGRs (/#1171, conflict with XTQMODKEYS).
+  * Added XTQALLOWED OSC 60 and OSC 61 (xterm 373).
+
+Unicode and Emoji data
+  * Extend emoji information by considering Unicode file emoji-test.txt.
+
+Configuration
+  * Option WrapTab (#1182).
+  * New user-definable function toggle-opaque (#1168), replaces transparency-opaque.
+
+Other
+  * Fixed crash in Options dialog when Printer Service is stopped (#1185).
+
+### 3.6.2 (13 Nov 2022) ###
+
+Unicode and Emoji data
+  * Unicode 15.0 update.
+
+Terminal features
+  * Status line area support (VT320, xterm 371), DECSSDT, DECSASD.
+  * Extended multi-line host-writable status area, DECSSDT 2 N.
+  * Combined sub/superscript attributes render small script (#1171).
+  * Adjusted subscript position (~#1171).
+  * Alternative DEC private SGRs for sub/superscript (#1171).
+  * Revamp line cursor handling, size changeable by CSI ? N c (#1157, #1175).
+  * Support DECSET 117 (DECECM, VT520).
+  * Added DECARR to DECRQSS.
+  * Prevent font zooming for resizing controls like CSI 8.
+  * Optionally visualize margins by dimming.
+
+Keyboard handling
+  * Not suppressing user-defined KeyFunctions for keypad keys in keypad modes (#1161).
+  * Alt+keypad-minus initiates decimal numeric input in case an Alt+numpad-digit key is assigned a user-defined function.
+
+Mouse handling
+  * Configurable modifiers for hovering and link opening (#1169).
+  * Support super and hyper modifiers with mouse functions.
+  * Fixed mouse pixel coordinates limits (DECSET 1016).
+
+Initialisation
+  * Grab focus again after showing the window, reducing focus delay for Windows 11 (#1113).
+
+Configuration
+  * Option OldKeyFunctionsKeypad (~#1161, not listed in manual).
+  * Option OpeningMod (#1169).
+  * New user-definable function reset-noask.
+  * Option DimMargins, user-definable function toggle-dim-margins.
+  * Option StatusLine, user-definable function toggle-status-line.
+  * Background image mode '+' for combined scaling and tiling (#1180).
+  * New user-definable function transparency-opaque (#1168).
+
+Other
+  * Fixed crash condition on user-defined commands (#1174).
+  * Add confirm dialog to Reset triggered by menu or Alt+F8 (#1173).
+
+### 3.6.1 (24 April 2022) ###
+
+Window handling
+  * Terminal reflow (#82, #219): fixed crash condition on irregular reflow chunks.
+  * Terminal reflow (#82, #219): fixed memory leak.
+
+Terminal features
+  * Visual input feedback: don't obscure text when just pressing Alt.
+  * Separate foreground and background values for ANSI colours (#1151).
+  * OSC 7704 for setting ANSI colours distinct from palette colours (#1151).
+
+Keyboard handling
+  * Support longer multi-char keyboard input (a.k.a. "ligatures" in Windows) (#1155).
+
+Configuration (contributed by Andy Koppe)
+  * ANSI colour specification accepts foreground ; background values (#1151).
+  * Tuned themes helmholtz (default) and kohlrausch for legibility (#1156).
+
+### 3.6.0 (20 March 2022) ###
+
+Highlights
+  * Optional feature: Reflow terminal lines when resizing terminal width.
+  * Visual feedback of numeric or composed character input.
+  * New themes helmholtz and luminous (contributed by Andy Koppe).
+  * Setting helmholtz theme as default colour scheme.
+
+Window handling
+  * Reflow terminal lines when resizing terminal width (#82, #219, mintty/wsltty#154).
+
+Terminal features
+  * Tweak pending auto-wrap state affected when switching wrap modes.
+  * Fixed unscroll (CSI +T) in case width has changed meanwhile.
+  * Visual feedback of numeric or composed character input.
+
+Keyboard handling
+  * Support user-defined mappings for Super-/Hyper-modified character keys.
+  * Support optional user-defined mappings for Control-/Alt-modified character keys (#399, #252, #523, #602, #645, ~#524, ~#817, ~#451).
+  * Suspend shortcut handling during numeric character input.
+  * Revise and fix numeric character input.
+  * Distinct Unicode vs. hexadecimal numeric character input.
+  * Menu key opens menu inside terminal, also stops numeric input.
+  * Fixed Compose sequences with more than 2 characters (broken since 3.1.5).
+
+Font rendering
+  * Right-to-left font fallback (#1148).
+  * Fixed auto-widening of ambiguous-width letters (broken since 3.4.4).
+  * Speedup rendering of replacement indication of invalid character codes (#1145).
+  * Extend cell zoom to some Geometric Shapes U+25E2.., Dingbats U+1F67C.., and Symbols U+1FB00..U+1FBB3.
+
+Startup
+  * Trimming irrelevant and possibly confusing environment variables before child invocation (xterm).
+
+Configuration
+  * New themes helmholtz and luminous (contributed by Andy Koppe).
+  * Setting helmholtz theme as default colour scheme.
+  * New option -Rt to report the tty name of the child process / shell.
+  * New option ShootFoot (#399, #252, #523, #602, #645, ~#524, ~#817, ~#451).
+  * New option RewrapOnResize (#82), interactive (Options dialog).
+  * New user-definable function unicode-char.
+  * Updated X11-derived data: compose sequences and colour names.
+
+### 3.5.3 (3 February 2022) ###
+
+Terminal features
+  * Fixed combining characters colour rendering (~#710).
+
+Desktop integration
+  * WSL path conversion considers extended /etc/fstab entries (#1130).
+  * WSL path conversion supports UNC paths (#1130).
+  * Clipboard: strip terminating NUL (#1132).
+
+Window handling
+  * New key shortcut Shift+Shift+Alt+F2 (both Shift keys) to enforce new window outside tabbar.
+  * Distinct system menu items "New Window" and "New Tab" if tabbar enabled (mintty/wsltty#295).
+  * Limiting size of scrollback buffer to secure buffer and clipboard handling (#1134).
+  * Avoid position gap after Options Apply (~#1126) in more cases, especially scrollbar toggling.
+  * Always fix window position back to screen when widening beyond screen.
+  * Save as Image (from Ctrl+right-click) with Shift also opens the image (#1139).
+  * Horizontal scrolling feature (#138).
+
+Font rendering
+  * Tweak again handling of negative font leading (#948, #946).
+
+Hotkey functions and user-definable functions
+  * Deprecated default key assignments Control+Shift+N / +T / +P.
+  * New user-definable functions new-tab and new-tab-cwd.
+
+Configuration
+  * New option NewTabs (mintty/wsltty#295).
+  * New command-line option --newtabs.
+  * New option MaxScrollbackLines.
+  * Option OldModifyKeys to tune modified special keys.
+  * New command-line option --horbar.
+  * New user-definable functions for horizontal scrolling.
+
+### 3.5.2 (13 November 2021) ###
+
+Unicode and Emoji data
+  * Unicode 14.0 update.
+
+Terminal features
+  * Fix (revert back) DECSDM (DECSET 80) Sixel Display mode (#1127, xterm 369).
+  * Sound file playing OSC 440 (#1122).
+  * DECPS tone playing support (#1122).
+  * Fixed LED state glitch when ScrollLock is held in auto-repeat.
+  * Extended scope of area attributes change functions DECCARA and DECRARA.
+  * Unscroll sequence CSI +T, filling lines from scrollback buffer (kitty).
+  * Changed default BracketedPasteByLine=0 for consistent appearance.
+
+Window handling
+  * Fixed -s max... options (#1124).
+  * Tweaked handling of positioning and size options.
+  * Always support negative position offset (#1123).
+  * Avoid position gap after Options Apply (#1126).
+  * Copy text: set proper clipboard timestamp.
+
+### 3.5.1 (4 September 2021) ###
+
+Terminal features
+  * Visual double-width of symbols and emojis with subsequent space (#1104, #892, #1065, #979).
+  * Limit line cursor width by width of lines (underline etc) (#1101).
+  * Alternative escape sequence DECSET 2026 for synchronous screen update (#1098).
+  * Optimise screen display speed on bell sound series (#1102, ~#865).
+  * Italic emojis.
+  * Notify child process via ioctl also when scaling window with font size (xterm 368).
+  * Bracketed paste mode: configurable splitting by line.
+  * New user-definable functions no-scroll, toggle-no-scroll, scroll-mode, toggle-scroll-mode.
+  * Management of the ScrollLock LED for consistence with actual status of special scroll features.
+
+Rendering
+  * Speedup of width detection for auto-narrowing for certain characters (#1065, #979, #892).
+  * Prevent artefacts of large-size underscore cursor (CSI 4 SP q CSI ? 6 c).
+  * Prevent spacing anomaly after U+FD3E and U+FD3F.
+  * Fix emojis selection highlighting (#1116), reverting 3.0.1 tweak for emojis in bidi lines.
+
+Window handling
+  * Ensure -w full to cover taskbar also with -B void (~#1114).
+  * Tab management: Keep tabbar consistent (~#944, #699).
+
+Initialisation
+  * Font initialisation speedup (~#1113).
+  * Avoid duplicate font initialisation (~#1113).
+  * Earlier window display by later setup of drag-and-drop and tabbar (~#1113).
+  * Grab focus before showing the window, reducing focus delay (#1113).
+
+Configuration
+  * New option BracketedPasteByLine.
+  * Transparency button slider (#728, #140).
+  * New user-definable function new-window-cwd to clone window in current directory (~#1106).
+  * New user-definable functions no-scroll, toggle-no-scroll, scroll-mode, toggle-scroll-mode.
+
+### 3.5.0 (16 April 2021) ###
+
+Terminal features
+  * Revised and fixed handling of blink attribute (~#1097).
+  * Coloured blink substitution display (xterm), escape sequences OSC 5/6;2.
+  * Support distinct blink attribute for base and combining characters.
+  * Apply blink attribute to graphics.
+  * Escape sequence OSC 22 to set mouse pointer shape (xterm 367).
+  * Escape sequences DCS=1/2s for atomic/synchronous screen update (~#1098).
+  * Support progress detection (for implicit progress bar) also if iconized.
+  * Implicit (detected) progress bar uses configured colour.
+  * Escape sequences to reset progress bar colour mode to configured value.
+  * Escape sequence to change progress value only.
+
+Desktop integration
+  * New user-definable function win-toggle-keep-screen-on to disable screen saver.
+
+Configuration
+  * New option BlinkColour.
+  * New options MousePointer, AppMousePointer.
+  * Restored "Allow blinking" in Options dialog (#1097).
+  * WSL-specific detection of available settings for Terminal Type (option Term) (mintty/wsltty#278).
+  * Export TERM to WSL (mintty/wsltty#278).
+
+### 3.4.7 (16 March 2021) ###
+
+Terminal features
+  * Fixed blinking for drawn/overstrike characters, (under)lining and emojis.
+  * Bracketed Paste Mode: ensure embedding of each line.
+  * Fixed character set GR mappings to be unguarded by NRCS (vttest 3.10).
+  * Restore attributes after DECALN test pattern (vttest 11.6.4/5).
+  * Simplified support of ISO Guarded Area as protected (xterm-like global distinction).
+  * Fixed validity for REP repeat preceding graphic char (vttest 11[.6].7.2).
+  * Keyboard status report (DEC DSR 26), reporting window focus (vttest 11.1.1.1.1).
+
+Vector graphics (Tektronix 4014 mode)
+  * Support "written first vector", triggered by GS-BEL (vttest 11.8.6.5, ~#896).
+  * Initial written vector joins previous text output (xterm).
+  * Adjustment of border coordinates to compensate for coordinate rounding.
+  * Fixed GIN mode and ENQ coordinates.
+  * Tweaked ENQ status byte.
+  * Distinct GIN mode mouse input (xterm).
+  * Smooth GIN mode crosshair cursor movement.
+  * Various mode handling fixes after GIN mode.
+  * GIN mode terminator strap options (Tek, xterm).
+  * Enhanced "defocused" indication by boldened colour.
+  * Enhanced "defocused" point plot indication by boldened point size.
+
+Window handling
+  * Lines cleared from top of screen are scrolled into scrollback buffer (mintty/wsltty#272).
+  * New user-definable function win-toggle-always-on-top (#1095).
+  * New heuristics to adjust row spacing to font metrics (mintty/wsltty#257).
+
+Configuration
+  * Run shell in login mode if terminal started from Windows shortcut.
+  * New option LoginFromShortcut.
+  * New option AutoLeading (mintty/wsltty#257).
+  * New option EraseToScrollback.
+  * New option TekStrap.
+
+### 3.4.6 (20 February 2021) ###
+
+Configuration
+  * Support style Emojis=zoom.
+  * OSC 7750 for dynamic change of emojis style.
+
+### 3.4.5 (17 February 2021) ###
+
+Terminal features
+  * Fixed width handling when selecting a non-text font (~#777).
+  * Auto-narrowing: glyph double-width detection for double-letter characters (like Dz, #777).
+  * Support fractional percentage for progress detection (#1074).
+  * Tweaked availability of DEC Cyrillic character set (VT520, xterm 363).
+
+Keyboard handling
+  * Changed Ctrl+Backarrow to send Backspace (#1082, #449, xterm).
+  * Applying modifyOtherKeys mode 2 more consistently to special keys (~~#1082).
+
+Configuration
+  * Tool `mintheme` works from WSL and in `screen` (mintty/wsltty#268).
+  * Support home or environment variable prefix for setting SaveFilename (~#1086).
+  * New settings -P/--pcon/ConPTY to enable/disable ConPTY support (mintty/wsltty#271).
+  * Support for theme file conversion on filename drag-and-drop (#1079).
+  * Support for theme file conversion on "file:" URL drag-and-drop (~#1079).
+  * Support for ".json" theme file conversion (~~#1079).
+
+### 3.4.4 (19 December 2020) ###
+
+Unicode and Emoji data
+  * Update to Emoji data version 13.1.
+
+Terminal features
+  * Terminal reset clears progress bar (mintty/wsltty#202).
+  * DECTST colour fillings (CSI 4;10..13 y, VT240).
+  * Smart detection of progress indication also inmidst line (mintty/wsltty#202).
+  * Fixed rendering of 0x7F (DEL code) in some 96-characters NRCS modes.
+  * Support for 48-bit hex colour specs (#1072).
+
+Font rendering
+  * Enabled width detection for auto-narrowing non-BMP characters (#1065).
+  * Tweaked character ranges to consider for auto-narrowing (#1065).
+  * Enabled secondary font specification for Unicode blocks (#777).
+
+Keyboard handling
+  * Compose key may also be user-defined super or hyper (#777).
+
+Window handling
+  * Optionally transform Exit to characters, to exit on application-level (#1063).
+  * Options dialog: configurable font and size (~#1059).
+  * Tweak initial setup of terminal pixel size (#1071).
+
+Configuration
+  * New option ExitCommands (#1063).
+  * New options OptionsFont and OptionsFontHeight (~#1059).
+  * Extended syntax for option FontChoice (#777).
+  * New ComposeKey values super, hyper (#777).
+
+### 3.4.3 (11 November 2020) ###
+
+Character encoding
+  * Fixed locale setup interworking with bash startup profile (~#1050).
+  * Handling empty startup locale to be consistent with system-derived shell locale (~#1050).
+
+### 3.4.2 (4 November 2020) ###
+
+Terminal features
+  * Progress bar control sequences CSI %q or OSC 9;4 (experimental).
+  * Optional automatic progress detection (mintty/wsltty#202).
+  * Media Copy sequence CSI 12 i to dump screen as image (#1051).
+  * HTML screen dumps do not visualize Space and TAB.
+  * New DECSCUSR (CSI SP q) values 7, 8 to set cursor style box (mintty/wsltty#204).
+  * Fixed horizontal position of emojis in double-width lines.
+
+Window handling / Tabbar (thanks to K. Takata)
+  * Bring other tab to top when closing (#1054).
+
+Character encoding
+  * Fixed locale setup in case of empty locale (#1050, thanks to K. Takata).
+  * Always set LANG if option Locale is used (#1050).
+
+Configuration
+  * New option ProgressBar (mintty/wsltty#202).
+  * New option value CursorType=box (config file/command line only, mintty/wsltty#204).
+
+### 3.4.1 (24 October 2020) ###
+
+Terminal features
+  * Fixed injected false visual tab indication (#1036).
+  * Escape sequences for stack of colours (XTPUSH/POP/REPORTCOLORS, xterm 357).
+  * Support multiple controls in OSC 4, 5, 10..19, 104, 105 (#1038, xterm).
+
+Window handling / Tabbar (thanks to K. Takata)
+  * Align position of new tabbar-enabled window with previous one (#1044).
+  * Tweaked tabbar handling for speed-up of title changes (#1043).
+  * Fixed startup position of maximised window (#1045).
+  * Fixed Alt+Shift+F2 and Alt+F2 behaviour on a maximised window (#1045).
+
+Font installation / Portable application
+  * Support dynamic installation of temporary fonts (#901, #1004).
+
+Window handling
+  * Clipboard selection can optionally contain TAB characters (#1037).
+  * Click-open link still after moving the mouse over the link area (#1039).
+  * Keep hotkey-started window in taskbar (#1035).
+  * Override font zooming also with Ctrl, to support FancyZones (#487).
+  * Fixed CopyAsHTML config glitch (#1042).
+
+Character encoding
+  * Revised locale handling and setting, especially with option Locale.
+  * Revised character width determination and setting, especially with option Locale.
+  * Revised setup of GB18030 encoding support.
+  * New option to enforce narrow ambiguous-width.
+  * Do not clear/overwrite all locale categories anymore by option Locale.
+  * Do not enforce UTF-8 encoding with WSL anymore.
+  * Propagate locale settings with option --WSL (mintty/wsltty#259).
+
+Configuration
+  * New option CopyTab (#1037).
+  * New option value Charwidth=ambig-narrow.
+  * New option OldLocale.
+
+### 3.4.0 (19 September 2020) ###
+
+Window handling / Tabs
+  * Optional tabbar for interactive virtual tabs session switching (#944).
+  * Fixed maximised/fullscreen synchronisation among sessions/tabs.
+  * Fixed state inconsistencies after minimizing synchronized windows (#699, ~#944).
+
+Window handling
+  * Fixed offset of saved image.
+  * Fixed themes list and interactive theme switching feedback (mintty/wsltty#251).
+  * Support system hotkey for activation in "Quake mode" (#1029).
+
+Mouse handling
+  * If ZoomMouse=false, Ctrl+mouse-wheel scrolls by 1 line per notch (#1032).
+  * Configurable number of scroll lines per mouse wheel notch (#1032).
+  * Support mousewheel reporting (e.g. for shell history scrolling) in normal screen mode (~#1032).
+  * Nudge complete delivery of application scrollbar sequences by delay (#1033).
+
+Terminal features
+  * Mouse mode 1016 with pixel coordinates (xterm 360).
+  * XTPUSHSGR foreground/background changed to 30/31 (xterm 357).
+  * Align OSC response terminator (ST or BEL) with request terminator (#1028, xterm).
+  * Fixed invalid IME cursor colour after OSC 112 "Reset cursor colour" (#942).
+
+Configuration
+  * New option TabBar and command-line option --tabbar (#944).
+  * New user-definable functions clear-title, refresh.
+  * New option LinesPerMouseWheelNotch (#1032).
+  * Option KeyFunctions: flexible specification of modifiers (in any order) (#851).
+
+### 3.3.0 (6 August 2020) ###
+
+Vector graphics
+  * Tektronix 4014 terminal vector graphics terminal emulation (#896).
+
+Keyboard handling
+  * Cancel compose key on mouse actions, to prevent surprising character composition.
+  * Fixed special key assignment (Ctrl+Shift+^) spoiled by KeyFunctions (since 2.9.1).
+  * Fixed special key assignment (Ctrl+Shift+@ with AltGr) spoiled by AltGrIsAlsoAlt prevention (since 3.1.5).
+  * Fixed Ctrl+AltGr+letter combinations.
+  * Fixed key modifier matching for KeyFunctions in some cases of Super/Hyper.
+  * Dropped Ctrl+Enter special key assignments.
+  * Deprecated Shift+Escape/Break/Pause.
+
+Window handling
+  * Prevent mouse wheel double interpretation, also fixing speed issues (mintty/wsltty#238).
+  * Handle proper link attributes when screen is scrolled (#1021).
+  * Image saving feature for terminal contents (png format), DEC and Tek.
+  * Fixed Shift+Alt+F2 size control on maximised/fullscreen windows (#633).
+  * Fixed Alt+F2 on normal window to clone current size (broken since 2.4.3).
+  * Tweak click-opening WSL files (mintty/wsltty#115).
+
+Configuration
+  * Support resource configuration directories via links (#1016).
+  * New option PrintableControls to make controls visible (#1019).
+  * New options Tek*.
+  * New user-definable functions save-image, tek-copy, tek-page, tek-reset.
+  * New option SaveFilename.
+
+### 3.2.0 (20 June 2020) ###
+
+Sixel and image display
+  * For overlapping images, fixed background and clipping borders (~#1010).
+  * Avoid image flickering by revised image list rendering strategy (#1010).
+  * New strategy to detect and collect overlaid images (~#1010).
+
+### 3.1.8 (7 June 2020) ###
+
+Terminal features
+  * Handle new lines within OSC strings, ignore for image data (#1010).
+
+Keyboard handling
+  * Optional legacy Alt modifier fallback for AltGr key.
+
+Window handling
+  * Fixed crash with empty search pattern (#1011).
+
+Configuration
+  * Changing default CheckVersionUpdate=0 to disable version checking by default.
+  * Option AltGrIsAlsoAlt.
+
+### 3.1.7 (6 June 2020) ###
+
+Terminal features
+  * New default CSI - p (DECARR 0) to disable keyboard repeat rate limitation.
+
+Keyboard handling
+  * Keyboard auto-repeat handling is now as usual (not affected) by default (#1009).
+  * Tweaked auto-repeat rate adjustment to better reflect selected values.
+  * Configurable key to activate keyboard selecting mode (#997, #84).
+  * Restored right-Alt modifier (if not AltGr) (#1003, ~#969).
+
+Window handling
+  * Ctrl+Alt+mouse-click restored to move the window (#1008).
+  * Search results are cleared on reset (#998).
+  * Constrain dark mode handling (#983) to Windows 10 Version 1809 (#1001).
+  * Alt+F2 clones maximised and fullscreen window modes (#999, ~#633).
+
+Configuration
+  * New user-definable function kb-select (#997, #84).
+
+Other
+  * Adding Windows build information to About info.
+
+### 3.1.6 (21 May 2020) ###
+
+Window handling
+  * Fixed resource leak when displaying images (#995).
+  * Fixed crash condition on keyboard auto-repeat (#996).
+
+### 3.1.5 (21 May 2020) ###
+
+Terminal features
+  * Limit coordinates of all mouse reports to text area (#972).
+  * Support bell volume escape sequence DECSWBV (#974) with wave files.
+  * Support margin bell feature (#974), with DECSET 44 enabling sequence (xterm).
+  * Support margin bell volume escape sequence DECSMBV (#974) with wave files.
+  * Support visible space indication.
+  * Fixed insert mode in single-width character mode (#964).
+  * DECFRA (fill rectangular area) works with wide and non-BMP characters.
+  * DECFRA works with NRCS and DEC Line Drawing characters (VT420).
+  * New CSI > 0 q to report terminal name and version (#881).
+  * New CSI 2/1 SP Z (ECMA-48 PEC) as character attribute to enforce single/double width (#615, #979, #973, #938, #638, ~#88, ~#671).
+  * New CSI cps - p DECARR Select Auto Repeat Rate (VT520).
+  * Support Ctrl+Alt-mouse clicks (#987).
+
+Character encoding
+  * Enhanced and documented GB18030 support (mintty/wsltty#224).
+
+Keyboard handling
+  * Unmapped AltGr combinations: don't fallback to ESC prefixing (~#969).
+  * Guard Compose key against hotkey injection (~#877).
+
+Unicode and Emoji data
+  * Unicode 13.0 update.
+  * Distinct support for EmojiOne (from unicode.org) and JoyPixels emojis.
+
+Font rendering
+  * Enable auto-narrowing for Private Use characters (#979, "Nerd Fonts").
+  * Adjust and zoom rendering for geometric Powerline symbols (#979).
+  * Support emoji style OpenMoji (#985).
+
+Window handling
+  * Tweak title bar dark mode adaptation to undocumented Windows changes (#983, mintty/wsltty#157).
+  * Support dark mode for menus (#983, mintty/wsltty#157).
+  * DropCommands secured against multiple placeholders.
+  * DropCommands optionally pastes Windows format paths (#982).
+  * Drag-and-drop import of itermcolors schemes (mintty/wsltty#227).
+  * Workaround to interact with Hot Keyboard (#877, setting SupportExternalHotkeys=4).
+  * Disable deprecated glass mode from interactive options (#501, mintty/wsltty#241).
+  * Speedup of scrollback searching (#988, #986).
+
+Other
+  * Warning and error popups are placed on top of desktop.
+  * Environment variables TERM_PROGRAM[_VERSION] provide unreliable info about terminal application (#776, #881).
+
+Configuration
+  * Options BellFile2 ... BellFile7 (#974).
+  * Options DispSpace, DispTab, DispClear.
+  * Options Suppress* are now resilient against space (mintty/wsltty#235).
+  * Option value SupportExternalHotkeys=4 (#877).
+  * Option value Emojis=openmoji (#985).
+
+### 3.1.4 (25 February 2020) ###
+
 Terminal features
   * Linux console controls for underscore cursor size (mintty/wsltty#203).
+  * Fixed sixel display failures at certain sizes (#967).
+
+Window handling
+  * Avoid resize flickering loop in Virtual Tabs mode.
+  * Don't keep selection size info popup on top when defocussed (#956).
+  * Ctrl+mouse on title bar can be configured or disabled (#953).
+
+Font rendering
+  * Fix adjusted row spacing ("Leading") for negative font leading (#948, #946).
+  * Support enabling of additional ligatures such as arrows (#601).
+  * Search bar button symbols configurable (#955).
+  * Support optional enforced single-width character rendering (#964).
+  * Not widening ambiguous-width Geometric Shapes, to avoid unsymmetric pairs.
+  * Proper auto-widening (æ, œ, ...) in partially ambiguous-wide fonts (MS Mincho).
+
+Configuration
+  * New option Ligatures (#601).
+  * New options MenuTitleCtrlLeft, MenuTitleCtrlRight (#953).
+  * Option SearchBar can configure button symbols (#955).
+  * New option values Charwidth=single / Charwidth=single-unicode (#964).
+
+Other
+  * Fix access to shortcut icon with path prefix %ProgramW6432%.
+  * Fix clipboard memory handling (#950).
+  * Note that DropCommands does not work with WSL or remotely (#947).
 
 ### 3.1.0 (23 November 2019) ###
 

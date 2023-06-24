@@ -96,15 +96,15 @@ win_show_tip(int x, int y, int cols, int rows)
     }
 
    /* Prepare other GDI objects and drawing info */
-    tip_bg = GetSysColor(COLOR_INFOBK);
-    tip_text = GetSysColor(COLOR_INFOTEXT);
+    tip_bg = win_get_sys_colour(COLOR_INFOBK);
+    tip_text = win_get_sys_colour(COLOR_INFOTEXT);
     memset(&nci, 0, sizeof(NONCLIENTMETRICS));
     nci.cbSize = sizeof(NONCLIENTMETRICS);
     SystemParametersInfo(SPI_GETNONCLIENTMETRICS, sizeof(NONCLIENTMETRICS),
                          &nci, 0);
     tip_font = CreateFontIndirect(&nci.lfStatusFont);
     tip_wnd =
-      CreateWindowExA(WS_EX_TOOLWINDOW | WS_EX_TOPMOST,
+      CreateWindowExA(WS_EX_TOOLWINDOW,  // don't include WS_EX_TOPMOST
                       MAKEINTRESOURCEA(tip_class), null, WS_POPUP, x, y, 1, 1,
                       null, null, inst, null);
     ShowWindow(tip_wnd, SW_SHOWNOACTIVATE);

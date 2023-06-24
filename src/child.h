@@ -3,7 +3,6 @@
 
 #include <termios.h>
 
-extern bool clone_size_token;
 extern string child_dir;
 
 extern void child_update_charset(void);
@@ -25,8 +24,9 @@ extern char * child_tty(void);
 extern char * foreground_prog(void);  // to be free()d
 extern void user_command(wstring commands, int n);
 extern wstring child_conv_path(wstring, bool adjust_dir);
-extern void child_fork(int argc, char * argv[], int moni);
+extern void child_fork(int argc, char * argv[], int moni, bool config_size, bool in_cwd, bool in_tabs);
 extern void child_set_fork_dir(char *);
+extern void setenvi(char * env, int val);
 extern void child_launch(int n, int argc, char * argv[], int moni);
 
 #endif

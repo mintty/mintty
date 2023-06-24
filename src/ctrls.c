@@ -270,7 +270,7 @@ ctrl_listbox(controlset *s, char *label, int lines, int percentage,
  */
 control *
 ctrl_radiobuttons(controlset *s, char *label, int ncolumns,
-                  handler_fn handler, void *context, ...)
+                  handler_fn handler, char *context, ...)
 {
   va_list ap;
   int i;
@@ -363,11 +363,13 @@ dlg_stdradiobutton_handler(control *ctrl, int event)
   if (event == EVENT_REFRESH) {
     int button;
     for (button = 0; button < ctrl->radio.nbuttons; button++) {
-      if (ctrl->radio.vals[button] == *val_p)
-        break;
+      if (ctrl->radio.vals[button] == *val_p) {
+        dlg_radiobutton_set(ctrl, button);
+        return;
+      }
     }
-    assert(button < ctrl->radio.nbuttons);
-    dlg_radiobutton_set(ctrl, button);
+    // clear all buttons if none selected
+    dlg_radiobutton_set(ctrl, -1);
   }
   else if (event == EVENT_VALCHANGE) {
     int button = dlg_radiobutton_get(ctrl);
@@ -410,10 +412,10 @@ dlg_stdintbox_handler(control *ctrl, int event)
 {
   int *ip = ctrl->context;
   if (event == EVENT_VALCHANGE) {
-      string val = 0;
-      dlg_editbox_get(ctrl, &val);
-      *ip = max(0, atoi(val));
-      delete(val);
+    string val = 0;
+    dlg_editbox_get(ctrl, &val);
+    *ip = max(0, atoi(val));
+    delete(val);
   }
   else if (event == EVENT_REFRESH) {
     char buf[16];

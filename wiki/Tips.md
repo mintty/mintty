@@ -11,8 +11,9 @@ For its configuration, it reads configuration files in this order:
 * `~/.minttyrc`
 
 For resource files to configure a colour scheme, 
-wave file for the bell character, localization files, emoji graphics,
-it looks for subfolders `themes`, `sounds`, `lang`, `emojis`, respectively, 
+wave file for the bell character, localization files, emoji graphics, 
+dynamic fonts, pointer shapes, it looks for subfolders 
+`themes`, `sounds`, `lang`, `emojis`, `fonts`, `pointers`, respectively, 
 in the directories
 * `~/.mintty`
 * `~/.config/mintty`
@@ -26,7 +27,9 @@ An additional directory for a configuration file and configuration resources
 can be given with command-line parameter ```--configdir```.
 
 
-## Using desktop shortcuts to start mintty ##
+## Desktop integration ##
+
+### Using desktop shortcuts to start mintty ###
 
 The Cygwin [setup.exe](http://cygwin.com/setup.exe) package for mintty 
 installs a shortcut in the Windows start menu under _All Programs/Cygwin_.
@@ -38,17 +41,35 @@ For example, shortcuts for access to remote machines can be created by
 invoking **[ssh](http://www.openssh.com)**. The command simply needs 
 to be appended to the target field of the shortcut’s properties:
 
-> Target: `C:\Cygwin\bin\mintty.exe /bin/ssh server`
+> Target: `C:\Cygwin64\bin\mintty.exe /bin/ssh server`
 
 The **[cygutils](http://www.cygwin.com/cygwin-ug-net/using-effectively.html#using-cygutils)** package 
 provides the **mkshortcut** utility for creating shortcuts from the command line. 
 See its manual page for details.
 
-A Windows shortcut can be associated with a **Shortcut key** so an instance 
-of mintty can be started using a hotkey. By default, an already running 
-instance would be focussed again with the associated hotkey. To have a 
-new instance started with every usage of the hotkey, use the command-line 
-option ```-D``` for mintty in the shortcut target.
+### Smart login mode ###
+
+If invoked from a Windows shortcut (desktop or start menu), mintty starts 
+the shell in login mode implicitly (since mintty 3.4.7) unless disabled 
+with option `LoginFromShortcut`.
+
+### Hotkey / Windows Shortcut key ###
+
+In a Windows shortcut (desktop or Start menu), a "Shortcut key" with 
+modifiers can be defined as a system hotkey to start an application or 
+bring it to the front.
+
+To have a new instance started with every usage of the hotkey, use the 
+command-line option ```-D``` for mintty in the shortcut target.
+
+### Hotkey / "quake mode" ###
+
+Mintty detects if activated via hotkey and will use the same hotkey to 
+minimize itself in turn, unless inhibited by shortcut override mode. 
+The preferred appearance of the hotkey-activated terminal window can 
+further be customized with options in the shortcut, e.g.
+
+> `C:\Cygwin64\bin\mintty.exe --pos top --size maxwidth -`
 
 ### Taskbar icons ###
 
@@ -96,12 +117,41 @@ the mintty [utils repository](https://github.com/mintty/utils).
 As noted above, since mintty 2.9.6, the mintty AppID does not need to be set 
 anymore in this case.
 
+### Taskbar launch commands ###
+
+Launch commands from the taskbar icon and its menu can be configured 
+with settings `AppName`, `AppLaunchCmd` and `TaskCommands` ("jump list").
+This can be made persistent with command line setting `--store-taskbar-properties`.
+
+#### Tab sessions ####
+
+See also the section on [Virtual Tabs and Tabbar](#virtual-tabs-and-tabbar) 
+for configuration of session invocations from the context menu 
+with setting `SessionCommands`.
+
+### Taskbar pinning ###
+
+Taskbar pinning of a mintty window can be prevented with command line setting `--nopin`.
+
+### Taskbar bell indication ###
+
+Bell highlighting of the taskbar icon is enabled by default and can be 
+disabled with option `BellTaskbar`.
+
+### Taskbar progress indication ###
+
+Progress indication on the taskbar icon can be switched dynamically 
+or pre-configured with options `ProgressBar` and `ProgressScan`.
+To enable progress indication e.g. for the MSYS2 package manager pacman:
+* `ProgressBar=1`
+* `ProgressScan=2`
+
 
 ## Window session grouping ##
 
 For grouping of window icons in the taskbar, Windows uses the intricate 
-AppID concept as explained above. For grouping of desktop windows, as 
-used by the mintty session switcher or external window manipulation tools, 
+AppID concept as explained above. For grouping of desktop windows, as used by 
+the mintty session switcher or tabbar, or external window manipulation tools, 
 Windows uses the distinct but likewise intricate Class concept.
 Mintty provides flexible configuration to set up either of them, see manual.
 
@@ -134,7 +184,7 @@ or using Powershell commands as described in
 If you have any Linux distribution for the Windows Subsystem for Linux (WSL) 
 installed, mintty can be called from cygwin to run a WSL terminal session:
 * `mintty --WSL=Ubuntu`
-* `mintty --WSL` (for the Default distribution as set with `wslconfig /s`)
+* `mintty --WSL` (for the Default distribution as set with `wslconfig /s` or `wsl -s`)
 
 Note, the `wslbridge2` gateways need to be installed in `/bin` for this purpose 
 (see below for details).
@@ -171,6 +221,12 @@ standalone package would set that up for you in the shortcuts. For other
 invocation (cygwin or Windows command line), mintty finds the suitable 
 WSL icon itself.
 
+Note that older wslbridge2 backends used not to be interoperable among 
+systems with different libraries (glibc vs musl).
+The _distro_ `Alpine` had been checked out to build a backend that works 
+with all Linux distributions; builds of later wslbridge2 are reported 
+to be interoperable though.
+
 At the end of the `mintty --WSL` invocation line, you may add an explicit 
 WSL shell invocation like `/bin/bash -l` to select your favourite shell or 
 ask for a login shell (`-l`), or set a start directory (`-C`, before any 
@@ -184,7 +240,7 @@ of the shortcut may be set to `%USERPROFILE%`.
 On Windows 7, mintty may also be used as a terminal for the 
 Subsystem for UNIX-based applications (SUA), also known as Interix.
 For the mintty session launcher, this can be configured for the 
-available shells as follows (concatened with ‘;’ separator for multiple targets):
+available shells as follows (concatenated with ‘;’ separator for multiple targets):
 * `SessionCommands=Interix Korn Shell:/bin/winpty C:\Windows\posix.exe /u /c /bin/ksh -l`
 * `SessionCommands=Interix SVR-5 Korn Shell:/bin/winpty posix /u /p /svr-5/bin/ksh /c -ksh`
 * `SessionCommands=Interix C Shell:/bin/winpty posix /u /c /bin/csh -l`
@@ -259,20 +315,24 @@ mintty /bin/env DISPLAY=:0 /bin/ssh -X server
 
 When interacting with programs that use a native Windows API for 
 command-line user interaction (“console mode”), a number of undesirable 
-effects are observed; this is the 
+effects used to be observed; this is the 
 [pty incompatibility problem](https://github.com/mintty/mintty/issues/56) 
 and the 
 [character encoding incompatibility problem](https://github.com/mintty/mintty/issues/376).
-This basically affects all programs not compiled in a cygwin or msys 
-environment (and note that MinGW is not msys in this context).
+This would basically affect all programs not compiled in a cygwin or msys 
+environment (and note that MinGW is not msys in this context), and would 
+occur in all pty-based terminals (like xterm, rxvt etc).
 
-As a workaround, you can use [winpty](https://github.com/rprichard/winpty) 
-as a wrapper to invoke the Windows program.
+Cygwin 3.1.0 compensates for this issue via the ConPTY API of Windows 10.
+On MSYS2, its usage can be enabled by setting the environment variable 
+MSYS=enable_pcon (or selecting this setting when installing an older version).
+You can also later set `MSYS=enable_pcon` in file `/etc/git-bash.config`.
+MSYS2 releases since 2022-10-28 enable ConPTY by default.
+You can also set mintty option `ConPTY=true` to override the MSYS2 setting.
 
-_Note:_ There is no point in reporting this for the 15th time as a mintty 
-issue, because it is not a mintty issue (or well, an issue maybe, but not 
-caused by, or fixable by, mintty); it is a generic problem of cygwin/msys 
-and occurs likewise in all other pty-based terminals (e.g. xterm).
+As a workaround on older versions of Cygwin or Windows, you can use 
+[winpty](https://github.com/rprichard/winpty) as a wrapper to invoke 
+the Windows program.
 
 ### Signal processing with alien programs ###
 
@@ -291,9 +351,12 @@ Secondary Device Attributes report queried from the terminal.
 The script `terminal` in the mintty 
 [utils repository](https://github.com/mintty/utils) provides an implementation.
 
-Using environment variables for this purpose is not reliable and therefore 
-not supported. See [issue #776](https://github.com/mintty/mintty/issues/776) 
-for a discussion.
+In addition, from mintty 3.1.5, an additional escape sequence causes mintty 
+to report its name and version; furthermore, although using 
+environment variables for this purpose is not reliable (see 
+[issue #776](https://github.com/mintty/mintty/issues/776) for a discussion), 
+mintty sets environment variables TERM_PROGRAM and TERM_PROGRAM_VERSION 
+as various other terminals do.
 
 
 ## Terminal line settings ##
@@ -302,16 +365,14 @@ Terminal line settings can be viewed or changed with the **[stty](http://www.ope
 
 See the stty manual for all the details, but here are a few examples. The commands can be included in shell startup files to make them permanent.
 
-To change the key for deleting a whole word from _Ctrl+W_ to _Ctrl+Backspace_:
-
+To change the key for deleting a whole word from _Ctrl+W_ to _Ctrl+Backspace_,
+you could assign the `^_` control character to the _Ctrl+Backarrow_ key:
+```
+KeyFunctions=C+Back:"^_"
+```
+and apply the following terminal line setting:
 ```
 stty werase '^_'
-```
-
-To use _Ctrl+Enter_ instead of _Ctrl+D_ for end of file:
-
-```
-stty eof '^^'
 ```
 
 To use _Pause_ and _Break_ instead of _Ctrl+Z_ and _Ctrl+C_ for suspending or interrupting a process:
@@ -328,7 +389,9 @@ echo -ne '\e[?7728h'
 
 (The standard escape character `^[` cannot be used for that purpose because it appears as the first character in many keycodes.)
 
-Unix terminal line drivers have a flow control feature that allow terminal output to be stopped with _Ctrl+S_ and restarted with _Ctrl+Q_. However, due to the scrollback feature in modern terminal emulators, there is little need for this. Hence, to make those key combinations available for other uses, disable flow control with this command:
+Unix terminal line drivers have a flow control feature that allow terminal output to be stopped with _Ctrl+S_ and restarted with _Ctrl+Q_. However, due to the scrollback feature in modern terminal emulators, there is little need for this. Hence, to make those key combinations available for other uses, disable flow control with this command
+(note that screen-oriented programs like text editors will typically 
+manage this setting themselves):
 
 ```
 stty -ixon
@@ -342,32 +405,41 @@ Keyboard input for the **[bash](http://www.gnu.org/software/bash)** shell and ot
 Anyone used to Windows key combinations for editing text might find the following bindings useful:
 
 ```
-# Ctrl+Left/Right to move by whole words
+# Ctrl+Right / Ctrl+Left to move by whole words
 "\e[1;5C": forward-word
 "\e[1;5D": backward-word
 
-# Ctrl+Backspace/Delete to delete whole words
+# Ctrl+Delete / Ctrl+Backarrow to delete whole words
 "\e[3;5~": kill-word
-"\C-_": backward-kill-word
+"\C-_": backward-kill-word      # with mintty setting KeyFunctions=C+Back:"^_"
 
-# Ctrl+Shift+Backspace/Delete to delete to start/end of the line
+# Ctrl+Shift+Delete to delete to end of the line
 "\e[3;6~": kill-line
-"\xC2\x9F": backward-kill-line  # for UTF-8
-#"\x9F": backward-kill-line     # for ISO-8859-x
-#"\e\C-_": backward-kill-line   # for any other charset
 
-# Alt-Backspace for undo
-"\e\d": undo
+# Ctrl+Shift+Backarrow to delete to start of the line
+"\e[72;6~": backward-kill-line  # with mintty setting KeyFunctions=CS+Back:72
+
+# Alt-Backarrow for undo
+"\e\d": undo                    # would be disabled by DECSET 67 sequence
 ```
-
-(The Ctrl+Shift+Backspace keycode depends on the selected character set, so the appropriate binding needs to be chosen.)
 
 Finally, a couple of bindings for convenient searching of the command history. Just enter the first few characters of a previous command and press _Ctrl+Up_ to look it up.
 
 ```
-# Ctrl+Up/Down for searching command history
+# Ctrl+Up / Ctrl+Down for searching command history
 "\e[1;5A": history-search-backward
 "\e[1;5B": history-search-forward
+```
+
+To add interactive protection from injected commands, the readline feature 
+`enable-bracketed-paste` makes use of bracketed-paste mode to present 
+multi-line commands for confirmation before running them.
+It should _not_ be combined with `skip-csi-sequence` however which is 
+buggy as of bash 4.4.12 / readline 7.0.3.
+
+```
+set enable-bracketed-paste on
+# do not map "\e[": skip-csi-sequence
 ```
 
 
@@ -379,6 +451,13 @@ and based on the resulting setting of the environment variable TERM,
 the application expects other key sequences than mintty sends.
 (While mintty could be changed to send VT100 application keypad codes in 
 that case, the current behaviour is compatible with xterm.)
+
+### Control+H in emacs ###
+
+If you configure the Backarrow key to send a Backspace character rather 
+than the Linux default DEL character (setting `BackspaceSendsBS=yes`), 
+emacs will not be able to recognize an explicit Ctrl+h command anymore.
+It is recommended to leave this setting at its default.
 
 ### Shift+up/down for text selection in emacs ###
 
@@ -455,6 +534,11 @@ timestamp. As a workaround, mintty can detect AltGr also from the
 two key codes arriving with some delay. Setting 
 `CtrlAltDelayAltGr=16` or `CtrlAltDelayAltGr=20` is suggested.
 
+### Handling the clipboard in Hot Keyboard ###
+
+Hot Keyboard needs configuration `CtrlAltIsAltGr=1` and `SupportExternalHotkeys=4` 
+as a workaround for buggy behaviour. Also `ClipShortcuts=true` (default) is advisable.
+
 
 ## Using Ctrl+Tab to switch window pane in terminal multiplexers ##
 
@@ -489,7 +573,56 @@ bind-key -n User1 previous-window
 
 A number of options are available to customize the keyboard behaviour, 
 including user-defined function and keypad keys and Ctrl+Shift+key shortcuts.
-See the manual page for options and details.
+See the manual page for options and details about
+* Backspace/DEL behaviour
+* AltGr and other modifiers
+* shortcut assignments
+* special key assignments
+* user-definable key functions
+
+See also the [[Keycodes]] wiki page.
+
+### Backarrow key configuration ###
+
+By default, mintty sends `^?` (ASCII DEL) as the keycode for the Backarrow key.
+This is the Linux default (as opposed to sending `^H` which was the 
+default in many Unix environments).
+This can be changed with setting `BackspaceSendsBS=yes`.
+The tty setting `ERASE character` will be aligned accordingly 
+(see `man termios` and command `stty erase`).
+
+Mind that this may affect certain applications, for example emacs which 
+cannot interpret the explicit Control+h command anymore.
+
+### Windows-style copy/paste key assignments ###
+
+If both settings `CtrlShiftShortcuts` and `CtrlExchangeShift` are enabled, 
+copy & paste functions are assigned to plain (unshifted) _Ctrl+C_ 
+and _Ctrl+V_ for those who prefer them to be handled like in Windows.
+
+It’s also possible to assign user-defined functions to modified 
+character keys with setting `KeyFunctions`; however, redefining 
+control character assignment (e.g. Control+C) or Alt-modified characters 
+(prefixing them with ESC) is not supported by default. 
+This would disable basic terminal features and may result in users 
+„shooting themselves in the foot“; overriding this protection is 
+possible by setting `ShootFoot`.
+
+Finally, it’s also possible to define Control+V as a paste function 
+independently of the terminal; add the following to your .bashrc file:
+```
+paste () {
+  CLIP=$(cat /dev/clipboard)
+  COUNT=$(echo -n "$CLIP" | wc -c)
+  READLINE_LINE="${READLINE_LINE:0:$READLINE_POINT}${CLIP}${READLINE_LINE:$READLINE_POINT}"
+  READLINE_POINT=$(($READLINE_POINT + $COUNT))
+}
+bind -x '"\C-v": paste'
+```
+and the following to your .inputrc file:
+```
+set bind-tty-special-chars off
+```
 
 
 ## Compose key ##
@@ -498,13 +631,21 @@ Mintty uses the Windows keyboard layout system with its “dead key” mechanism
 for entering accented characters, enhanced by self-composed characters 
 for dead-key combinations that Windows does not support (e.g. ẃ).
 
-Mintty also provides a Compose key, configurable to Control, Shift or Alt,
-using X11 compose data. For example, if the compose key is configured 
-to be Control, pressing and release the Control key, followed by letters 
+Mintty also provides a Compose key, using X11 compose data.
+It is configurable to Control, Shift, Alt, Super or Hyper, or CapsLock, 
+or to any key combination with user-definable function `compose` in 
+setting `KeyFunctions`.
+For example, if the Compose key is configured to be Control, 
+pressing and releasing the Control key, followed by letters 
 `a` and `e`, will enter `æ`; Control-`-`-`,` will enter `¬`, 
 Control-`C`-`o` will enter `©`, Control-`<`-`<` will enter `«`, 
 Control-`c`-`,` will enter `ç`, Control-`s`-`s` will enter `ß`, 
 Control-`!`-`!` will enter `¡`, Control-`!`-`?` will enter `‽`, etc.
+
+The user-definable function `compose` can be used to assign the Compose 
+function to other keys, e.g.
+* `KeyFunctions=CapsLock:compose`
+* `KeyFunctions=NumLock:compose`
 
 For a separate compose key solution, the most seamless and stable 
 **Compose Key for Windows** is 
@@ -576,32 +717,44 @@ In the Options menu, section _Looks_, the _Theme_ popup offers theme files
 as stored in a resource directory for selection.
 This dialog field (or the “Color Scheme Designer” button for drag-and-drop) 
 can be used in different ways:
-* Popup the selection to choose a theme configured in your resource directory
+* (*) Popup the selection to choose a theme configured in your resource directory
 * Insert a file name (e.g. by pasting or drag-and-drop from Windows Explorer)
-* Drag-and-drop a theme file from the Internet (may be embedded in HTML page)
-* Drag-and-drop a colour scheme directly from the Color Scheme Designer (see below)
+* (*) Drag-and-drop a theme file from the Internet (may be embedded in HTML page)
+* (*) Drag-and-drop a colour scheme directly from the Color Scheme Designer (see below)
 
-After drag-and-drop of a colour scheme, you may Apply it for testing;
+(* Option 1) 
+The default theme (since 3.6.0) is 
+[helmholtz](https://raw.githubusercontent.com/mintty/mintty/master/themes/helmholtz) 
+which provides a colour scheme of well-balanced appearance and luminance;
+see the comments in the theme file about its crafting principles.
+
+(* Option 3) 
+A number of colour schemes have been published for mintty, also 
+mintty supports direct drag-and-drop import of theme files in 
+iTerm2 or Windows terminal formats.
+Look for the following repositories:
+* https://iterm2colorschemes.com/
+* https://github.com/oumu/mintty-color-schemes
+* https://github.com/goreliu/wsl-terminal/tree/master/src/etc/themes
+
+After drag-and-drop of a colour scheme, it is automatically applied 
+to the current terminal session for quick and easy testing;
 to keep the scheme in your popup selection, assign a name to it by typing it 
 into the Theme field, then click the “Store” button. After downloading a 
 theme file, the name will be filled with its basename as a suggestion.
 As long as a colour scheme is loaded but not yet stored, and a name is 
 available in the Theme field, the “Store” button will be enabled.
 
-There is an excellent colour scheme designer available:
+(* Option 4) The 
 [4bit Terminal Color Scheme Designer](http://ciembor.github.io/4bit/#) 
-which lets you download a tuned colour scheme (top-right button “Get Scheme”).
+lets you download a tuned colour scheme (top-right button “Get Scheme”).
 Click on the button “Color Scheme Designer” below the Theme field 
 to open the designer page and start your design. You can either download 
 the scheme file (“Get Scheme” – “mintty”) or drag-and-drop the download link 
 directly to the mintty Options menu, to either the Theme field or the 
-Color Scheme Designer button. You can then click Apply to test the design 
-and if you like it, you can enter a theme name in the Theme field and then 
-click the “Store” button to store the colour scheme.
-
-A number of colour schemes have been published for mintty, e.g.
-* https://github.com/oumu/mintty-color-schemes
-* https://github.com/goreliu/wsl-terminal/tree/master/src/etc/themes
+Color Scheme Designer button. If you like the scheme, you can enter a 
+theme name in the Theme field and then click the “Store” button to 
+store the colour scheme.
 
 Mintty also provides the command-line script ```mintheme``` which can 
 display the themes available in the mintty configuration directories or 
@@ -613,7 +766,7 @@ As an alternative to a background colour, mintty also supports graphic
 background. This can be configured with the option `Background` or 
 set dynamically using special syntax of the colour background OSC sequence.
 The respective parameter addresses an image file, preceded by a mode 
-prefix and optionally followed by a transparancy value.
+prefix and optionally followed by a transparency value.
 Prefixes are:
 * `*` use image file as tiled background
 * `_` (optional with option Background) use image as picture background, scaled to window
@@ -626,8 +779,8 @@ with a value of 255, the alpha transparency values of the image will be used.
 
 Examples:
 ```
-Background=C:\cygwin\usr\share\backgrounds\tiles\rough_paper.png
--o Background='C:\cygwin\usr\share\backgrounds\tiles\rough_paper.png'
+Background=C:\cygwin64\usr\share\backgrounds\tiles\rough_paper.png
+-o Background='C:\cygwin64\usr\share\backgrounds\tiles\rough_paper.png'
 echo -ne '\e]11;*/usr/share/backgrounds/tiles/rough_paper.png\a'
 echo -ne '\e]11;_pontneuf.png,99\a'
 echo -ne '\e]11;=,99\a'
@@ -639,6 +792,7 @@ Note that absolute pathnames within the cygwin file system are likely
 not to work among different cygwin installations. 
 To configure a background in `$APPDATA/mintty/config` (or 
 `%APPDATA%/wsltty/config`), Windows pathname syntax should be used.
+
 
 ## Providing and selecting fonts ##
 
@@ -731,17 +885,50 @@ FontChoice=Private:3
 Font3=MesloLGS NF
 ```
 
+Note that in addition to Unicode scripts, also Unicode blocks can be used 
+to specify a secondary font, by a "|" prefix to the block name, with block 
+specifications preceding over the more general script specifications.
+```
+FontChoice=Greek:3;|Greek Extended:4
+```
+
+### Dynamic fonts ###
+
+Mintty supports on-the-fly temporary font installation, especially for use 
+in a portable terminal application.
+Place font files into the subdirectory `fonts` of the mintty configuration 
+directory. All will be made available for mintty usage, there is currently 
+no mechanism to configure dynamic fonts explicitly. The number of font files 
+should be limited to avoid significant startup delay.
+To avoid having to set up an explicit `--configdir` invocation parameter, 
+fonts can be placed in the /usr/share/mintty/fonts folder of the portable 
+installation.
+
 
 ## Character width ##
 
 By default, mintty adjusts character width to the width assumption of the 
 locale mechanism (function `wcwidth`).
-If it is desired to use more up-to-date Unicode width properties, this can 
-be chosen with option `Charwidth=unicode`. Note that actual width 
-properties as rendered on the screen and width assumptions of the 
-`wcwidth` function will be inconsistent then for the impacted characters, 
-which may confuse screen applications (such as editors) that rely on 
-`wcwidth` information.
+Character width can be modified by a number of configuration or dynamic settings:
+* `Locale`: change locale, stays consistent with system locales
+* `Charwidth=unicode`: use built-in rather than system-provided Unicode data
+* `Charwidth`: further options to handle double-width characters
+* `Charset`: may affect CJK ambiguous-width handling if used with `Locale`
+* `Font`: may affect CJK ambiguous-width handling if locale support fails
+* `PrintableControls`: makes C1 or C0 control characters visible (width 1)
+* [OSC 701](https://github.com/mintty/mintty/wiki/CtrlSeqs#locale): changes locale/charset, may affect ambiguous width handling
+* OSC 50: changes font, may affect ambiguous width handling (with `Locale`)
+* [OSC 77119](https://github.com/mintty/mintty/wiki/CtrlSeqs#wide-characters): turns some character ranges to wide characters
+* [PEC](https://github.com/mintty/mintty/wiki/CtrlSeqs#explicit-character-width): explicit character width attribute
+
+See the [mintty manual](http://mintty.github.io/mintty.1.html) and
+[Control Sequences](https://github.com/mintty/mintty/wiki/CtrlSeqs)
+for more details.
+
+Note that with any of these settings, actual width properties as 
+rendered on the screen and width assumptions of the `wcwidth` function 
+will be inconsistent then for the impacted characters, which may confuse 
+screen applications (such as editors) that rely on `wcwidth` information.
 
 ### Ambiguous width setting ###
 
@@ -770,7 +957,33 @@ If it is not desired to set a specific base locale in order to enable
 ambiguous-wide mode, option `Charwidth=ambig-wide` can be used.
 It implies `Charwidth=unicode` behaviour, with the same caveats as above.
 Mintty indicates this mode by appending the `@cjkwide` modifier to the 
-`LC_CTYPE` locale variable (not yet supported by cygwin).
+`LC_CTYPE` locale variable.
+
+Single-width CJK character rendering can be enforced, with proper glyph 
+scaling, with settings `Charwidth=single` or `Charwidth=single-unicode`, 
+following a 
+[proposal](https://gitlab.freedesktop.org/terminal-wg/specifications/issues/9#note_406682) 
+in the Terminals Working Group Specifications.
+Mintty indicates this mode by appending the `@cjksingle` modifier to the 
+`LC_CTYPE` locale variable.
+
+### Remote locale width mismatch ###
+
+After remote login, locale definitions of remote and local systems may differ, 
+mostly about existing locales and ambiguous width properties.
+This is particularly the case if
+* the cygwin locale includes a @cjk... modifier which is not supported on other systems
+* the cygwin locale is a CJK locale with UTF-8 encoding in cygwin before 3.2.0 (which makes ambiguous width narrow for all UTF-8 locales to be consistent with other systems)
+
+The script `localejoin` in the 
+mintty [utils repository](https://github.com/mintty/utils) adjusts these 
+mismatches by switching the terminal locale temporarily and thus joining 
+its width properties with those of typical remote systems.
+Direct invocation of the script just runs a shell with a locale setting.
+To use it for direct remote invocation, install it under the name 
+containing any of the remote login programs (rsh, rlogin, rexec, telnet, ssh).
+Example (with `localejoin` renamed/linked/copied as `minssh`):
+* `minssh` _myLinuxhost_
 
 ### Selective double character width ###
 
@@ -786,6 +999,12 @@ but not all such characters are handled, and there is no perfect solution
 that would also comply with the locale mechanism unless the terminal would 
 support proportional fonts.
 
+### Wide symbol overhang ###
+
+For symbol characters and emojis that are single-width by definition 
+(e.g. locale) but visually double-width, double-width display is supported 
+if the character is followed by an adjacent single-width space character.
+
 
 ## Font rendering and geometry ##
 
@@ -800,6 +1019,7 @@ interfere with mintty’s own bidi transformation.
 The actual window size is influenced by several parameters:
 * Font size / character height is the main parameter to determine the row height.
 * Row height is additionally affected by the “leading” information from the font.
+* Automatic row height adjustment method can be selected by setting `AutoLeading`.
 * Row height and column width can furthermore be tuned with setting `RowSpacing` and `ColSpacing`.
 * A gap between text and window border can be specified with setting `Padding` (default 1).
 
@@ -858,8 +1078,8 @@ ECMA-48 sub-parameters are supported.
 | 58:2::R:G:B            | 59                | underline RGB colour          |
 | 58:3:F:C:M:Y           | 59                | underline CMY colour (*)      |
 | 58:4:F:C:M:Y:K         | 59                | underline CMYK colour (*)     |
-| 73                     | 75                | superscript (tentative)       |
-| 74                     | 75                | subscript   (tentative)       |
+| 73 _or_ ?4             | 75 _or_ ?24       | superscript (*)               |
+| 74 _or_ ?5             | 75 _or_ ?24       | subscript (*)                 |
 | _any_                  | 0 _or empty_      |                               |
 
 Note: Alternative fonts are configured with options Font1 ... Font10.
@@ -886,16 +1106,17 @@ Note: The emoji style attribute sets the display preference for a number
 of characters that have emojis but would be displayed with text style 
 by default (e.g. decimal digits).
 
-Note: SGR codes for superscript and subscript display are subject to change.
-
 Note: Text attributes can be disabled with option SuppressSGR (see manual).
 
+Note: Combined SGR 73;74 results in small characters at normal position.
+This does not apply to the alternative DEC private SGRs ?4 and ?5.
+
 As a fancy add-on feature for text attributes, mintty supports distinct 
-colour attributes for combining characters, so a combined character 
+(colour) attributes for combining characters, so a combined character 
 can be displayed in multiple colours. Attributes considered for this 
 purpose are default and ANSI foreground colours, palette and true-colour 
-foreground colours, dim mode and manual bold mode (BoldAsFont=false); 
-background colours and inverse mode are ignored.
+foreground colours, dim mode and manual bold mode (BoldAsFont=false), 
+and blinking; background colours and inverse mode are ignored.
 <img align=top src=https://github.com/mintty/mintty/wiki/mintty-coloured-combinings.png>
 
 
@@ -904,6 +1125,9 @@ background colours and inverse mode are ignored.
 Mintty supports display of emojis as defined by Unicode using 
 emoji presentation, emoji style variation and emoji sequences.
 (Note that the tty must be in a UTF-8 locale to support emoji codes.)
+Extended flag emojis (not listed by Unicode) are supported dynamically.
+
+<img align=right src=https://github.com/mintty/mintty/wiki/mintty-emojis.png>
 
 The option `Emojis` can choose among sets of emoji graphics if 
 deployed in a mintty configuration directory.
@@ -919,25 +1143,43 @@ Note that up to cygwin 2.10.0, it may be useful to set `Charwidth=unicode` in ad
 Emojis are displayed in the rectangular character cell group determined 
 by the cumulated width of the emoji sequence characters. The option 
 `EmojiPlacement` can adjust the location of emoji graphics within that area.
+You can use the escape sequence PEC to tune emoji width.
 
 ### Installing emoji resources ###
 
 Mintty does not bundle actual emoji graphics with its package.
 You will have to download and deploy them yourself.
+Expert options are described here, see also the next section 
+for a Quick Guide to emoji installation.
 
 Emoji data can be found at the following sources:
-<img align=right src=https://github.com/mintty/mintty/wiki/mintty-emojis.png>
-* [EmojiOne](https://www.emojione.com/)
-  * Free Download for your own use, PNG Files, download e.g. 128x128px zip
-  * Deploy the preferred subdirectory (e.g. 128) as `emojione`
+* [Unicode.org](http://www.unicode.org/emoji/charts/) Full Emoji List (~50MB)
+  * Use the script [`getemojis`](getemojis) to download the web pages 
+  [Full Emoji List](http://www.unicode.org/emoji/charts/full-emoji-list.html) and 
+  [Full Emoji Modifier Sequences](http://www.unicode.org/emoji/charts/full-emoji-modifiers.html) 
+  (with all emoji data embedded)
+  and extract emoji data (call it without parameters for instructions)
+  * Deploy the desired subdirectories (e.g. `apple`) and subdirectory `common`
+  * Includes apple, emojione, facebook, google, twitter, samsung, windows emojis (and some limited low-resolution sets that we shall ignore)
+* [OpenMoji](https://openmoji.org/)
+  * Under “Get OpenMojis”, download the “[PNG Color 72×72](https://github.com/hfg-gmuend/openmoji/releases/latest/download/openmoji-72x72-color.zip)” archive (or the very large resolution if preferred)
+  * Unpack the archive into `openmoji`
 * [Noto Emoji font](https://github.com/googlefonts/noto-emoji), subdirectory `png/128`
   * “Clone or download” the repository or download a release archive
   * Deploy subdirectory noto-emoji/png/128 as `noto`
-* [Unicode.org](http://www.unicode.org/emoji/charts/) Full Emoji List (~50MB)
-  * Download the [Full Emoji List](http://www.unicode.org/emoji/charts/full-emoji-list.html) (with all emoji data embedded)
-  * Use the [extraction script `getemojis`](getemojis) to extract emoji data (call it without parameters for instructions)
-  * Deploy the desired subdirectories (e.g. `apple`)
-  * Includes apple, emojione, facebook, google, twitter, samsung, windows emojis (and some limited low-resolution sets that we shall ignore)
+* [JoyPixels](https://www.joypixels.com/) (formerly EmojiOne)
+  * Download JoyPixels Free (or Premium)
+  * Deploy the preferred subdirectory (e.g. png/unicode/128) as `joypixels`
+* Zoom (with an installed Zoom meeting client)
+  * Deploy $APPDATA/Zoom/data/Emojis/*.png into `zoom`
+
+Emoji flags graphics (extending Unicode) can be found at the following sources:
+* [Google region flags](https://github.com/google/region-flags.git)
+* [Puellanivis’ emoji flags](https://github.com/puellanivis/emoji.git)
+
+  * Use the script [`getflags`](getflags) to download the repositories 
+  and extract emoji data (call it without parameters for instructions).
+  * Deploy common/*.png into `common`
 
 To “Clone” with limited download volume, use the command `git clone --depth 1`.
 To download only the desired subdirectory from `github.com`, use `subversion`, 
@@ -955,6 +1197,27 @@ Use your preferred configuration directory, e.g.
 * `cp -rl noto-emoji/png/128 "$APPDATA"/mintty/emojis/noto`
 * `cp -rl noto-emoji/png/128 /usr/share/mintty/emojis/noto`
 
+### Quick Guide to emoji installation ###
+
+In the cygwin or MSYS2 mintty packages, the emoji download and deployment 
+scripts are installed in /usr/share/mintty/emojis, so do this for a common 
+all-users deployment of the emojis listed at Unicode.org and the flags emojis:
+* `cd /usr/share/mintty/emojis`
+* `./getemojis -d`
+* `./getflags -de`
+
+You may also use the scripts for deployment in your preferred config directory.
+
+To deploy in your personal local resource folder:
+* `mkdir -p ~/.config//mintty/emojis; cd ~/.config/mintty/emojis`
+* `/usr/share/mintty/emojis/getemojis -d`
+* `/usr/share/mintty/emojis/getflags -de`
+
+To deploy in your personal common resource folder (shared e.g. by cygwin/MSYS2):
+* `mkdir -p "$APPDATA"/mintty/emojis; cd "$APPDATA"/mintty/emojis`
+* `/usr/share/mintty/emojis/getemojis -d`
+* `/usr/share/mintty/emojis/getflags -de`
+
 
 ## Searching in the text and scrollback buffer ##
 
@@ -969,7 +1232,52 @@ previous/next prompt line if these are marked with scroll marker escape
 sequences, see the [[CtrlSeqs]] wiki page.
 
 
-## Passing arguments from an environment with different character set ##
+## Character encoding ##
+
+Character encoding (or character set) is normally determined via the 
+locale mechanism. To run mintty in a specific locale case-by-case, 
+you would set the LC_CTYPE locale category (using environment variables 
+LC_ALL, LC_CTYPE, LANG in this precedence) to configure both mintty and 
+its child process (shell) consistently, for example:
+
+```
+LC_CTYPE=zh_CN.gbk mintty &
+```
+
+However, as a legacy option, it is also possible to configure mintty with 
+distinct options `Locale` and `Charset`; note that despite the name, the 
+`Locale` parameter must *not* include an encoding suffix in this case.
+Note that combining `Locale` with an empty `Charset` setting results in 
+the implicit character encoding as defined by the respective locale 
+without suffix, which is not UTF-8 in most cases and may be unexpected.
+Take care to make sure that the child process has the same idea about the 
+character encoding as the terminal in this scenario.
+
+### GB18030 support ###
+
+Mintty has special support for the GB18030 character encoding which is not 
+supported by cygwin and therefore not available for interactive configuration 
+of the `Charset` setting in the Options dialog.
+Setting `Charset=GB18030` in a config file or on the command line invokes 
+this support (setting `Locale` too is necessary).
+Mintty will fallback to the GBK character encoding for the locale 
+setup of its child process in this case, to provide at least 
+consistence with a maximum subset of GB18030. GB18030 is fully 
+supported for terminal output/input. Example:
+
+```
+mintty -o Locale=zh_CN -o Charset=GB18030 &
+```
+Add setting `-o Charwidth=ambig-wide` if desired.
+
+If mintty is used as a WSL terminal, the WSL side can be configured to run 
+a GB18030 locale as well to achieve full GB18030 support.
+
+```
+mintty --WSL[=...] -o Locale=zh_CN -o Charset=GB18030
+```
+
+### Passing arguments from an environment with different character set ###
 
 To pass non-ASCII parameters to a command run from mintty using a specific 
 character encoding, proper conversion must be crafted.
@@ -980,7 +1288,7 @@ starting in a specific directory with a non-ASCII name,
 use this command line as a shortcut target:
 
 ```
-C:\cygwin\bin\mintty.exe -o Locale=C -o Charset=GBK /bin/bash -l -c "cd `echo D:/桌面 | iconv -f UTF-8`; exec bash"
+C:\cygwin64\bin\mintty.exe -o Locale=C -o Charset=GBK /bin/bash -l -c "cd `echo D:/桌面 | iconv -f UTF-8`; exec bash"
 ```
 
 So the initial shell, interpreting its ```cd``` parameters already in GBK 
@@ -1013,7 +1321,7 @@ a login shell), Alt+F2 starts again a login terminal, whose login shell
 is likely to reset the working directory to the home directory.
 
 
-## Virtual Tabs ##
+## Virtual Tabs and Tabbar ##
 
 The Virtual Tabs feature provides a list of all running mintty sessions 
 as well as configurable launch parameters for new sessions.
@@ -1028,6 +1336,11 @@ and `SessionGeomSync`.
 Distinct sets of sessions can be set up with the setting `-o Class=...`.
 For flexible window grouping, this setting supports the same placeholders 
 as the `AppID` option.
+
+### Tabbar ###
+
+Tabs can also be switched from a tabbar, activated with setting `Tabbar` to 
+a recommended value of 2 or more (use 4 or 9 for maximal tab synchronization).
 
 
 ## Multi-monitor support ##
@@ -1073,6 +1386,20 @@ mintty [utils repository](https://github.com/mintty/utils) supports
 interactive image display.
 
 
+## Tektronix 4014 vector graphics ##
+
+Mintty can emulate the Tektronix 4014 vector graphics terminal. 
+It switches to Tek emulation on the xterm sequence DECSET 38 (`\e[?38h`). 
+It is suggested to adjust the window size to the Tektronix 4010 resolution and aspect ratio before:
+* `echo -en "\e[4;780;1024t"`
+
+The script `tek` in the mintty 
+[utils repository](https://github.com/mintty/utils) supports switching 
+to Tek mode and optional output of Tek plot files.
+It also sets the environment variables **TERM** and **GNUTERM** properly.
+When leaving the sub-shell, it restores DEC/ANSI terminal mode.
+
+
 ## Localization ##
 
 Mintty facilitates localization of its user interface, the Options dialog, 
@@ -1081,8 +1408,9 @@ The localization language can be selected with the option `Language`,
 see manual page for details.
 
 Example:
-`Language=*`, environment variables `LANGUAGE=de_CH:français:de:fr_FR` and 
-`LC_MESSAGES=en_GB.UTF-8`, `LC_ALL` not set:
+Assume setting `Language=*`, environment variables 
+`LANGUAGE=de_CH:français:de:fr_FR` and `LC_MESSAGES=en_GB.UTF-8`, 
+environment variable `LC_ALL` not set:
 mintty tries to find localization files (in this order) for 
 `de_CH`, `français`, `de`, `fr_FR`, `en_GB`, 
 then (as generic fallback) `fr` and `en`, 
@@ -1090,9 +1418,8 @@ each in all resource configuration folders (subfolder `lang`).
 
 Note that Windows may already have localized the default entries of the 
 system menu, which makes the system menu language inconsistent because 
-mintty adds a few items here. Choose `Language=en` to 
+mintty adds a few items here. Choose `Language=en` or `en_US` to 
 “reverse-localize” this, as well as the font and colour chooser dialogs.
-
 Choose `Language=en_US` to change `Colour` to `Color` in the menus.
 
 ### Adding translations to localization ###
@@ -1106,6 +1433,16 @@ To add a new language, copy `messages.pot` to the desired `.po` file
 (including a region suffix if appropriate, like `fr_CH`) and add the 
 `msgstr` entries which are empty in the template. The tool `poedit` may 
 be used but remember to use UTF-8 encoding.
+Check the translations for strings that may be too long and get clipped 
+by a careful walkthrough of the Options dialog, opening all popups and 
+sub-dialogs (colours and font) and also checking `mintty -o FontMenu=0`.
+
+_Note:_ For setting values in popup menus of some of the options 
+in the Options dialog, localization is also supported. Note however 
+that the corresponding values in the config file or on the command line 
+must not be localized, so apparent inconsistencies may arise.
+It is therefore suggested _not_ to localize these values 
+(marked “(localization optional)” in the localization template `messages.pot`).
 
 _Note:_ There is one special pseudo-string in the localization template which 
 facilitates scaling of the Options dialog width. It is labelled 
@@ -1142,7 +1479,7 @@ Mintty supports a few extension features:
 
 See the manual page for details.
 
-### Terminating the foreground program ###
+### Terminating the foreground program, the hard way ###
 
 As an example for a user-defined command, that is not used for filtering 
 text in this case, assume the user wants a menu option to terminate the 
@@ -1153,26 +1490,46 @@ including a user command:
 UserCommands=Kill foreground process:kill -9 $MINTTY_PID
 ```
 
+### Terminating the foreground program, the smart way ###
+
+With option `ExitCommands`, a set of strings (likely control strings) 
+can be defined to be sent to the respective foreground application 
+if the window is instructed to "Close" from its menu or close button.
+
+_Note:_ Detection of terminal foreground processes works only locally; 
+this features does not work with WSL or after remote login.
+
+_Note:_ This feature potentially makes mintty vulnerable against command injection.
+Be careful what strings you configure!
+
+Example:
+```
+ExitCommands=bash:exit^M;mined:^[q;emacs:^X^C
+```
+
 
 ## Running mintty stand-alone ##
 
 To install mintty outside a cygwin environment, follow a few rules:
 * Compile mintty statically.
 * Install mintty.exe together with cygwin1.dll and cygwin-console-helper.exe.
-* Call the directory in which to install mintty and libraries ‘bin’.
+* Call the directory in which to install mintty and libraries `bin` (optional).
+* The parent directory of `bin` will be considered the mintty root directory.
+* Aside the `bin` directory (in the root directory), install folder tree `usr/share/mintty` with subdirectories for mintty resources, e.g. `lang/*.po`, `themes/*`, `sounds/*` etc.
 
 ### Bundling mintty with dedicated software ###
 
 To bundle an application which is not natively compiled on cygwin with mintty,
-some way of bridging the terminal interworking incompatiblity problems 
+cygwin 3.1.0 provides the ConPTY support to bridge the terminal interworking incompatiblity problems 
 ([pty incompatibility problem](https://github.com/mintty/mintty/issues/56) and
-[character encoding incompatibility problem](https://github.com/mintty/mintty/issues/376))
-needs to be integrated. A generic solution is [winpty](https://github.com/rprichard/winpty).
-To run WSL, use ʻwslbridge2’ instead (see above).
+[character encoding incompatibility problem](https://github.com/mintty/mintty/issues/376)).
+
 For software that is aware of Posix terminal conventions, it may be a feasible 
 solution if the software detects a terminal and its character encoding by 
 checking environment variable `TERM` and the locale variables and invokes 
 `stty raw -echo` to enable direct character-based I/O and disable 
 non-compatible signal handling. For this purpose, stty and its library 
 dependencies need to be bundled with the installation as well.
+
+To run WSL, use `wslbridge2` as a gateway (see above).
 

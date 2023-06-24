@@ -1,12 +1,12 @@
 // config.c (part of mintty)
-// Copyright 2008-13 Andy Koppe, 2015-2017 Thomas Wolff
+// Copyright 2008-2022 Andy Koppe, 2015-2022 Thomas Wolff
 // Based on code from PuTTY-0.60 by Simon Tatham and team.
 // Licensed under the terms of the GNU General Public License v3 or later.
 
 // Internationalization approach:
 // instead of refactoring a lot of framework functions (here, *ctrls.c)
 // to use Unicode strings, the API is simply redefined to use UTF-8;
-// non-ASCII strings are converted before being passed to the platform 
+// non-ASCII strings are converted before being passed to the platform
 // (using UTF-16 on Windows)
 
 #include "term.h"
@@ -14,8 +14,10 @@
 #include "print.h"
 #include "charset.h"
 #include "win.h"
+#include <fcntl.h>  // open+flags, mkdir
 
 #include <windows.h>  // registry handling
+#include "winpriv.h"  // support_wsl, load_library_func
 
 #include <termios.h>
 #ifdef __CYGWIN__
@@ -36,9 +38,22 @@ const config default_cfg = {
   // Looks
   .fg_colour = 0xBFBFBF,
   .bold_colour = (colour)-1,
+  .blink_colour = (colour)-1,
   .bg_colour = 0x000000,
   .cursor_colour = 0xBFBFBF,
+  .tek_fg_colour = (colour)-1,
+  .tek_bg_colour = (colour)-1,
+  .tek_cursor_colour = (colour)-1,
+  .tek_write_thru_colour = (colour)-1,
+  .tek_defocused_colour = (colour)-1,
+  .tek_glow = 1,
+  .tek_strap = 0,
   .underl_colour = (colour)-1,
+  .tab_fg_colour = (colour)-1,
+  .tab_bg_colour = (colour)-1,
+  .disp_space = 0,
+  .disp_clear = 0,
+  .disp_tab = 0,
   .underl_manual = false,
   .hover_colour = (colour)-1,
   .sel_fg_colour = (colour)-1,
@@ -66,6 +81,7 @@ const config default_cfg = {
   .fontfams[8] = {.name = W(""), .weight = 400, .isbold = false},
   .fontfams[9] = {.name = W(""), .weight = 400, .isbold = false},
   .fontfams[10] = {.name = W(""), .weight = 400, .isbold = false},
+  .fontfams[11] = {.name = W("Courier New"), .weight = 400, .isbold = false},
   .font_choice = W(""),
   .font_sample = W(""),
   .show_hidden_fonts = false,
@@ -76,13 +92,19 @@ const config default_cfg = {
   .allow_blinking = false,
   .locale = "",
   .charset = "",
+  .charwidth = 0,
+  .old_locale = false,
   .fontmenu = -1,
+  .tek_font = W(""),
   // Keys
   .backspace_sends_bs = CERASE == '\b',
   .delete_sends_del = false,
   .ctrl_alt_is_altgr = false,
+  .altgr_is_alt = false,
   .ctrl_alt_delay_altgr = 0,
   .old_altgr_detection = false,
+  .old_modify_keys = 0,
+  .format_other_keys = 1,
   .auto_repeat = true,
   .external_hotkeys = 2,
   .clip_shortcuts = true,
@@ -101,39 +123,54 @@ const config default_cfg = {
   .key_menu = "",	// VK_APPS
   .key_scrlock = "",	// VK_SCROLL
   .key_commands = W(""),
+  .manage_leds = 7,
+  .enable_remap_ctrls = false,
+  .old_keyfuncs_keypad = false,
   // Mouse
-  .copy_on_select = true,
-  .copy_as_rtf = true,
-  .copy_as_html = 0,
-  .copy_as_rtf_font = W(""),
-  .copy_as_rtf_font_size = 0,
   .clicks_place_cursor = false,
   .middle_click_action = MC_PASTE,
   .right_click_action = RC_MENU,
   .opening_clicks = 1,
+  .opening_mod = MDK_CTRL,
   .zoom_mouse = true,
   .clicks_target_app = true,
   .click_target_mod = MDK_SHIFT,
   .hide_mouse = true,
   .elastic_mouse = false,
+  .lines_per_notch = 0,
+  .mouse_pointer = W("ibeam"),
+  .appmouse_pointer = W("arrow"),
+  // Selection
+  .input_clears_selection = true,
+  .copy_on_select = true,
+  .copy_tabs = false,
+  .copy_as_rtf = true,
+  .copy_as_html = 0,
+  .copy_as_rtf_font = W(""),
+  .copy_as_rtf_font_size = 0,
+  .trim_selection = true,
+  .allow_set_selection = false,
+  .selection_show_size = false,
   // Window
   .cols = 80,
   .rows = 24,
+  .rewrap_on_resize = false,
   .scrollbar = 1,
   .scrollback_lines = 10000,
+  .max_scrollback_lines = 250000,
   .scroll_mod = MDK_SHIFT,
   .pgupdn_scroll = false,
   .lang = W(""),
-  .search_bar = "",
+  .search_bar = W(""),
   .search_context = 0,
   // Terminal
   .term = "xterm",
   .answerback = W(""),
+  .wrap_tab = 0,
   .old_wrapmodes = false,
   .enable_deccolm_init = false,
-  .bell_sound = true,
   .bell_type = 1,
-  .bell_file = W(""),
+  .bell_file = {W(""), W(""), W(""), W(""), W(""), W(""), W("")},
   .bell_freq = 0,
   .bell_len = 400,
   .bell_flash = false,  // xterm: visualBell
@@ -141,9 +178,10 @@ const config default_cfg = {
   .bell_taskbar = true, // xterm: bellIsUrgent
   .bell_popup = false,  // xterm: popOnBell
   .bell_interval = 100,
+  .play_tone = 2,
   .printer = W(""),
   .confirm_exit = true,
-  .allow_set_selection = false,
+  .confirm_reset = false,
   // Command line
   .class = W(""),
   .hold = HOLD_START,
@@ -159,6 +197,7 @@ const config default_cfg = {
   // "Hidden"
   .bidi = 2,
   .disable_alternate_screen = false,
+  .erase_to_scrollback = true,
   .display_speedup = 6,
   .suppress_sgr = "",
   .suppress_dec = "",
@@ -167,45 +206,58 @@ const config default_cfg = {
   .suppress_nrc = "",  // unused
   .suppress_wheel = "",
   .filter_paste = "",
-  .input_clears_selection = true,
+  .bracketed_paste_split = 0,
   .suspbuf_max = 8080,
-  .trim_selection = true,
-  .charwidth = 0,
+  .printable_controls = 0,
   .char_narrowing = 75,
   .emojis = 0,
-  .emoji_placement = 0,
+  .emoji_placement = EMPL_STRETCH,
+  .save_filename = W("mintty.%Y-%m-%d_%H-%M-%S"),
   .app_id = W(""),
   .app_name = W(""),
   .app_launch_cmd = W(""),
   .drop_commands = W(""),
+  .exit_commands = W(""),
   .user_commands = W(""),
   .ctx_user_commands = W(""),
   .sys_user_commands = W(""),
   .user_commands_path = W("/bin:%s"),
   .session_commands = W(""),
   .task_commands = W(""),
+  .conpty_support = -1,
+  .login_from_shortcut = true,
   .menu_mouse = "b",
   .menu_ctrlmouse = "e|ls",
   .menu_altmouse = "ls",
   .menu_menu = "bs",
   .menu_ctrlmenu = "e|ls",
+  .menu_title_ctrl_l = "Ws",
+  .menu_title_ctrl_r = "Ws",
   .geom_sync = 0,
+  .tabbar = 0,
+  .new_tabs = 0,
   .col_spacing = 0,
   .row_spacing = 0,
+  .auto_leading = 2,
   .padding = 1,
+  .ligatures = 1,
   .ligatures_support = 0,
   .handle_dpichanged = 2,
-  .check_version_update = 900,
+  .check_version_update = 0,
   .word_chars = "",
   .word_chars_excl = "",
   .use_system_colours = false,
   .short_long_opts = false,
   .bold_as_special = false,
-  .selection_show_size = false,
   .hover_title = true,
+  .progress_bar = 0,
+  .progress_scan = 1,
+  .dim_margins = false,
+  .status_line = false,
   .old_bold = false,
   .ime_cursor_colour = DEFAULT_COLOUR,
   .ansi_colours = {
+#ifdef old_mintty_colour_scheme  // theme "mintty"
     [BLACK_I]        = RGB(0x00, 0x00, 0x00),
     [RED_I]          = RGB(0xBF, 0x00, 0x00),
     [GREEN_I]        = RGB(0x00, 0xBF, 0x00),
@@ -222,11 +274,31 @@ const config default_cfg = {
     [BOLD_MAGENTA_I] = RGB(0xFF, 0x40, 0xFF),
     [BOLD_CYAN_I]    = RGB(0x40, 0xFF, 0xFF),
     [BOLD_WHITE_I]   = RGB(0xFF, 0xFF, 0xFF)
+#else  // theme "helmholtz"
+    [BLACK_I]        = { RGB(  0,   0,   0), RGB(  0,   0,   0) },
+    [RED_I]          = { RGB(212,  44,  58), RGB(162,  30,  41) },
+    [GREEN_I]        = { RGB( 28, 168,   0), RGB( 28, 168,   0) },
+    [YELLOW_I]       = { RGB(192, 160,   0), RGB(192, 160,   0) },
+    [BLUE_I]         = { RGB(  0,  93, 255), RGB(  0,  32, 192) },
+    [MAGENTA_I]      = { RGB(177,  72, 198), RGB(134,  54, 150) },
+    [CYAN_I]         = { RGB(  0, 168, 154), RGB(  0, 168, 154) },
+    [WHITE_I]        = { RGB(191, 191, 191), RGB(191, 191, 191) },
+    [BOLD_BLACK_I]   = { RGB( 96,  96,  96), RGB( 72,  72,  72) },
+    [BOLD_RED_I]     = { RGB(255, 118, 118), RGB(255, 118, 118) },
+    [BOLD_GREEN_I]   = { RGB(  0, 242,   0), RGB(  0, 242,   0) },
+    [BOLD_YELLOW_I]  = { RGB(242, 242,   0), RGB(242, 242,   0) },
+    [BOLD_BLUE_I]    = { RGB(125, 151, 255), RGB(125, 151, 255) },
+    [BOLD_MAGENTA_I] = { RGB(255, 112, 255), RGB(255, 112, 255) },
+    [BOLD_CYAN_I]    = { RGB(  0, 240, 240), RGB(  0, 240, 240) },
+    [BOLD_WHITE_I]   = { RGB(255, 255, 255), RGB(255, 255, 255) }
+#endif
   },
   .sixel_clip_char = W(" "),
   .baud = 0,
   .bloom = 0,
   .old_xbuttons = false,
+  .options_font = W(""),
+  .options_fontsize = 0,
   .old_options = ""
 };
 
@@ -235,8 +307,9 @@ config cfg, new_cfg, file_cfg;
 typedef enum {
   OPT_BOOL, OPT_MOD, OPT_TRANS, OPT_CURSOR, OPT_FONTSMOOTH, OPT_FONTRENDER,
   OPT_MIDDLECLICK, OPT_RIGHTCLICK, OPT_SCROLLBAR, OPT_WINDOW, OPT_HOLD,
-  OPT_INT, OPT_COLOUR, OPT_STRING, OPT_WSTRING,
+  OPT_INT, OPT_COLOUR, OPT_COLOUR_PAIR, OPT_STRING, OPT_WSTRING,
   OPT_CHARWIDTH, OPT_EMOJIS, OPT_EMOJI_PLACEMENT,
+  OPT_COMPOSE_KEY,
   OPT_TYPE_MASK = 0x1F,
   OPT_LEGACY = 0x20,
   OPT_KEEPCR = 0x40
@@ -258,8 +331,21 @@ options[] = {
 
   // Looks
   {"BoldColour", OPT_COLOUR, offcfg(bold_colour)},
+  {"BlinkColour", OPT_COLOUR, offcfg(blink_colour)},
   {"CursorColour", OPT_COLOUR, offcfg(cursor_colour)},
+  {"TekForegroundColour", OPT_COLOUR, offcfg(tek_fg_colour)},
+  {"TekBackgroundColour", OPT_COLOUR, offcfg(tek_bg_colour)},
+  {"TekCursorColour", OPT_COLOUR, offcfg(tek_cursor_colour)},
+  {"TekWriteThruColour", OPT_COLOUR, offcfg(tek_write_thru_colour)},
+  {"TekDefocusedColour", OPT_COLOUR, offcfg(tek_defocused_colour)},
+  {"TekGlow", OPT_INT, offcfg(tek_glow)},
+  {"TekStrap", OPT_INT, offcfg(tek_strap)},
   {"UnderlineColour", OPT_COLOUR, offcfg(underl_colour)},
+  {"TabForegroundColour", OPT_COLOUR, offcfg(tab_fg_colour)},
+  {"TabBackgroundColour", OPT_COLOUR, offcfg(tab_bg_colour)},
+  {"DispSpace", OPT_INT, offcfg(disp_space)},
+  {"DispClear", OPT_INT, offcfg(disp_clear)},
+  {"DispTab", OPT_INT, offcfg(disp_tab)},
   {"HoverColour", OPT_COLOUR, offcfg(hover_colour)},
   {"UnderlineManual", OPT_BOOL, offcfg(underl_manual)},
   {"HighlightBackgroundColour", OPT_COLOUR, offcfg(sel_bg_colour)},
@@ -293,6 +379,8 @@ options[] = {
   {"AllowBlinking", OPT_BOOL, offcfg(allow_blinking)},
   {"Locale", OPT_STRING, offcfg(locale)},
   {"Charset", OPT_STRING, offcfg(charset)},
+  {"Charwidth", OPT_CHARWIDTH, offcfg(charwidth)},
+  {"OldLocale", OPT_BOOL, offcfg(old_locale)},
   {"FontRender", OPT_FONTRENDER, offcfg(font_render)},
   {"FontMenu", OPT_INT, offcfg(fontmenu)},
   {"OldFontMenu", OPT_INT | OPT_LEGACY, offcfg(fontmenu)},
@@ -316,13 +404,19 @@ options[] = {
   {"Font9Weight", OPT_INT, offcfg(fontfams[9].weight)},
   {"Font10", OPT_WSTRING, offcfg(fontfams[10].name)},
   {"Font10Weight", OPT_INT, offcfg(fontfams[10].weight)},
+  {"FontRTL", OPT_WSTRING, offcfg(fontfams[11].name)},
+  {"FontRTLWeight", OPT_INT, offcfg(fontfams[11].weight)},
+  {"TekFont", OPT_WSTRING, offcfg(tek_font)},
 
   // Keys
   {"BackspaceSendsBS", OPT_BOOL, offcfg(backspace_sends_bs)},
   {"DeleteSendsDEL", OPT_BOOL, offcfg(delete_sends_del)},
   {"CtrlAltIsAltGr", OPT_BOOL, offcfg(ctrl_alt_is_altgr)},
+  {"AltGrIsAlsoAlt", OPT_BOOL, offcfg(altgr_is_alt)},
   {"CtrlAltDelayAltGr", OPT_INT, offcfg(ctrl_alt_delay_altgr)},
   {"OldAltGrDetection", OPT_BOOL, offcfg(old_altgr_detection)},
+  {"OldModifyKeys", OPT_INT, offcfg(old_modify_keys)},
+  {"FormatOtherKeys", OPT_INT, offcfg(format_other_keys)},
   {"AutoRepeat", OPT_BOOL, offcfg(auto_repeat)},
   {"SupportExternalHotkeys", OPT_INT, offcfg(external_hotkeys)},
   {"ClipShortcuts", OPT_BOOL, offcfg(clip_shortcuts)},
@@ -334,7 +428,7 @@ options[] = {
   {"CtrlShiftShortcuts", OPT_BOOL, offcfg(ctrl_shift_shortcuts)},
   {"CtrlExchangeShift", OPT_BOOL, offcfg(ctrl_exchange_shift)},
   {"CtrlControls", OPT_BOOL, offcfg(ctrl_controls)},
-  {"ComposeKey", OPT_MOD, offcfg(compose_key)},
+  {"ComposeKey", OPT_COMPOSE_KEY, offcfg(compose_key)},
   {"Key_PrintScreen", OPT_STRING, offcfg(key_prtscreen)},
   {"Key_Pause", OPT_STRING, offcfg(key_pause)},
   {"Key_Break", OPT_STRING, offcfg(key_break)},
@@ -343,42 +437,65 @@ options[] = {
   {"Break", OPT_STRING | OPT_LEGACY, offcfg(key_break)},
   {"Pause", OPT_STRING | OPT_LEGACY, offcfg(key_pause)},
   {"KeyFunctions", OPT_WSTRING | OPT_KEEPCR, offcfg(key_commands)},
+  {"ManageLEDs", OPT_INT, offcfg(manage_leds)},
+  {"ShootFoot", OPT_BOOL, offcfg(enable_remap_ctrls)},
+  {"OldKeyFunctionsKeypad", OPT_BOOL, offcfg(old_keyfuncs_keypad)},
 
   // Mouse
-  {"CopyOnSelect", OPT_BOOL, offcfg(copy_on_select)},
-  {"CopyAsRTF", OPT_BOOL, offcfg(copy_as_rtf)},
-  {"CopyAsHTML", OPT_INT, offcfg(copy_as_html)},
-  {"CopyAsRTFFont", OPT_WSTRING, offcfg(copy_as_rtf_font)},
-  {"CopyAsRTFFontHeight", OPT_INT, offcfg(copy_as_rtf_font_size)},
   {"ClicksPlaceCursor", OPT_BOOL, offcfg(clicks_place_cursor)},
   {"MiddleClickAction", OPT_MIDDLECLICK, offcfg(middle_click_action)},
   {"RightClickAction", OPT_RIGHTCLICK, offcfg(right_click_action)},
   {"OpeningClicks", OPT_INT, offcfg(opening_clicks)},
+  {"OpeningMod", OPT_MOD, offcfg(opening_mod)},
   {"ZoomMouse", OPT_BOOL, offcfg(zoom_mouse)},
   {"ClicksTargetApp", OPT_BOOL, offcfg(clicks_target_app)},
   {"ClickTargetMod", OPT_MOD, offcfg(click_target_mod)},
   {"HideMouse", OPT_BOOL, offcfg(hide_mouse)},
   {"ElasticMouse", OPT_BOOL, offcfg(elastic_mouse)},
+  {"LinesPerMouseWheelNotch", OPT_INT, offcfg(lines_per_notch)},
+  {"MousePointer", OPT_WSTRING, offcfg(mouse_pointer)},
+  {"AppMousePointer", OPT_WSTRING, offcfg(appmouse_pointer)},
+
+  // Selection
+  {"ClearSelectionOnInput", OPT_BOOL, offcfg(input_clears_selection)},
+  {"CopyOnSelect", OPT_BOOL, offcfg(copy_on_select)},
+  {"CopyTab", OPT_BOOL, offcfg(copy_tabs)},
+  {"CopyAsRTF", OPT_BOOL, offcfg(copy_as_rtf)},
+  {"CopyAsHTML", OPT_BOOL, offcfg(copy_as_html)},
+  {"CopyAsRTFFont", OPT_WSTRING, offcfg(copy_as_rtf_font)},
+  {"CopyAsRTFFontSize", OPT_INT | OPT_LEGACY, offcfg(copy_as_rtf_font_size)},
+  {"CopyAsRTFFontHeight", OPT_INT, offcfg(copy_as_rtf_font_size)},
+  {"TrimSelection", OPT_BOOL, offcfg(trim_selection)},
+  {"AllowSetSelection", OPT_BOOL, offcfg(allow_set_selection)},
+  {"SelectionShowSize", OPT_INT, offcfg(selection_show_size)},
 
   // Window
   {"Columns", OPT_INT, offcfg(cols)},
   {"Rows", OPT_INT, offcfg(rows)},
+  {"RewrapOnResize", OPT_BOOL, offcfg(rewrap_on_resize)},
   {"ScrollbackLines", OPT_INT, offcfg(scrollback_lines)},
+  {"MaxScrollbackLines", OPT_INT, offcfg(max_scrollback_lines)},
   {"Scrollbar", OPT_SCROLLBAR, offcfg(scrollbar)},
   {"ScrollMod", OPT_MOD, offcfg(scroll_mod)},
   {"PgUpDnScroll", OPT_BOOL, offcfg(pgupdn_scroll)},
   {"Language", OPT_WSTRING, offcfg(lang)},
-  {"SearchBar", OPT_STRING, offcfg(search_bar)},
+  {"SearchBar", OPT_WSTRING, offcfg(search_bar)},
   {"SearchContext", OPT_INT, offcfg(search_context)},
 
   // Terminal
   {"Term", OPT_STRING, offcfg(term)},
   {"Answerback", OPT_WSTRING, offcfg(answerback)},
+  {"WrapTab", OPT_INT, offcfg(wrap_tab)},
   {"OldWrapModes", OPT_BOOL, offcfg(old_wrapmodes)},
   {"Enable132ColumnSwitching", OPT_BOOL, offcfg(enable_deccolm_init)},
-  {"BellSound", OPT_BOOL, offcfg(bell_sound)},
   {"BellType", OPT_INT, offcfg(bell_type)},
-  {"BellFile", OPT_WSTRING, offcfg(bell_file)},
+  {"BellFile", OPT_WSTRING, offcfg(bell_file[6])},
+  {"BellFile2", OPT_WSTRING, offcfg(bell_file[0])},
+  {"BellFile3", OPT_WSTRING, offcfg(bell_file[1])},
+  {"BellFile4", OPT_WSTRING, offcfg(bell_file[2])},
+  {"BellFile5", OPT_WSTRING, offcfg(bell_file[3])},
+  {"BellFile6", OPT_WSTRING, offcfg(bell_file[4])},
+  {"BellFile7", OPT_WSTRING, offcfg(bell_file[5])},
   {"BellFreq", OPT_INT, offcfg(bell_freq)},
   {"BellLen", OPT_INT, offcfg(bell_len)},
   {"BellFlash", OPT_BOOL, offcfg(bell_flash)},
@@ -386,9 +503,10 @@ options[] = {
   {"BellTaskbar", OPT_BOOL, offcfg(bell_taskbar)},
   {"BellPopup", OPT_BOOL, offcfg(bell_popup)},
   {"BellInterval", OPT_INT, offcfg(bell_interval)},
+  {"PlayTone", OPT_INT, offcfg(play_tone)},
   {"Printer", OPT_WSTRING, offcfg(printer)},
   {"ConfirmExit", OPT_BOOL, offcfg(confirm_exit)},
-  {"AllowSetSelection", OPT_BOOL, offcfg(allow_set_selection)},
+  {"ConfirmReset", OPT_BOOL, offcfg(confirm_reset)},
 
   // Command line
   {"Class", OPT_WSTRING, offcfg(class)},
@@ -409,6 +527,7 @@ options[] = {
   // "Hidden"
   {"Bidi", OPT_INT, offcfg(bidi)},
   {"NoAltScreen", OPT_BOOL, offcfg(disable_alternate_screen)},
+  {"EraseToScrollback", OPT_BOOL, offcfg(erase_to_scrollback)},
   {"DisplaySpeedup", OPT_INT, offcfg(display_speedup)},
   {"SuppressSGR", OPT_STRING, offcfg(suppress_sgr)},
   {"SuppressDEC", OPT_STRING, offcfg(suppress_dec)},
@@ -417,32 +536,43 @@ options[] = {
   {"SuppressNRC", OPT_STRING, offcfg(suppress_nrc)},  // unused
   {"SuppressMouseWheel", OPT_STRING, offcfg(suppress_wheel)},
   {"FilterPasteControls", OPT_STRING, offcfg(filter_paste)},
-  {"ClearSelectionOnInput", OPT_BOOL, offcfg(input_clears_selection)},
+  {"BracketedPasteByLine", OPT_INT, offcfg(bracketed_paste_split)},
   {"SuspendWhileSelecting", OPT_INT, offcfg(suspbuf_max)},
-  {"TrimSelection", OPT_BOOL, offcfg(trim_selection)},
-  {"Charwidth", OPT_CHARWIDTH, offcfg(charwidth)},
+  {"PrintableControls", OPT_INT, offcfg(printable_controls)},
   {"CharNarrowing", OPT_INT, offcfg(char_narrowing)},
   {"Emojis", OPT_EMOJIS, offcfg(emojis)},
   {"EmojiPlacement", OPT_EMOJI_PLACEMENT, offcfg(emoji_placement)},
+  {"SaveFilename", OPT_WSTRING, offcfg(save_filename)},
   {"AppID", OPT_WSTRING, offcfg(app_id)},
   {"AppName", OPT_WSTRING, offcfg(app_name)},
   {"AppLaunchCmd", OPT_WSTRING, offcfg(app_launch_cmd)},
+
   {"DropCommands", OPT_WSTRING | OPT_KEEPCR, offcfg(drop_commands)},
+  {"ExitCommands", OPT_WSTRING | OPT_KEEPCR, offcfg(exit_commands)},
   {"UserCommands", OPT_WSTRING | OPT_KEEPCR, offcfg(user_commands)},
   {"CtxMenuFunctions", OPT_WSTRING | OPT_KEEPCR, offcfg(ctx_user_commands)},
   {"SysMenuFunctions", OPT_WSTRING | OPT_KEEPCR, offcfg(sys_user_commands)},
   {"UserCommandsPath", OPT_WSTRING, offcfg(user_commands_path)},
   {"SessionCommands", OPT_WSTRING | OPT_KEEPCR, offcfg(session_commands)},
   {"TaskCommands", OPT_WSTRING | OPT_KEEPCR, offcfg(task_commands)},
+  {"ConPTY", OPT_BOOL, offcfg(conpty_support)},
+  {"LoginFromShortcut", OPT_BOOL, offcfg(login_from_shortcut)},
   {"MenuMouse", OPT_STRING, offcfg(menu_mouse)},
   {"MenuCtrlMouse", OPT_STRING, offcfg(menu_ctrlmouse)},
   {"MenuMouse5", OPT_STRING, offcfg(menu_altmouse)},
   {"MenuMenu", OPT_STRING, offcfg(menu_menu)},
   {"MenuCtrlMenu", OPT_STRING, offcfg(menu_ctrlmenu)},
+  {"MenuTitleCtrlLeft", OPT_STRING, offcfg(menu_title_ctrl_l)},
+  {"MenuTitleCtrlRight", OPT_STRING, offcfg(menu_title_ctrl_r)},
+
   {"SessionGeomSync", OPT_INT, offcfg(geom_sync)},
+  {"TabBar", OPT_BOOL, offcfg(tabbar)},
+  {"NewTabs", OPT_INT, offcfg(new_tabs)},
   {"ColSpacing", OPT_INT, offcfg(col_spacing)},
   {"RowSpacing", OPT_INT, offcfg(row_spacing)},
+  {"AutoLeading", OPT_INT, offcfg(auto_leading)},
   {"Padding", OPT_INT, offcfg(padding)},
+  {"Ligatures", OPT_INT, offcfg(ligatures)},
   {"LigaturesSupport", OPT_INT, offcfg(ligatures_support)},
   {"HandleDPI", OPT_INT, offcfg(handle_dpichanged)},
   {"CheckVersionUpdate", OPT_INT, offcfg(check_version_update)},
@@ -453,30 +583,36 @@ options[] = {
   {"OldBold", OPT_BOOL, offcfg(old_bold)},
   {"ShortLongOpts", OPT_BOOL, offcfg(short_long_opts)},
   {"BoldAsRainbowSparkles", OPT_BOOL, offcfg(bold_as_special)},
-  {"SelectionShowSize", OPT_INT, offcfg(selection_show_size)},
   {"HoverTitle", OPT_BOOL, offcfg(hover_title)},
+  {"ProgressBar", OPT_BOOL, offcfg(progress_bar)},
+  {"ProgressScan", OPT_INT, offcfg(progress_scan)},
   {"Baud", OPT_INT, offcfg(baud)},
   {"Bloom", OPT_INT, offcfg(bloom)},
+  {"DimMargins", OPT_BOOL, offcfg(dim_margins)},
+  {"StatusLine", OPT_BOOL, offcfg(status_line)},
   {"OldXButtons", OPT_BOOL, offcfg(old_xbuttons)},
+  {"OptionsFont", OPT_WSTRING, offcfg(options_font)},
+  {"OptionsFontSize", OPT_INT | OPT_LEGACY, offcfg(options_fontsize)},
+  {"OptionsFontHeight", OPT_INT, offcfg(options_fontsize)},
   {"OldOptions", OPT_STRING, offcfg(old_options)},
 
   // ANSI colours
-  {"Black", OPT_COLOUR, offcfg(ansi_colours[BLACK_I])},
-  {"Red", OPT_COLOUR, offcfg(ansi_colours[RED_I])},
-  {"Green", OPT_COLOUR, offcfg(ansi_colours[GREEN_I])},
-  {"Yellow", OPT_COLOUR, offcfg(ansi_colours[YELLOW_I])},
-  {"Blue", OPT_COLOUR, offcfg(ansi_colours[BLUE_I])},
-  {"Magenta", OPT_COLOUR, offcfg(ansi_colours[MAGENTA_I])},
-  {"Cyan", OPT_COLOUR, offcfg(ansi_colours[CYAN_I])},
-  {"White", OPT_COLOUR, offcfg(ansi_colours[WHITE_I])},
-  {"BoldBlack", OPT_COLOUR, offcfg(ansi_colours[BOLD_BLACK_I])},
-  {"BoldRed", OPT_COLOUR, offcfg(ansi_colours[BOLD_RED_I])},
-  {"BoldGreen", OPT_COLOUR, offcfg(ansi_colours[BOLD_GREEN_I])},
-  {"BoldYellow", OPT_COLOUR, offcfg(ansi_colours[BOLD_YELLOW_I])},
-  {"BoldBlue", OPT_COLOUR, offcfg(ansi_colours[BOLD_BLUE_I])},
-  {"BoldMagenta", OPT_COLOUR, offcfg(ansi_colours[BOLD_MAGENTA_I])},
-  {"BoldCyan", OPT_COLOUR, offcfg(ansi_colours[BOLD_CYAN_I])},
-  {"BoldWhite", OPT_COLOUR, offcfg(ansi_colours[BOLD_WHITE_I])},
+  {"Black", OPT_COLOUR_PAIR, offcfg(ansi_colours[BLACK_I])},
+  {"Red", OPT_COLOUR_PAIR, offcfg(ansi_colours[RED_I])},
+  {"Green", OPT_COLOUR_PAIR, offcfg(ansi_colours[GREEN_I])},
+  {"Yellow", OPT_COLOUR_PAIR, offcfg(ansi_colours[YELLOW_I])},
+  {"Blue", OPT_COLOUR_PAIR, offcfg(ansi_colours[BLUE_I])},
+  {"Magenta", OPT_COLOUR_PAIR, offcfg(ansi_colours[MAGENTA_I])},
+  {"Cyan", OPT_COLOUR_PAIR, offcfg(ansi_colours[CYAN_I])},
+  {"White", OPT_COLOUR_PAIR, offcfg(ansi_colours[WHITE_I])},
+  {"BoldBlack", OPT_COLOUR_PAIR, offcfg(ansi_colours[BOLD_BLACK_I])},
+  {"BoldRed", OPT_COLOUR_PAIR, offcfg(ansi_colours[BOLD_RED_I])},
+  {"BoldGreen", OPT_COLOUR_PAIR, offcfg(ansi_colours[BOLD_GREEN_I])},
+  {"BoldYellow", OPT_COLOUR_PAIR, offcfg(ansi_colours[BOLD_YELLOW_I])},
+  {"BoldBlue", OPT_COLOUR_PAIR, offcfg(ansi_colours[BOLD_BLUE_I])},
+  {"BoldMagenta", OPT_COLOUR_PAIR, offcfg(ansi_colours[BOLD_MAGENTA_I])},
+  {"BoldCyan", OPT_COLOUR_PAIR, offcfg(ansi_colours[BOLD_CYAN_I])},
+  {"BoldWhite", OPT_COLOUR_PAIR, offcfg(ansi_colours[BOLD_WHITE_I])},
 
   // Legacy
   {"BoldAsBright", OPT_BOOL | OPT_LEGACY, offcfg(bold_as_colour)},
@@ -488,26 +624,36 @@ typedef const struct {
   char val;
 } opt_val;
 
-static opt_val
-*const opt_vals[] = {
+static opt_val * const opt_vals[] = {
   [OPT_BOOL] = (opt_val[]) {
-    {"no", false},
-    {"yes", true},
-    {"false", false},
-    {"true", true},
-    {"off", false},
-    {"on", true},
+    //__ Setting false for Boolean options (localization optional)
+    {__("no"), false},
+    //__ Setting true for Boolean options (localization optional)
+    {__("yes"), true},
+    //__ Setting false for Boolean options (localization optional)
+    {__("false"), false},
+    //__ Setting true for Boolean options (localization optional)
+    {__("true"), true},
+    //__ Setting false for Boolean options (localization optional)
+    {__("off"), false},
+    //__ Setting true for Boolean options (localization optional)
+    {__("on"), true},
     {0, 0}
   },
   [OPT_CHARWIDTH] = (opt_val[]) {
     {"locale", 0},
     {"unicode", 1},
     {"ambig-wide", 2},
+    {"ambig-narrow", 3},
+    {"single", 10},
+    {"single-unicode", 11},
     {0, 0}
   },
   [OPT_EMOJIS] = (opt_val[]) {
     {"none", EMOJIS_NONE},
+    {"openmoji", EMOJIS_OPENMOJI},
     {"noto", EMOJIS_NOTO},
+    {"joypixels", EMOJIS_JOYPIXELS},
     {"emojione", EMOJIS_ONE},
     {"apple", EMOJIS_APPLE},
     {"google", EMOJIS_GOOGLE},
@@ -515,16 +661,17 @@ static opt_val
     {"facebook", EMOJIS_FB},
     {"samsung", EMOJIS_SAMSUNG},
     {"windows", EMOJIS_WINDOWS},
+    {"zoom", EMOJIS_ZOOM},
     {0, 0}
   },
   [OPT_EMOJI_PLACEMENT] = (opt_val[]) {
-    //__ Options - Text - Emojis - Placement
+    //__ Options - Text - Emojis - Placement (localization optional)
     {__("stretch"), EMPL_STRETCH},
-    //__ Options - Text - Emojis - Placement
+    //__ Options - Text - Emojis - Placement (localization optional)
     {__("align"), EMPL_ALIGN},
-    //__ Options - Text - Emojis - Placement
+    //__ Options - Text - Emojis - Placement (localization optional)
     {__("middle"), EMPL_MIDDLE},
-    //__ Options - Text - Emojis - Placement
+    //__ Options - Text - Emojis - Placement (localization optional)
     {__("full"), EMPL_FULL},
     {0, 0}
   },
@@ -538,6 +685,16 @@ static opt_val
     {"hyper", MDK_HYPER},
     {0, 0}
   },
+  [OPT_COMPOSE_KEY] = (opt_val[]) {
+    {"off", 0},
+    {"shift", MDK_SHIFT},
+    {"alt", MDK_ALT},
+    {"ctrl", MDK_CTRL},
+    {"super", MDK_SUPER},
+    {"hyper", MDK_HYPER},
+    {"capslock", MDK_CAPSLOCK},
+    {0, 0}
+  },
   [OPT_TRANS] = (opt_val[]) {
     {"off", TR_OFF},
     {"low", TR_LOW},
@@ -549,6 +706,7 @@ static opt_val
   [OPT_CURSOR] = (opt_val[]) {
     {"line", CUR_LINE},
     {"block", CUR_BLOCK},
+    {"box", CUR_BOX},
     {"underscore", CUR_UNDERSCORE},
     {0, 0}
   },
@@ -607,6 +765,54 @@ static opt_val
 #else
 #define trace_theme(params)
 #endif
+
+
+char *
+save_filename(char * suf)
+{
+  char * pat = cs__wcstombs(cfg.save_filename);
+
+  // expand initial ~ or $variable
+  char * sep;
+  if (*pat == '~' && pat[1] == '/') {
+    char * pat1 = asform("%s%s", home, pat + 1);
+    free(pat);
+    pat = pat1;
+  }
+  else if (*pat == '$' && (sep = strchr(pat, '/'))) {
+    *sep = 0;
+    if (getenv(pat + 1)) {
+      char * pat1 = asform("%s/%s", getenv(pat + 1), sep + 1);
+      free(pat);
+      pat = pat1;
+    }
+  }
+  wchar * wpat = cs__mbstowcs(pat);
+  free(pat);
+  pat = path_win_w_to_posix(wpat);
+  free(wpat);
+  //printf("save_filename pat %ls -> %s\n", cfg.save_filename, pat);
+
+  struct timeval now;
+  gettimeofday(& now, 0);
+  char * fn = newn(char, MAX_PATH + 1 + strlen(suf));
+  strftime(fn, MAX_PATH, pat, localtime(& now.tv_sec));
+  //printf("save_filename [%s] (%s) -> %s%s\n", pat, suf, fn, suf);
+  free(pat);
+  strcat(fn, suf);
+
+  // make sure directory exists
+  char * basesep = strrchr(fn, '/');
+  if (basesep) {
+    *basesep = 0;
+    if (access(fn, X_OK | W_OK) != 0) {
+      mkdir(fn, 0755);
+    }
+    *basesep = '/';
+  }
+
+  return fn;
+}
 
 
 #define dont_debug_opterror
@@ -713,8 +919,8 @@ check_legacy_options(void (*remember_option)(char * tag, uint))
 {
   if (cfg.use_system_colours) {
     // Translate 'UseSystemColours' to colour settings.
-    cfg.fg_colour = cfg.cursor_colour = win_get_sys_colour(true);
-    cfg.bg_colour = win_get_sys_colour(false);
+    cfg.fg_colour = cfg.cursor_colour = win_get_sys_colour(COLOR_WINDOWTEXT);
+    cfg.bg_colour = win_get_sys_colour(COLOR_WINDOW);
     cfg.use_system_colours = false;
 
     // Make sure they're written to the config file.
@@ -739,36 +945,41 @@ parse_colour(string s, colour *cp)
   float c, m, y, k = 0;
   if (sscanf(s, "%u,%u,%u", &r, &g, &b) == 3)
     ;
+  else if (sscanf(s, "#%4x%4x%4x", &r, &g, &b) == 3) {
+    r >>= 8;
+    g >>= 8;
+    b >>= 8;
+  }
   else if (sscanf(s, "#%2x%2x%2x", &r, &g, &b) == 3)
     ;
   else if (sscanf(s, "rgb:%2x/%2x/%2x", &r, &g, &b) == 3)
     ;
   else if (sscanf(s, "rgb:%4x/%4x/%4x", &r, &g, &b) == 3)
     r >>= 8, g >>= 8, b >>= 8;
-  else if (sscanf(s, "cmy:%f/%f/%f", &c, &m, &y) == 3
-        || sscanf(s, "cmyk:%f/%f/%f/%f", &c, &m, &y, &k) == 4
-          )
-    if (c >= 0 && c <= 1 && m >= 0 && m <= 1 && y >= 0 && y <= 1 && k >= 0 && k <= 1) {
+  else if (sscanf(s, "cmy:%f/%f/%f", &c, &m, &y) == 3 ||
+           sscanf(s, "cmyk:%f/%f/%f/%f", &c, &m, &y, &k) == 4) {
+    if (c >= 0 && c <= 1 && m >= 0 && m <= 1 &&
+        y >= 0 && y <= 1 && k >= 0 && k <= 1) {
       r = (1 - c) * (1 - k) * 255;
       g = (1 - m) * (1 - k) * 255;
       b = (1 - y) * (1 - k) * 255;
     }
     else
       return false;
+  }
   else {
-    int coli = -1;
-    int len = strlen(s);
-    while (len && s[len - 1] == ' ')
-      len--;
-    for (uint i = 0; i < lengthof(xcolours); i++)
-      if (0 == strncasecmp(s, xcolours[i].name, len)) {
+    bool found = false;
+    for (uint i = 0; i < lengthof(xcolours); i++) {
+      string name = xcolours[i].name;
+      if (!strncasecmp(s, name, strlen(name))) {
         r = xcolours[i].r;
         g = xcolours[i].g;
         b = xcolours[i].b;
-        coli = i;
+        found = true;
         break;
       }
-    if (coli < 0)
+    }
+    if (!found)
       return false;
   }
 
@@ -811,8 +1022,26 @@ set_option(string name, string val_str, bool from_file)
       }
     }
     when OPT_COLOUR:
+#ifdef debug_theme
+      printf("set_option <%s> <%s>\n", name, val_str);
+#endif
       if (parse_colour(val_str, val_p))
         return i;
+    when OPT_COLOUR_PAIR: {
+#ifdef debug_theme
+      printf("set_option <%s> <%s>\n", name, val_str);
+#endif
+      colour_pair *pair = val_p;
+      if (parse_colour(val_str, &pair->fg)) {
+        const char *sep = strchr(val_str, ';');
+        if (!sep) {
+          pair->bg = pair->fg;
+          return i;
+        }
+        else if (parse_colour(sep + 1, &pair->bg))
+          return i;
+      }
+    }
     otherwise: {
       int len = strlen(val_str);
       if (!len)
@@ -833,8 +1062,9 @@ set_option(string name, string val_str, bool from_file)
     }
   }
   //__ %2$s: option name, %1$s: invalid value
-  opterror(_("Ignoring invalid value '%s' for option '%s'"), 
-           from_file, val_str, name);
+  if (!wnd)  // report errors only during initialisation
+    opterror(_("Ignoring invalid value '%s' for option '%s'"), 
+             from_file, val_str, name);
   return -1;
 }
 
@@ -888,7 +1118,43 @@ parse_arg_option(string option)
 }
 
 
-#include "winpriv.h"  // home
+/*
+   In a configuration parameter list, map tag to value.
+ */
+char *
+matchconf(char * conf, char * item)
+{
+  char * cmdp = conf;
+  char sepch = ';';
+  if ((uchar)*cmdp <= (uchar)' ')
+    sepch = *cmdp++;
+
+  char * paramp;
+  while ((paramp = strchr(cmdp, ':'))) {
+    *paramp = '\0';
+    paramp++;
+    char * sepp = strchr(paramp, sepch);
+    if (sepp)
+      *sepp = '\0';
+
+    if (!strcmp(cmdp, item))
+      return paramp;
+
+    if (sepp) {
+      cmdp = sepp + 1;
+      // check for multi-line separation
+      if (*cmdp == '\\' && cmdp[1] == '\n') {
+        cmdp += 2;
+        while (iswspace(*cmdp))
+          cmdp++;
+      }
+    }
+    else
+      break;
+  }
+  return 0;
+}
+
 
 static string * config_dirs = 0;
 static int last_config_dir = -1;
@@ -926,8 +1192,6 @@ init_config_dirs(void)
     config_dirs[++last_config_dir] = config_dir;
   }
 }
-
-#include <fcntl.h>
 
 char *
 get_resource_file(wstring sub, wstring res, bool towrite)
@@ -1304,6 +1568,9 @@ load_config(string filename, int to_save)
     to_save = false;
 
   FILE * file = fopen(filename, "r");
+  //printf("load_config <%s> ok %d save %d\n", filename, !!file, to_save);
+  if (report_config && file)
+    printf("loading config <%s>\n", filename);
 
   if (to_save) {
     if (file || (!rc_filename && to_save == 2) || to_save == 3) {
@@ -1311,6 +1578,8 @@ load_config(string filename, int to_save)
 
       delete(rc_filename);
       rc_filename = path_posix_to_win_w(filename);
+      if (report_config)
+        printf("save to config <%ls>\n", rc_filename);
     }
   }
 
@@ -1376,10 +1645,10 @@ void
 copy_config(char * tag, config * dst_p, const config * src_p)
 {
 #ifdef debug_theme
-  char * cfg(config * p) {
-    return p == new_cfg ? "new" : p == file_cfg ? "file" : p == cfg ? "cfg" : "?";
+  char * _cfg(const config * p) {
+    return p == &new_cfg ? "new" : p == &file_cfg ? "file" : p == &cfg ? "cfg" : "?";
   }
-  printf("[%s] copy_config %s <- %s\n", tag, cfg(dst_p), cfg(src_p));
+  printf("[%s] copy_config %s <- %s\n", tag, _cfg(dst_p), _cfg(src_p));
 #else
   (void)tag;
 #endif
@@ -1394,8 +1663,12 @@ copy_config(char * tag, config * dst_p, const config * src_p)
           strset(dst_val_p, *(string *)src_val_p);
         when OPT_WSTRING:
           wstrset(dst_val_p, *(wstring *)src_val_p);
-        when OPT_INT or OPT_COLOUR:
+        when OPT_INT:
           *(int *)dst_val_p = *(int *)src_val_p;
+        when OPT_COLOUR:
+          *(colour *)dst_val_p = *(colour *)src_val_p;
+        when OPT_COLOUR_PAIR:
+          *(colour_pair *)dst_val_p = *(colour_pair *)src_val_p;
         otherwise:
           *(char *)dst_val_p = *(char *)src_val_p;
       }
@@ -1409,6 +1682,18 @@ init_config(void)
   copy_config("init", &cfg, &default_cfg);
 }
 
+static void
+fix_config(void)
+{
+  // Avoid negative sizes.
+  cfg.rows = max(1, cfg.rows);
+  cfg.cols = max(1, cfg.cols);
+  cfg.scrollback_lines = max(0, cfg.scrollback_lines);
+
+  // Limit size of scrollback buffer.
+  cfg.scrollback_lines = min(cfg.scrollback_lines, cfg.max_scrollback_lines);
+}
+
 void
 finish_config(void)
 {
@@ -1419,14 +1704,11 @@ finish_config(void)
     (void)load_messages_lang("messages");
 #endif
 #ifdef debug_opterror
-  opterror("Täst L %s %s", false, "b�h", "b�h�");
+  opterror("Täst L %s %s", false, "b�h", "b�h�");
   opterror("Täst U %s %s", true, "böh", "büh€");
 #endif
 
-  // Avoid negative sizes.
-  cfg.rows = max(1, cfg.rows);
-  cfg.cols = max(1, cfg.cols);
-  cfg.scrollback_lines = max(0, cfg.scrollback_lines);
+  fix_config();
 
   // Ignore charset setting if we haven't got a locale.
   if (!*cfg.locale)
@@ -1503,6 +1785,12 @@ save_config(void)
             colour c = *(colour *)val_p;
             fprintf(file, "%u,%u,%u", red(c), green(c), blue(c));
           }
+          when OPT_COLOUR_PAIR: {
+            colour_pair p = *(colour_pair *)val_p;
+            fprintf(file, "%u,%u,%u", red(p.fg), green(p.fg), blue(p.fg));
+            if (p.fg != p.bg)
+              fprintf(file, ";%u,%u,%u", red(p.bg), green(p.bg), blue(p.bg));
+          }
           otherwise: {
             int val = *(char *)val_p;
             opt_val *o = opt_vals[type];
@@ -1527,6 +1815,7 @@ save_config(void)
 
 
 static control *cols_box, *rows_box, *locale_box, *charset_box;
+static control *transparency_valbox, *transparency_selbox;
 static control *font_sample, *font_list, *font_weights;
 
 void
@@ -1546,8 +1835,12 @@ apply_config(bool save)
           changed = strcmp(*(string *)val_p, *(string *)new_val_p);
         when OPT_WSTRING:
           changed = wcscmp(*(wstring *)val_p, *(wstring *)new_val_p);
-        when OPT_INT or OPT_COLOUR:
+        when OPT_INT:
           changed = (*(int *)val_p != *(int *)new_val_p);
+        when OPT_COLOUR:
+          changed = (*(colour *)val_p != *(colour *)new_val_p);
+        when OPT_COLOUR_PAIR:
+          changed = memcmp(val_p, new_val_p, sizeof(colour_pair));
         otherwise:
           changed = (*(char *)val_p != *(char *)new_val_p);
       }
@@ -1562,6 +1855,7 @@ apply_config(bool save)
      )
     load_messages(&new_cfg);
   win_reconfig();  // copy_config(&cfg, &new_cfg);
+  fix_config();
   if (save)
     save_config();
   bool had_theme = !!*cfg.theme_file;
@@ -1569,13 +1863,17 @@ apply_config(bool save)
   if (*cfg.colour_scheme) {
     load_scheme(cfg.colour_scheme);
     win_reset_colours();
+    win_invalidate_all(false);
   }
   else if (*cfg.theme_file) {
     load_theme(cfg.theme_file);
     win_reset_colours();
+    win_invalidate_all(false);
   }
-  else if (had_theme)
+  else if (had_theme) {
     win_reset_colours();
+    win_invalidate_all(false);
+  }
   //printf("apply_config %d bd %d\n", save, cfg.bold_as_font);
 }
 
@@ -1754,35 +2052,42 @@ about_handler(control *unused(ctrl), int event)
 }
 
 
-static void
-add_file_resources(control *ctrl, wstring pattern, bool dirs)
-{
-  wstring suf = wcsrchr(pattern, L'.');
-  int sufl = suf ? wcslen(suf) : 0;
+#if CYGWIN_VERSION_API_MINOR < 74
+#define use_findfile
+#endif
 
+static void
+do_file_resources(control *ctrl, wstring pattern, bool list_dirs, str_fn fnh)
+{
   init_config_dirs();
-  WIN32_FIND_DATAW ffd;
-  HANDLE hFind = NULL;
-  int ok = false;
+  //printf("add_file_resources <%ls> dirs %d\n", pattern, list_dirs);
+
   for (int i = last_config_dir; i >= 0; i--) {
+#ifdef use_findfile
+    wstring suf = wcsrchr(pattern, L'.');
+    int sufl = suf ? wcslen(suf) : 0;
+
     wchar * rcpat = path_posix_to_win_w(config_dirs[i]);
     int len = wcslen(rcpat);
     rcpat = renewn(rcpat, len + wcslen(pattern) + 2);
     rcpat[len++] = L'/';
     wcscpy(&rcpat[len], pattern);
+    //printf("<%s> -> <%ls>\n", config_dirs[i], rcpat);
 
-    hFind = FindFirstFileW(rcpat, &ffd);
-    ok = hFind != INVALID_HANDLE_VALUE;
+    WIN32_FIND_DATAW ffd;
+    HANDLE hFind = FindFirstFileW(rcpat, &ffd);
+    int ok = hFind != INVALID_HANDLE_VALUE;
     free(rcpat);
     if (ok) {
       while (ok) {
-        if (dirs && (ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
+        if (list_dirs && (ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
           if (ffd.cFileName[0] != '.' && !!wcscmp(ffd.cFileName, W("common")))
             // exclude the [0-7] links left over by the `getemojis` script
             if (wcslen(ffd.cFileName) > 1)
-              dlg_listbox_add_w(ctrl, ffd.cFileName);
+              if (ctrl)
+                dlg_listbox_add_w(ctrl, ffd.cFileName);
         }
-        else if (!dirs) {
+        else if (!list_dirs) {
           //LARGE_INTEGER filesize = {.LowPart = ffd.nFileSizeLow, .HighPart = ffd.nFileSizeHigh};
           //long s = filesize.QuadPart;
 
@@ -1790,7 +2095,10 @@ add_file_resources(control *ctrl, wstring pattern, bool dirs)
           int len = wcslen(ffd.cFileName);
           if (ffd.cFileName[0] != '.' && ffd.cFileName[len - 1] != '~') {
             ffd.cFileName[len - sufl] = 0;
-            dlg_listbox_add_w(ctrl, ffd.cFileName);
+            if (ctrl)
+              dlg_listbox_add_w(ctrl, ffd.cFileName);
+            else
+              (void)fnh;  // CYGWIN_VERSION_API_MINOR < 74
           }
         }
         ok = FindNextFileW(hFind, &ffd);
@@ -1803,7 +2111,67 @@ add_file_resources(control *ctrl, wstring pattern, bool dirs)
       // empty valid dir
       //break;
     }
+#else
+#include <dirent.h>
+    char * pat = cs__wcstombs(pattern);
+    char * patsuf = strrchr(pat, '.');
+    int patsuflen = patsuf ? strlen(patsuf) : 0;
+    char * patbase = strrchr(pat, '/');
+    if (patbase)
+      *patbase = 0;
+    char * rcpat = asform("%s/%s", config_dirs[i], pat);
+    //printf("<%s> -> <%s>\n", config_dirs[i], rcpat);
+
+    DIR * dir = opendir(rcpat);
+    if (dir) {
+      struct dirent * direntry;
+      while ((direntry = readdir (dir)) != 0) {
+        if (patsuf && !strstr(direntry->d_name, patsuf))
+          continue;
+
+        if (list_dirs && direntry->d_type == DT_DIR) {
+          if (direntry->d_name[0] != '.' && !!strcmp(direntry->d_name, "common"))
+            // exclude the [0-7] links left over by the `getemojis` script
+            if (strlen(direntry->d_name) > 1) {
+              if (ctrl)
+                dlg_listbox_add(ctrl, direntry->d_name);
+            }
+        }
+        else if (!list_dirs) {
+          // strip suffix
+          int len = strlen(direntry->d_name);
+          if (direntry->d_name[0] != '.' && direntry->d_name[len - 1] != '~') {
+            direntry->d_name[len - patsuflen] = 0;
+            if (ctrl)
+              dlg_listbox_add(ctrl, direntry->d_name);
+            else {
+              char * fn = asform("%s/%s", rcpat, direntry->d_name);
+              wchar * wfn = path_posix_to_win_w(fn);
+              fnh(wfn);
+              free(wfn);
+              free(fn);
+            }
+          }
+        }
+      }
+      closedir(dir);
+    }
+    free(rcpat);
+    free(pat);
+#endif
   }
+}
+
+static void
+add_file_resources(control *ctrl, wstring pattern, bool list_dirs)
+{
+  do_file_resources(ctrl, pattern, list_dirs, 0);
+}
+
+void
+handle_file_resources(wstring pattern, str_fn fn_handler)
+{
+  do_file_resources(0, pattern, false, fn_handler);
 }
 
 
@@ -1931,10 +2299,13 @@ charset_handler(control *ctrl, int event)
 static void
 lang_handler(control *ctrl, int event)
 {
-  //__ UI language
+  //__ UI localization disabled
   const wstring NONE = _W("– None –");
+  //__ UI localization: use Windows desktop setting
   const wstring WINLOC = _W("@ Windows language @");
+  //__ UI localization: use environment variable setting (LANGUAGE, LC_*)
   const wstring LOCENV = _W("* Locale environm. *");
+  //__ UI localization: use mintty configuration setting (Text - Locale)
   const wstring LOCALE = _W("= cfg. Text Locale =");
   switch (event) {
     when EVENT_REFRESH:
@@ -1977,12 +2348,35 @@ term_handler(control *ctrl, int event)
     bool terminfo_exists_in(char * dir, char * sub, char * ti) {
       char * terminfo = asform("%s%s/%x/%s", dir, sub ?: "", *ti, ti);
       bool exists = !access(terminfo, R_OK);
+      //printf("exists %d <%s>\n", exists, terminfo);
       free(terminfo);
+      if (support_wsl && !exists) {
+        terminfo = asform("%s%s/%c/%s", dir, sub ?: "", *ti, ti);
+        exists = !access(terminfo, R_OK);
+        //printf("exists %d <%s>\n", exists, terminfo);
+        free(terminfo);
+      }
       return exists;
     }
-    return terminfo_exists_in("/usr/share/terminfo", 0, ti)
-        || terminfo_exists_in(home, "/.terminfo", ti)
-         ;
+    if (support_wsl) {
+      char * wslroot;
+      if (wslname) {
+        char * wslnamec = cs__wcstombs(wslname);
+        wslroot = asform("//wsl$/%s", wslnamec);
+        free(wslnamec);
+      }
+      else if (*wsl_basepath)
+        wslroot = path_win_w_to_posix(wsl_basepath);
+      else
+        wslroot = strdup("");
+      bool ex = terminfo_exists_in(wslroot, "/usr/share/terminfo", ti);
+      free(wslroot);
+      return ex;
+    }
+    else
+      return terminfo_exists_in("/usr/share/terminfo", 0, ti)
+          || terminfo_exists_in(home, "/.terminfo", ti)
+           ;
   }
   switch (event) {
     when EVENT_REFRESH:
@@ -2068,7 +2462,7 @@ bellfile_handler(control *ctrl, int event)
 {
   const wstring NONE = _W("◇ None (system sound) ◇");  // ♢◇
   const wstring CFG_NONE = W("");
-  wstring bell_file = new_cfg.bell_file;
+  wstring bell_file = new_cfg.bell_file[6];
   if (event == EVENT_REFRESH) {
     dlg_listbox_clear(ctrl);
     dlg_listbox_add_w(ctrl, NONE);
@@ -2083,12 +2477,12 @@ bellfile_handler(control *ctrl, int event)
       dlg_editbox_get_w(ctrl, &bell_file);
 
     // add std dir prefix?
-    new_cfg.bell_file = bell_file;
+    new_cfg.bell_file[6] = bell_file;
     win_bell(&new_cfg);
   }
   else if (event == EVENT_DROP) {
     dlg_editbox_set_w(ctrl, dragndrop);
-    wstrset(&new_cfg.bell_file, dragndrop);
+    wstrset(&new_cfg.bell_file[6], dragndrop);
     win_bell(&new_cfg);
   }
 }
@@ -2106,79 +2500,313 @@ enable_widget(control * ctrl, bool enable)
   EnableWindow(wid, enable);
 }
 
+#define dont_debug_scheme 2
+
+/*
+   Load scheme from URL or file, convert .itermcolors and .json formats
+ */
 static char *
 download_scheme(char * url)
 {
+#ifdef debug_scheme
+  printf("download_scheme <%s>\n", url);
+#endif
   if (strchr(url, '\''))
     return null;  // Insecure link
 
-#ifdef use_curl
-  static string cmdpat = "curl '%s' -o - 2> /dev/null";
-  char * cmd = newn(char, strlen(cmdpat) -1 + strlen(url));
-  sprintf(cmd, cmdpat, url);
-  FILE * sf = popen(cmd, "r");
-  if (!sf)
-    return null;
-#else
-  HRESULT (WINAPI * pURLDownloadToFile)(void *, LPCSTR, LPCSTR, DWORD, void *) = 0;
-  pURLDownloadToFile = load_library_func("urlmon.dll", "URLDownloadToFileA");
-  bool ok = false;
-  char * sfn = asform("%s/.mintty-scheme.%d", tmpdir(), getpid());
-  if (pURLDownloadToFile) {
-#ifdef __CYGWIN__
-    /* Need to sync the Windows environment */
-    cygwin_internal(CW_SYNC_WINENV);
-#endif
-    char * wfn = path_posix_to_win_a(sfn);
-    ok = S_OK == pURLDownloadToFile(NULL, url, wfn, 0, NULL);
-    free(wfn);
+  FILE * sf = 0;
+  char * sfn = 0;
+  if (url[1] == ':') {
+    sf = fopen(url, "r");
   }
-  if (!ok)
-    return null;
-  FILE * sf = fopen(sfn, "r");
+  else {
+#ifdef use_curl
+    static string cmdpat = "curl '%s' -o - 2> /dev/null";
+    char * cmd = newn(char, strlen(cmdpat) -1 + strlen(url));
+    sprintf(cmd, cmdpat, url);
+    sf = popen(cmd, "r");
+#else
+    HRESULT (WINAPI * pURLDownloadToFile)(void *, LPCSTR, LPCSTR, DWORD, void *) = 0;
+    pURLDownloadToFile = load_library_func("urlmon.dll", "URLDownloadToFileA");
+    bool ok = false;
+    sfn = asform("%s/.mintty-scheme.%d", tmpdir(), getpid());
+    if (pURLDownloadToFile) {
+# ifdef __CYGWIN__
+      /* Need to sync the Windows environment */
+      cygwin_internal(CW_SYNC_WINENV);
+# endif
+      char * wfn = path_posix_to_win_a(sfn);
+      ok = S_OK == pURLDownloadToFile(NULL, url, wfn, 0, NULL);
+      free(wfn);
+    }
+    if (!ok)
+      free(sfn);
+    sf = fopen(sfn, "r");
+    //printf("URL <%s> file <%s> OK %d\n", url, sfn, !!sf);
+    if (!sf) {
+      remove(sfn);
+      free(sfn);
+    }
+#endif
+  }
   if (!sf)
     return null;
+#ifdef debug_scheme
+  printf("URL <%s> OK %d\n", url, !!sf);
 #endif
 
+  // colour scheme string
   char * sch = null;
-  while (fgets(linebuf, sizeof(linebuf) - 1, sf)) {
-    char * eq = linebuf;
-    while ((eq = strchr(++eq, '='))) {
-      int dum;
-      if (sscanf(eq, "= %d , %d , %d", &dum, &dum, &dum) == 3) {
-        char *cp = eq;
-        while (strchr("=0123456789, ", *cp))
-          cp++;
-        *cp++ = ';';
-        *cp = '\0';
-        cp = eq;
-        if (cp != linebuf)
-          cp--;
-        while (strchr("BCFGMRWYacdeghiklnorstuwy ", *cp)) {
-          eq = cp;
-          if (cp == linebuf)
-            break;
-          else
-            cp--;
-        }
-        while (*eq == ' ')
-          eq++;
-        if (*eq != '=') {
-          // squeeze white space
-          char * src = eq;
-          char * dst = eq;
-          while (*src) {
-            if (*src != ' ' && *src != '\t')
-              *dst++ = *src;
-            src++;
-          }
-          *dst = '\0';
+  // colour modifications, common for .itermcolors and .json (unused there)
+  colour ansi_colours[16] = 
+    {(colour)-1, (colour)-1, (colour)-1, (colour)-1, 
+     (colour)-1, (colour)-1, (colour)-1, (colour)-1, 
+     (colour)-1, (colour)-1, (colour)-1, (colour)-1, 
+     (colour)-1, (colour)-1, (colour)-1, (colour)-1};
+  colour fg_colour = (colour)-1, bg_colour = (colour)-1;
+  colour bold_colour = (colour)-1, blink_colour = (colour)-1;
+  colour cursor_colour = (colour)-1, sel_fg_colour = (colour)-1, sel_bg_colour = (colour)-1;
+  colour underl_colour = (colour)-1, hover_colour = (colour)-1;
+  // construct a ColourScheme string
+  void schapp(char * opt, colour c)
+  {
+#if defined(debug_scheme) && debug_scheme > 1
+    printf("schapp %s %06X\n", opt, c);
+#endif
+    if (c != (colour)-1) {
+      char colval[strlen(opt) + 14];
+      sprintf(colval, "%s=%u,%u,%u;", opt, red(c), green(c), blue(c));
+      int len = sch ? strlen(sch) : 0;
+      sch = renewn(sch, len + strlen(colval) + 1);
+      strcpy(&sch[len], colval);
+    }
+  }
+  // collect all modified colours in a colour scheme string
+  void schappall()
+  {
+    schapp("ForegroundColour", fg_colour);
+    schapp("BackgroundColour", bg_colour);
+    schapp("BoldColour", bold_colour);
+    schapp("BlinkColour", blink_colour);
+    schapp("CursorColour", cursor_colour);
+    schapp("UnderlineColour", underl_colour);
+    schapp("HoverColour", hover_colour);
+    schapp("HighlightBackgroundColour", sel_bg_colour);
+    schapp("HighlightForegroundColour", sel_fg_colour);
+    schapp("Black", ansi_colours[BLACK_I]);
+    schapp("Red", ansi_colours[RED_I]);
+    schapp("Green", ansi_colours[GREEN_I]);
+    schapp("Yellow", ansi_colours[YELLOW_I]);
+    schapp("Blue", ansi_colours[BLUE_I]);
+    schapp("Magenta", ansi_colours[MAGENTA_I]);
+    schapp("Cyan", ansi_colours[CYAN_I]);
+    schapp("White", ansi_colours[WHITE_I]);
+    schapp("BoldBlack", ansi_colours[BOLD_BLACK_I]);
+    schapp("BoldRed", ansi_colours[BOLD_RED_I]);
+    schapp("BoldGreen", ansi_colours[BOLD_GREEN_I]);
+    schapp("BoldYellow", ansi_colours[BOLD_YELLOW_I]);
+    schapp("BoldBlue", ansi_colours[BOLD_BLUE_I]);
+    schapp("BoldMagenta", ansi_colours[BOLD_MAGENTA_I]);
+    schapp("BoldCyan", ansi_colours[BOLD_CYAN_I]);
+    schapp("BoldWhite", ansi_colours[BOLD_WHITE_I]);
+  }
 
-          int len = sch ? strlen(sch) : 0;
-          sch = renewn(sch, len + strlen(eq) + 1);
-          strcpy(&sch[len], eq);
+  char * urlsuf = strrchr(url, '.');
+  if (urlsuf && !strcmp(urlsuf, ".itermcolors")) {
+    int level = 0;
+    colour * key = 0;
+    int component = -1;
+    while (fgets(linebuf, sizeof(linebuf) - 1, sf)) {
+      if (strstr(linebuf, "<dict>"))
+        level++;
+      else if (strstr(linebuf, "</dict>"))
+        level--;
+      else {
+        char * entity = strstr(linebuf, "<key>");
+        if (entity) {
+          entity += 5;
+          char * fini = strchr(entity, '<');
+          if (fini)
+            *fini = 0;
+          if (level == 2) {
+            if (0 == strcmp(entity, "Blue Component"))
+              component = 2;
+            else if (0 == strcmp(entity, "Green Component"))
+              component = 1;
+            else if (0 == strcmp(entity, "Red Component"))
+              component = 0;
+            else if (0 == strcmp(entity, "Alpha Component"))
+              ;
+            else if (0 == strcmp(entity, "Color Space"))
+              ;
+            else {
+              component = -1;
+            }
+          }
+          else if (level == 1) {
+#if defined(debug_scheme) && debug_scheme > 1
+            printf("iterm entity <%s>\n", entity);
+#endif
+            int coli;
+            if (0 == strcmp(entity, "Foreground Color"))
+              key = &fg_colour;
+            else if (0 == strcmp(entity, "Bold Color"))
+              key = &bold_colour;
+            else if (0 == strcmp(entity, "Background Color"))
+              key = &bg_colour;
+            else if (0 == strcmp(entity, "Cursor Color"))
+              key = &cursor_colour;
+            //else if (0 == strcmp(entity, "Cursor Text Color"))
+            else if (0 == strcmp(entity, "Selected Text Color"))
+              key = &sel_fg_colour;
+            else if (0 == strcmp(entity, "Selection Color"))
+              key = &sel_bg_colour;
+            else if (0 == strcmp(entity, "Underline Color"))
+              key = &underl_colour;
+            else if (0 == strcmp(entity, "Link Color"))
+              key = &hover_colour;  // ?
+            //else if (0 == strcmp(entity, "Cursor Guide Color"))
+            //else if (0 == strcmp(entity, "Tab Color"))
+            //else if (0 == strcmp(entity, "Badge Color"))
+            else if (sscanf(entity, "Ansi %d Color", &coli) == 1 && coli >= 0 && coli < 16) {
+              key = &ansi_colours[coli];
+            }
+            else
+              key = 0;
+          }
         }
-        break;
+        else if (level == 2 && key) {
+#if defined(debug_scheme) && debug_scheme > 1
+          printf("iterm value <%s>\n", linebuf);
+#endif
+          entity = strstr(linebuf, "<real>");
+          double val;
+          if (entity && sscanf(entity, "<real>%lf<", &val) == 1 && val >= 0.0 && val <= 1.0) {
+            int ival = val * 255.0 + 0.5;
+            switch (component) {
+              when 0:  // red
+                *key = (*key & 0xFFFF00) | ival;
+              when 1:  // green
+                *key = (*key & 0xFF00FF) | ival << 8;
+              when 2:  // blue
+                *key = (*key & 0x00FFFF) | ival << 16;
+            }
+          }
+        }
+      }
+    }
+    // collect modified colours into colour scheme string
+    schappall();
+  }
+  else if (urlsuf && !strcmp(urlsuf, ".json")) {
+    // support .json theme files in either vscode or Windows terminal format
+    while (fgets(linebuf, sizeof(linebuf) - 1, sf)) {
+      char * scan = strchr(linebuf, '"');
+      char * key;
+      char * val;
+      if (scan) {
+        scan++;
+        // strip vscode prefixes
+        if (strncmp(scan, "terminal.", 9) == 0) {
+          scan += 9;
+          if (strncmp(scan, "ansi", 4) == 0)
+            scan += 4;
+        }
+        key = scan;
+        scan = strchr(scan, '"');
+      }
+      if (scan) {
+        *scan = 0;
+        scan++;
+        scan = strchr(scan, '"');
+        if (scan) {
+          scan++;
+          val = scan;
+          scan = strchr(scan, '"');
+          if (scan) {
+            *scan = 0;
+          }
+        }
+      }
+      if (scan) {
+#if defined(debug_scheme) && debug_scheme > 1
+        printf("<%s> <%s> (%s)\n", key, val, linebuf);
+#endif
+        // transform .json colour names
+        void schapp(char * jname, char * name)
+        {
+          if (strcasecmp(key, jname) == 0) {
+#if defined(debug_scheme) && debug_scheme > 1
+            printf("%s=%s\n", name, val);
+#endif
+            int len = sch ? strlen(sch) : 0;
+            sch = renewn(sch, len + strlen(name) + strlen(val) + 3);
+            sprintf(&sch[len], "%s=%s;", name, val);
+          }
+        }
+        schapp("black", "Black");
+        schapp("red", "Red");
+        schapp("green", "Green");
+        schapp("yellow", "Yellow");
+        schapp("blue", "Blue");
+        schapp("magenta", "Magenta");
+        schapp("purple", "Magenta");
+        schapp("cyan", "Cyan");
+        schapp("white", "White");
+        schapp("brightblack", "BoldBlack");
+        schapp("brightred", "BoldRed");
+        schapp("brightgreen", "BoldGreen");
+        schapp("brightyellow", "BoldYellow");
+        schapp("brightblue", "BoldBlue");
+        schapp("brightmagenta", "BoldMagenta");
+        schapp("brightpurple", "BoldMagenta");
+        schapp("brightcyan", "BoldCyan");
+        schapp("brightwhite", "BoldWhite");
+        schapp("foreground", "ForegroundColour");
+        schapp("background", "BackgroundColour");
+      }
+    }
+  }
+  else {
+    while (fgets(linebuf, sizeof(linebuf) - 1, sf)) {
+      char * eq = linebuf;
+      while ((eq = strchr(++eq, '='))) {
+        int dum;
+        if (sscanf(eq, "= %d , %d , %d", &dum, &dum, &dum) == 3) {
+          char *cp = eq;
+          while (strchr("=0123456789, ", *cp))
+            cp++;
+          *cp++ = ';';
+          *cp = '\0';
+          cp = eq;
+          if (cp != linebuf)
+            cp--;
+          while (strchr("BCFGMRWYacdeghiklnorstuwy ", *cp)) {
+            eq = cp;
+            if (cp == linebuf)
+              break;
+            else
+              cp--;
+          }
+          while (*eq == ' ')
+            eq++;
+          if (*eq != '=') {
+            // squeeze white space
+            char * src = eq;
+            char * dst = eq;
+            while (*src) {
+              if (*src != ' ' && *src != '\t')
+                *dst++ = *src;
+              src++;
+            }
+            *dst = '\0';
+
+            int len = sch ? strlen(sch) : 0;
+            sch = renewn(sch, len + strlen(eq) + 1);
+            strcpy(&sch[len], eq);
+          }
+          break;
+        }
       }
     }
   }
@@ -2186,10 +2814,15 @@ download_scheme(char * url)
   pclose(sf);
 #else
   fclose(sf);
-  remove(sfn);
-  free(sfn);
+  if (sfn) {
+    remove(sfn);
+    free(sfn);
+  }
 #endif
 
+#if defined(debug_scheme) && debug_scheme > 1
+  printf("download_scheme -> <%s>\n", sch);
+#endif
   return sch;
 }
 
@@ -2238,6 +2871,9 @@ theme_handler(control *ctrl, int event)
                  );
   }
   else if (event == EVENT_DROP) {
+#ifdef debug_scheme
+    printf("EVENT_DROP <%ls>\n", dragndrop);
+#endif
     if (wcsncmp(W("data:text/plain,"), dragndrop, 16) == 0) {
       // indicate availability of downloaded scheme to be stored
       dlg_editbox_set_w(ctrl, DOWNLOADED);
@@ -2267,14 +2903,27 @@ theme_handler(control *ctrl, int event)
           || wcsncmp(W("https:"), dragndrop, 6) == 0
           || wcsncmp(W("ftp:"), dragndrop, 4) == 0
           || wcsncmp(W("ftps:"), dragndrop, 5) == 0
-            ) {
+          || wcsncmp(W("file:"), dragndrop, 5) == 0
+#if CYGWIN_VERSION_API_MINOR >= 74
+          || (dragndrop[1] == ':' &&
+              (wcsstr(dragndrop, W(".itermcolors")) ||
+               wcsstr(dragndrop, W(".json"))
+              )
+             )
+#endif
+            )
+    {
       char * url = cs__wcstoutf(dragndrop);
       char * sch = download_scheme(url);
       if (sch) {
         wchar * urlpoi = wcschr(dragndrop, '?');
         if (urlpoi)
           *urlpoi = 0;
+        // find URL basename
         urlpoi = wcsrchr(dragndrop, '/');
+        // or file basename
+        if (!urlpoi)
+          urlpoi = wcsrchr(dragndrop, '\\');
         if (urlpoi) {
           // set theme name proposal to url base name
           urlpoi++;
@@ -2298,6 +2947,14 @@ theme_handler(control *ctrl, int event)
       wstrset(&new_cfg.theme_file, dragndrop);
       enable_widget(store_button, false);
     }
+  }
+  // apply changed theme immediately
+  if (strcmp(new_cfg.colour_scheme, cfg.colour_scheme) || wcscmp(new_cfg.theme_file, cfg.theme_file))
+  {
+#ifdef debug_theme
+    printf("theme_handler: apply\n");
+#endif
+    apply_config(false);
   }
 }
 
@@ -2786,6 +3443,40 @@ emoji_placement_handler(control *ctrl, int event)
   opt_handler(ctrl, event, &new_cfg.emoji_placement, opt_vals[OPT_EMOJI_PLACEMENT]);
 }
 
+static void
+compose_key_handler(control *ctrl, int event)
+{
+  opt_handler(ctrl, event, &new_cfg.compose_key, opt_vals[OPT_COMPOSE_KEY]);
+}
+
+static void
+smoothing_handler(control *ctrl, int event)
+{
+  opt_handler(ctrl, event, &new_cfg.font_smoothing, opt_vals[OPT_FONTSMOOTH]);
+}
+
+static opt_val * const showbold_vals =
+(opt_val[]) {
+    {__("as font"), 1},
+    {__("as colour"), 2},
+    {__("as font & as colour"), 3},
+    {__("xterm"), 0},
+    {0, 0}
+};
+
+static char showbold;
+
+static void
+showbold_handler(control *ctrl, int event)
+{
+  showbold = new_cfg.bold_as_font | ((char)new_cfg.bold_as_colour) << 1;
+  //printf("bold as font %d as colour %d event %d\n", new_cfg.bold_as_font, new_cfg.bold_as_colour, event);
+  opt_handler(ctrl, event, &showbold, showbold_vals);
+  new_cfg.bold_as_font = showbold & 1;
+  new_cfg.bold_as_colour = showbold & 2;
+  //printf("bold as font %d as colour %d\n", new_cfg.bold_as_font, new_cfg.bold_as_colour);
+}
+
 static bool bold_like_xterm;
 
 static void
@@ -2833,6 +3524,73 @@ bold_handler(control *ctrl, int event)
       checkbox_option_set(ctrl_bold_like_xterm, true);
     else
       checkbox_option_set(ctrl_bold_like_xterm, false);
+  }
+}
+
+void
+transparency_valhandler(control *ctrl, int event)
+{
+  if (event == EVENT_VALCHANGE) {
+    string val = 0;
+    dlg_editbox_get(ctrl, &val);
+    new_cfg.transparency = atoi(val);
+    delete(val);
+  }
+  else if (event == EVENT_UNFOCUS) {
+    string val = 0;
+    dlg_editbox_get(ctrl, &val);
+    int transp = atoi(val);
+    delete(val);
+    // adjust value if out of range
+    if (transp < 4)
+      transp = 0;
+    else if (transp > 254)
+      transp = 254;
+    new_cfg.transparency = transp;
+    // refresh box in case we changed it
+    char buf[16];
+    sprintf(buf, "%i", transp);
+    dlg_editbox_set(ctrl, buf);
+    // update radio buttons
+    dlg_stdradiobutton_handler(transparency_selbox, EVENT_REFRESH);
+  }
+  else if (event == EVENT_REFRESH) {
+    char buf[16];
+    sprintf(buf, "%i", (uchar)new_cfg.transparency);
+    dlg_editbox_set(ctrl, buf);
+  }
+}
+
+void
+transparency_selhandler(control *ctrl, int event)
+{
+  dlg_stdradiobutton_handler(ctrl, event);
+  if (event == EVENT_VALCHANGE) {
+    transparency_valhandler(transparency_valbox, EVENT_REFRESH);
+  }
+}
+
+static void
+transparency_slider(control *ctrl, int event)
+{
+  string dir = ctrl->context;
+  mod_keys mods = get_mods();
+  if (event == EVENT_ACTION) {
+    int step = *dir == '-' ? -4 : 4;
+    if (mods & MDK_SHIFT)
+      step *= 4;
+    else if (mods & MDK_CTRL)
+      step /= 4;
+    int transp = (uchar)new_cfg.transparency;
+    transp += step;
+    if (transp < 4)
+      transp = step > 0 ? 4 : 0;
+    else if (transp > 254)
+      transp = 254;
+    new_cfg.transparency = transp;
+    transparency_valhandler(transparency_valbox, EVENT_REFRESH);
+    // call the lower-level function for update, to avoid recursion
+    dlg_stdradiobutton_handler(transparency_selbox, EVENT_REFRESH);
   }
 }
 
@@ -2909,9 +3667,9 @@ setup_config_box(controlbox * b)
   //__ Options - Looks: section title
                       _("Transparency"));
   bool with_glass = win_is_glass_available();
-  ctrl_radiobuttons(
+  transparency_selbox = ctrl_radiobuttons(
     s, null, 4 + with_glass,
-    dlg_stdradiobutton_handler, &new_cfg.transparency,
+    transparency_selhandler, &new_cfg.transparency,
     //__ Options - Looks: transparency
     _("&Off"), TR_OFF,
     //__ Options - Looks: transparency
@@ -2939,23 +3697,45 @@ setup_config_box(controlbox * b)
     dlg_stdcheckbox_handler, &new_cfg.blurred
   )->column = 1;
 #else
+#ifdef no_transparency_pseudo_slider
   ctrl_checkbox(
     //__ Options - Looks: transparency
     s, _("Opa&que when focused"),
     dlg_stdcheckbox_handler, &new_cfg.opaque_when_focused
   );
+#else
+  ctrl_columns(s, 4, 64, 10, 16, 10);
+  ctrl_checkbox(
+    //__ Options - Looks: transparency
+    s, _("Opa&que when focused"),
+    dlg_stdcheckbox_handler, &new_cfg.opaque_when_focused
+  )->column = 0;
+  (transparency_valbox = ctrl_editbox(
+    s, 0, 100, transparency_valhandler, 0 //&new_cfg.transparency
+  ))->column = 2;
+  ctrl_pushbutton(
+    s, _("◄"), transparency_slider, "-"
+  )->column = 1;
+  ctrl_pushbutton(
+    s, _("►"), transparency_slider, "+"
+  )->column = 3;
+#endif
 #endif
 
   s = ctrl_new_set(b, _("Looks"), null, 
   //__ Options - Looks: section title
                       _("Cursor"));
   ctrl_radiobuttons(
-    s, null, 4 + with_glass,
+    s, null, 4,
     dlg_stdradiobutton_handler, &new_cfg.cursor_type,
     //__ Options - Looks: cursor type
     _("Li&ne"), CUR_LINE,
     //__ Options - Looks: cursor type
     _("Bloc&k"), CUR_BLOCK,
+#ifdef cursor_type_box
+    //__ Options - Looks: cursor type
+    _("Bo&x"), CUR_BOX,
+#endif
     //__ Options - Looks: cursor type
     _("&Underscore"), CUR_UNDERSCORE,
     null
@@ -3008,6 +3788,7 @@ setup_config_box(controlbox * b)
       )->column = 1;
     }
     else {
+     if (0 != strstr(cfg.old_options, "blinking")) {
       s = ctrl_new_set(b, _("Text"), null, 
                        //__ Options - Text:
                        _("Show bold"));
@@ -3027,6 +3808,17 @@ setup_config_box(controlbox * b)
         s, _("xterm"),
         bold_handler, &bold_like_xterm
       )->column = 2;
+     }
+     else {
+      ctrl_combobox(
+        //__ Options - Text:
+        s, _("Show bold"),
+        50, showbold_handler, 0);
+      ctrl_checkbox(
+        //__ Options - Text:
+        s, _("&Allow blinking"),
+        dlg_stdcheckbox_handler, &new_cfg.allow_blinking);
+     }
     }
   }
   else {
@@ -3071,6 +3863,7 @@ setup_config_box(controlbox * b)
       )->column = 0;
     }
     else {
+     if (0 != strstr(cfg.old_options, "blinking")) {
       ctrl_radiobuttons(
         //__ Options - Text:
         s, _("Font smoothing"), 4,
@@ -3105,6 +3898,21 @@ setup_config_box(controlbox * b)
         s, _("xterm"),
         bold_handler, &bold_like_xterm
       )->column = 2;
+     }
+     else {
+      ctrl_combobox(
+        s, _("Font smoothing"), 50, smoothing_handler, 0);
+
+      s = ctrl_new_set(b, _("Text"), null, null);
+      ctrl_combobox(
+        //__ Options - Text:
+        s, _("Show bold"),
+        50, showbold_handler, 0);
+      ctrl_checkbox(
+        //__ Options - Text:
+        s, _("&Allow blinking"),
+        dlg_stdcheckbox_handler, &new_cfg.allow_blinking);
+     }
     }
   }
 
@@ -3167,6 +3975,11 @@ setup_config_box(controlbox * b)
     s, _("Ctrl+LeftAlt is Alt&Gr"),
     dlg_stdcheckbox_handler, &new_cfg.ctrl_alt_is_altgr
   );
+  ctrl_checkbox(
+    //__ Options - Keys:
+    s, _("AltGr is also Alt"),
+    dlg_stdcheckbox_handler, &new_cfg.altgr_is_alt
+  );
 
   s = ctrl_new_set(b, _("Keys"), null, 
   //__ Options - Keys: section title
@@ -3202,22 +4015,29 @@ setup_config_box(controlbox * b)
     dlg_stdcheckbox_handler, &new_cfg.ctrl_shift_shortcuts
   );
 
-  s = ctrl_new_set(b, _("Keys"), null, 
-  //__ Options - Keys: section title
-                      _("Compose key"));
-  ctrl_radiobuttons(
-    s, null, 4,
-    dlg_stdradiobutton_handler, &new_cfg.compose_key,
-    //__ Options - Keys:
-    _("&Shift"), MDK_SHIFT,
-    //__ Options - Keys:
-    _("&Ctrl"), MDK_CTRL,
-    //__ Options - Keys:
-    _("&Alt"), MDK_ALT,
-    //__ Options - Keys:
-    _("&Off"), 0,
-    null
-  );
+  if (strstr(cfg.old_options, "composekey")) {
+    s = ctrl_new_set(b, _("Keys"), null, 
+    //__ Options - Keys: section title
+                        _("Compose key"));
+    ctrl_radiobuttons(
+      s, null, 4,
+      dlg_stdradiobutton_handler, &new_cfg.compose_key,
+      //__ Options - Keys:
+      _("&Shift"), MDK_SHIFT,
+      //__ Options - Keys:
+      _("&Ctrl"), MDK_CTRL,
+      //__ Options - Keys:
+      _("&Alt"), MDK_ALT,
+      //__ Options - Keys:
+      _("&Off"), 0,
+      null
+    );
+  }
+  else {
+    s = ctrl_new_set(b, _("Keys"), null, null);
+    ctrl_combobox(
+      s, _("Compose key"), 50, compose_key_handler, 0);
+  }
 
  /*
   * The Mouse panel.
@@ -3228,11 +4048,18 @@ setup_config_box(controlbox * b)
                       _("Mouse functions"), null);
   ctrl_columns(s, 2, 50, 50);
   if (strstr(cfg.old_options, "sel")) {
+//#define copy_as_html_checkbox
+//#define copy_as_html_right
 #ifdef copy_as_html_checkbox
     ctrl_checkbox(
       //__ Options - Mouse:
       s, _("Cop&y on select"),
       dlg_stdcheckbox_handler, &new_cfg.copy_on_select
+    )->column = 0;
+    ctrl_checkbox(
+      //__ Options - Mouse:
+      s, _("Copy with TABs"),
+      dlg_stdcheckbox_handler, &new_cfg.copy_tabs
     )->column = 0;
     ctrl_checkbox(
       //__ Options - Mouse:
@@ -3264,6 +4091,11 @@ setup_config_box(controlbox * b)
     )->column = 0;
     ctrl_checkbox(
       //__ Options - Mouse:
+      s, _("Copy with TABs"),
+      dlg_stdcheckbox_handler, &new_cfg.copy_tabs
+    )->column = 0;
+    ctrl_checkbox(
+      //__ Options - Mouse:
       s, _("Copy as &rich text"),
       dlg_stdcheckbox_handler, &new_cfg.copy_as_rtf
     )->column = 0;
@@ -3273,6 +4105,7 @@ setup_config_box(controlbox * b)
       s, _("Cop&y on select"),
       dlg_stdcheckbox_handler, &new_cfg.copy_on_select
     )->column = 0;
+    // no space for "Copy with TABs"
     ctrl_checkbox(
       //__ Options - Mouse:
       s, _("Copy as &rich text"),
@@ -3422,6 +4255,11 @@ setup_config_box(controlbox * b)
       s, _("Cop&y on select"),
       dlg_stdcheckbox_handler, &new_cfg.copy_on_select
     )->column = 0;
+    ctrl_checkbox(
+      //__ Options - Selection:
+      s, _("Copy with TABs"),
+      dlg_stdcheckbox_handler, &new_cfg.copy_tabs
+    )->column = 0;
     ctrl_columns(s, 1, 100);  // reset column stuff so we can rearrange them
     ctrl_columns(s, 2, 50, 50);
     ctrl_checkbox(
@@ -3475,8 +4313,8 @@ setup_config_box(controlbox * b)
     ctrl_columns(s, 2, 100, 0);
     // window-related
     ctrl_editbox(
-      //__ Options - Selection:
-      s, _("Show size while selecting (0..12)"), 24,
+      //__ Options - Selection: clock position of info popup for text size
+      s, _("Show size while selecting (0..12)"), 15,
       dlg_stdintbox_handler, &new_cfg.selection_show_size
     );
 #define dont_config_suspbuf
@@ -3498,7 +4336,7 @@ setup_config_box(controlbox * b)
                       _("Window properties"), 
   //__ Options - Window: section title
                       _("Default size"));
-  ctrl_columns(s, 5, 35, 3, 28, 4, 30);
+  ctrl_columns(s, 5, 35, 4, 28, 3, 30);
   (cols_box = ctrl_editbox(
     //__ Options - Window:
     s, _("Colu&mns"), 44, dlg_stdintbox_handler, &new_cfg.cols
@@ -3511,6 +4349,12 @@ setup_config_box(controlbox * b)
     //__ Options - Window:
     s, _("C&urrent size"), current_size_handler, 0
   )->column = 4;
+  ctrl_columns(s, 1, 100);
+  ctrl_checkbox(
+    //__ Options - Window:
+    s, _("Re&wrap on resize"),
+    dlg_stdcheckbox_handler, &new_cfg.rewrap_on_resize
+  );
 
   s = ctrl_new_set(b, _("Window"), null, null);
   ctrl_columns(s, 2, 66, 34);
@@ -3606,7 +4450,7 @@ setup_config_box(controlbox * b)
     s, _("&Type"), 100, term_handler, 0
   )->column = 0;
   ctrl_editbox(
-    //__ Options - Terminal:
+    //__ Options - Terminal: answerback string for ^E request
     s, _("&Answerback"), 100, dlg_stdstringbox_handler, &new_cfg.answerback
   )->column = 1;
 
@@ -3625,11 +4469,11 @@ setup_config_box(controlbox * b)
   ctrl_columns(s, 2, 100, 0);
   ctrl_combobox(
     //__ Options - Terminal: bell
-    s, _("&Wave"), 83, bellfile_handler, &new_cfg.bell_file
+    s, _("&Wave"), 83, bellfile_handler, &new_cfg.bell_file[6]
   )->column = 0;
   ctrl_columns(s, 1, 100);  // reset column stuff so we can rearrange them
   // balance column widths of the following 3 fields 
-  // to accomodate different length of localized labels
+  // to accommodate different length of localized labels
   int strwidth(string s0) {
     int len = 0;
     unsigned char * sp = (unsigned char *)s0;
@@ -3690,5 +4534,10 @@ setup_config_box(controlbox * b)
     //__ Options - Terminal:
     s, _("Prompt about running processes on &close"),
     dlg_stdcheckbox_handler, &new_cfg.confirm_exit
+  );
+  ctrl_checkbox(
+    //__ Options - Terminal:
+    s, _("Status Line"),
+    dlg_stdcheckbox_handler, &new_cfg.status_line
   );
 }

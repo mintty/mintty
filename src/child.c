@@ -1,5 +1,5 @@
 // child.c (part of mintty)
-// Copyright 2008-11 Andy Koppe, 2015-2017 Thomas Wolff
+// Copyright 2008-11 Andy Koppe, 2015-2022 Thomas Wolff
 // Licensed under the terms of the GNU General Public License v3 or later.
 
 #include "child.h"
@@ -8,6 +8,7 @@
 #include "charset.h"
 
 #include "winpriv.h"  /* win_prefix_title, win_update_now */
+#include "appinfo.h"  /* APPNAME, VERSION */
 
 #include <pwd.h>
 #include <fcntl.h>
@@ -39,16 +40,19 @@ int forkpty(int *, char *, struct termios *, struct winsize *);
 // http://www.tldp.org/LDP/abs/html/exitcodes.html
 #define mexit 126
 
-bool clone_size_token = true;
-
 string child_dir = null;
 
+bool logging = false;
 static pid_t pid;
 static bool killed;
 static int win_fd;
 static int pty_fd = -1;
 static int log_fd = -1;
-bool logging = false;
+#if CYGWIN_VERSION_API_MINOR >= 74
+static struct winsize prev_winsize = {0, 0, 0, 0};
+#else
+static struct winsize prev_winsize;
+#endif
 
 #if CYGWIN_VERSION_API_MINOR >= 66
 #include <langinfo.h>
@@ -216,11 +220,88 @@ child_update_charset(void)
 #endif
 }
 
+/*
+   Trim environment from variables set by launchers, other terminals, 
+   or other shells, in order to avoid confusing behaviour or invalid 
+   information (e.g. LINES, COLUMNS).
+ */
+static void
+trim_environment(void)
+{
+  void trimenv(string e) {
+    if (e[strlen(e) - 1] == '_') {
+#if CYGWIN_VERSION_API_MINOR >= 74
+      for (int ei = 0; environ[ei]; ei++) {
+        if (strncmp(e, environ[ei], strlen(e)) == 0) {
+          char * ee = strchr(environ[ei], '=');
+          if (ee) {
+            char * ev = strndup(environ[ei], ee - environ[ei]);
+            //printf("%s @%d - unsetenv %s: %s\n", e, ei, ev, environ[ei]);
+            unsetenv(ev);
+            free(ev);
+            // recheck current position after deletion
+            --ei;
+          }
+        }
+      }
+#endif
+    }
+    else
+      unsetenv(e);
+  }
+  // clear startup information from desktop launchers
+  trimenv("WINDOWID");
+  trimenv("GIO_LAUNCHED_");
+  trimenv("DESKTOP_STARTUP_ID");
+  // clear optional terminal configuration indications
+  trimenv("LINES");
+  trimenv("COLUMNS");
+  trimenv("TERMCAP");
+  trimenv("COLORFGBG");
+  trimenv("COLORTERM");
+  trimenv("DEFAULT_COLORS");
+  trimenv("WCWIDTH_CJK_LEGACY");
+  // clear identification from other terminals
+  trimenv("ITERM2_");
+  trimenv("MC_");
+  trimenv("PUTTY");
+  trimenv("RXVT_");
+  trimenv("URXVT_");
+  trimenv("VTE_");
+  trimenv("XTERM_");
+  trimenv("TERM_");
+  // clear indications from terminal multiplexers
+  trimenv("STY");
+  trimenv("WINDOW");
+  trimenv("TMUX");
+  trimenv("TMUX_PANE");
+  trimenv("BYOBU_");
+}
+
+static bool
+ispathprefix(string pref, string path)
+{
+  if (*pref == '/')
+    pref++;
+  if (*path == '/')
+    path++;
+  int len = strlen(pref);
+  if (0 == strncmp(pref, path, len)) {
+    path += len;
+    if (!*path || *path == '/')
+      return true;
+  }
+  return false;
+}
+
 void
 child_create(char *argv[], struct winsize *winp)
 {
   trace_dir(asform("child_create: %s", getcwd(malloc(MAX_PATH), MAX_PATH)));
-  string lang = cs_lang();
+
+  trim_environment();
+
+  prev_winsize = *winp;
 
   // xterm and urxvt ignore SIGHUP, so let's do the same.
   signal(SIGHUP, SIG_IGN);
@@ -228,6 +309,19 @@ child_create(char *argv[], struct winsize *winp)
   signal(SIGINT, sigexit);
   signal(SIGTERM, sigexit);
   signal(SIGQUIT, sigexit);
+
+  // support OSC 7 directory cloning if cloning WSL window while in rootfs
+  if (support_wsl && wslname) {
+    // this is done once in a new window, so don't care about memory leaks
+    char * rootfs = path_win_w_to_posix(wsl_basepath);
+    char * cwd = getcwd(malloc(MAX_PATH), MAX_PATH);
+    if (ispathprefix(rootfs, cwd)) {
+      char * dist = cs__wcstombs(wslname);
+      char * wslsubdir = cwd + strlen(rootfs);
+      char * wsldir = asform("//wsl$/%s%s", dist, wslsubdir);
+      chdir(wsldir);
+    }
+  }
 
   // Create the child process and pseudo terminal.
   pid = forkpty(&pty_fd, 0, 0, winp);
@@ -283,16 +377,28 @@ child_create(char *argv[], struct winsize *winp)
     signal(SIGTTOU, SIG_IGN);
 
     setenv("TERM", cfg.term, true);
+    // unreliable info about terminal application (#881)
+    setenv("TERM_PROGRAM", APPNAME, true);
+    setenv("TERM_PROGRAM_VERSION", VERSION, true);
 
-    if (lang) {
-      unsetenv("LC_ALL");
-      unsetenv("LC_COLLATE");
-      unsetenv("LC_CTYPE");
-      unsetenv("LC_MONETARY");
-      unsetenv("LC_NUMERIC");
-      unsetenv("LC_TIME");
-      unsetenv("LC_MESSAGES");
-      setenv("LANG", lang, true);
+    // If option Locale is used, set locale variables?
+    // https://github.com/mintty/mintty/issues/116#issuecomment-108888265
+    // Variables are now set in update_locale() which sets one of 
+    // LC_ALL or LC_CTYPE depending on previous setting of 
+    // LC_ALL or LC_CTYPE or LANG, stripping @cjk modifiers for WSL.
+    if (cfg.old_locale) {
+      //string lang = cs_lang();
+      string lang = cs_lang() ? cs_get_locale() : 0;
+      if (lang) {
+        unsetenv("LC_ALL");
+        unsetenv("LC_COLLATE");
+        unsetenv("LC_CTYPE");
+        unsetenv("LC_MONETARY");
+        unsetenv("LC_NUMERIC");
+        unsetenv("LC_TIME");
+        unsetenv("LC_MESSAGES");
+        setenv("LANG", lang, true);
+      }
     }
 
     // Terminal line settings
@@ -332,6 +438,10 @@ child_create(char *argv[], struct winsize *winp)
   else { // Parent process.
     if (report_child_pid) {
       printf("%d\n", pid);
+      fflush(stdout);
+    }
+    if (report_child_tty) {
+      printf("%s\n", ptsname(pty_fd));
       fflush(stdout);
     }
 
@@ -394,6 +504,9 @@ child_tty(void)
 void
 child_proc(void)
 {
+  if (term.no_scroll)
+    return;
+
   for (;;) {
     if (term.paste_buffer)
       term_send_paste();
@@ -520,9 +633,8 @@ child_proc(void)
         else
 #endif
         do {
-          //if (kb_trace) printf("[%lu] <read\n", mtime());
-
           int ret = read(pty_fd, buf + len, sizeof buf - len);
+          //if (kb_trace) printf("[%lu] read %d\n", mtime(), ret);
           if (ret > 0)
             len += ret;
           else
@@ -565,7 +677,7 @@ child_kill(bool point_blank)
 bool
 child_is_alive(void)
 {
-    return pid;
+  return pid;
 }
 
 bool
@@ -696,7 +808,7 @@ grandchild_process_list(void)
           procw[i] = 0x2007;  // FIGURE SPACE
     int wid = min(wcslen(procw), 40);
     for (int i = 13; i < wid; i++)
-      if ((cfg.charwidth ? xcwidth(procw[i]) : wcwidth(procw[i])) == 2)
+      if (((cfg.charwidth % 10) ? xcwidth(procw[i]) : wcwidth(procw[i])) == 2)
         wid--;
     procw[wid] = 0;
 
@@ -784,8 +896,10 @@ child_sendw(const wchar *ws, uint wlen)
 void
 child_resize(struct winsize *winp)
 {
-  if (pty_fd >= 0)
+  if (pty_fd >= 0 && memcmp(&prev_winsize, winp, sizeof(struct winsize)) != 0) {
+    prev_winsize = *winp;
     ioctl(pty_fd, TIOCSWINSZ, winp);
+  }
 }
 
 static int
@@ -794,13 +908,9 @@ foreground_pid()
   return (pty_fd >= 0) ? tcgetpgrp(pty_fd) : 0;
 }
 
-char *
-foreground_cwd()
+static char *
+get_foreground_cwd()
 {
-  // if working dir is communicated interactively, use it
-  if (child_dir && *child_dir)
-    return strdup(child_dir);
-
   // for WSL, do not check foreground process; hope start dir is good
   if (support_wsl) {
     char cwd[MAX_PATH];
@@ -819,6 +929,15 @@ foreground_cwd()
   }
 #endif
   return 0;
+}
+
+char *
+foreground_cwd()
+{
+  // if working dir is communicated interactively, use it
+  if (child_dir && *child_dir)
+    return strdup(child_dir);
+  return get_foreground_cwd();
 }
 
 char *
@@ -1007,20 +1126,31 @@ setenvi(char * env, int val)
 }
 
 static void
-setup_sync()
+setup_sync(bool in_tabs)
 {
-  if (cfg.geom_sync) {
+  if (sync_level()) {
     if (win_is_fullscreen) {
       setenvi("MINTTY_DX", 0);
       setenvi("MINTTY_DY", 0);
     }
-    else {
+    else if (!IsZoomed(wnd)) {
       RECT r;
       GetWindowRect(wnd, &r);
       setenvi("MINTTY_X", r.left);
       setenvi("MINTTY_Y", r.top);
       setenvi("MINTTY_DX", r.right - r.left);
       setenvi("MINTTY_DY", r.bottom - r.top);
+    }
+    if (cfg.tabbar) {
+      setenvi("MINTTY_TABBAR", cfg.tabbar);
+      // enforce proper grouping, i.e. either new tab or window, as requested
+      if (in_tabs && *cfg.class) {
+        char * class = cs__wcstoutf(cfg.class);
+        setenv("MINTTY_CLASS", class, true);
+        free(class);
+      }
+      else if (!in_tabs)
+        setenv("MINTTY_CLASS", "+", true);
     }
   }
 }
@@ -1029,28 +1159,29 @@ setup_sync()
   Called from Alt+F2 (or session launcher via child_launch).
  */
 static void
-do_child_fork(int argc, char *argv[], int moni, bool launch)
+do_child_fork(int argc, char *argv[], int moni, bool launch, bool config_size, bool in_cwd)
 {
   trace_dir(asform("do_child_fork: %s", getcwd(malloc(MAX_PATH), MAX_PATH)));
-  setup_sync();
 
+#ifdef control_AltF2_size_via_token
   void reset_fork_mode()
   {
     clone_size_token = true;
   }
+#endif
 
   pid_t clone = fork();
 
   if (cfg.daemonize) {
     if (clone < 0) {
       childerror(_("Error: Could not fork child daemon"), true, errno, 0);
-      reset_fork_mode();
+      //reset_fork_mode();
       return;  // assume next fork will fail too
     }
     if (clone > 0) {  // parent waits for intermediate child
       int status;
       waitpid(clone, &status, 0);
-      reset_fork_mode();
+      //reset_fork_mode();
       return;
     }
 
@@ -1064,15 +1195,21 @@ do_child_fork(int argc, char *argv[], int moni, bool launch)
   }
 
   if (clone == 0) {  // prepare child process to spawn new terminal
+    string set_dir = 0;
+    if (in_cwd)
+      set_dir = get_foreground_cwd(false);  // do this before close(pty_fd)!
+
     if (pty_fd >= 0)
       close(pty_fd);
     if (log_fd >= 0)
       close(log_fd);
     close(win_fd);
 
-    if (child_dir && *child_dir) {
-      string set_dir = child_dir;
-      if (support_wsl) {
+    if ((child_dir && *child_dir) || set_dir) {
+      if (set_dir) {
+        // use cwd of foreground process if requested via in_cwd
+      }
+      else if (support_wsl) {
         wchar * wcd = cs__utftowcs(child_dir);
 #ifdef debug_wsl
         printf("fork wsl <%ls>\n", wcd);
@@ -1084,23 +1221,26 @@ do_child_fork(int argc, char *argv[], int moni, bool launch)
         set_dir = (string)cs__wcstombs(wcd);
         delete(wcd);
       }
+      else
+        set_dir = strdup(child_dir);
 
-      chdir(set_dir);
-      trace_dir(asform("child: %s", set_dir));
-      setenv("PWD", set_dir, true);  // avoid softlink resolution
-      // prevent shell startup from setting current directory to $HOME
-      // unless cloned/Alt+F2 (!launch)
-      if (!launch) {
-        setenv("CHERE_INVOKING", "mintty", true);
-        // if cloned and then launched from Windows shortcut (!shortcut) 
-        // (by sanitizing taskbar icon grouping, #784, mintty/wsltty#96) 
-        // indicate to set proper directory
-        if (shortcut)
-          setenv("MINTTY_PWD", set_dir, true);
-      }
+      if (set_dir) {
+        chdir(set_dir);
+        trace_dir(asform("child: %s", set_dir));
+        setenv("PWD", set_dir, true);  // avoid softlink resolution
+        // prevent shell startup from setting current directory to $HOME
+        // unless cloned/Alt+F2 (!launch)
+        if (!launch) {
+          setenv("CHERE_INVOKING", "mintty", true);
+          // if cloned and then launched from Windows shortcut (!shortcut) 
+          // (by sanitizing taskbar icon grouping, #784, mintty/wsltty#96) 
+          // indicate to set proper directory
+          if (shortcut)
+            setenv("MINTTY_PWD", set_dir, true);
+        }
 
-      if (support_wsl)
         delete(set_dir);
+      }
     }
 
 #ifdef add_child_parameters
@@ -1134,9 +1274,19 @@ do_child_fork(int argc, char *argv[], int moni, bool launch)
 #endif
 
     // provide environment to clone size
-    if (clone_size_token) {
-      setenvi("MINTTY_ROWS", term.rows);
-      setenvi("MINTTY_COLS", term.cols);
+    if (!config_size) {
+      setenvi("MINTTY_ROWS", term.rows0);
+      setenvi("MINTTY_COLS", term.cols0);
+#ifdef support_horizontal_scrollbar_with_tabbar
+      // this does not work, so horizontal scrollbar is disabled with tabbar
+extern int horsqueeze(void);  // should become horsqueeze_cols in win.h
+      setenvi("MINTTY_SQUEEZE", horsqueeze() / cell_width);
+#endif
+      // provide environment to maximise window
+      if (win_is_fullscreen)
+        setenvi("MINTTY_MAXIMIZE", 2);
+      else if (IsZoomed(wnd))
+        setenvi("MINTTY_MAXIMIZE", 1);
     }
     // provide environment to select monitor
     if (moni > 0)
@@ -1171,16 +1321,19 @@ do_child_fork(int argc, char *argv[], int moni, bool launch)
 #endif
     exit(mexit);
   }
-  reset_fork_mode();
+  //reset_fork_mode();
 }
 
 /*
   Called from Alt+F2.
  */
 void
-child_fork(int argc, char *argv[], int moni)
+child_fork(int argc, char *argv[], int moni, bool config_size, bool in_cwd, bool in_tabs)
 {
-  do_child_fork(argc, argv, moni, false);
+  setup_sync(in_tabs);
+  do_child_fork(argc, argv, moni, false, config_size, in_cwd);
+  // prevent wrong control of subsequent child_fork
+  unsetenv("MINTTY_CLASS");
 }
 
 /*
@@ -1204,7 +1357,7 @@ child_launch(int n, int argc, char * argv[], int moni)
         *sepp = '\0';
 
       if (n == 0) {
-        //setup_sync();
+        //setup_sync(false);
         argc = 1;
         char ** new_argv = newn(char *, argc + 1);
         new_argv[0] = argv[0];
@@ -1223,7 +1376,7 @@ child_launch(int n, int argc, char * argv[], int moni)
           }
         }
         new_argv[argc] = 0;
-        do_child_fork(argc, new_argv, moni, true);
+        do_child_fork(argc, new_argv, moni, true, true, false);
         free(new_argv);
         break;
       }

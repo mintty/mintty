@@ -211,8 +211,8 @@ sixel_parser_set_default_color(sixel_state_t * st)
 }
 
 
-int
-sixel_parser_finalize(sixel_state_t * st, unsigned char * pixels)
+unsigned char *
+sixel_parser_finalize(sixel_state_t * st)
 {
   int status = -1;
   int sx;
@@ -222,7 +222,6 @@ sixel_parser_finalize(sixel_state_t * st, unsigned char * pixels)
   sixel_color_no_t * src;
   unsigned char * dst;
   colour color;
-  int size_pixels = st->image.width * st->image.height * 4;
 
   if (++st->max_x < st->attributed_ph) {
     st->max_x = st->attributed_ph;
@@ -237,10 +236,17 @@ sixel_parser_finalize(sixel_state_t * st, unsigned char * pixels)
 
   if (image->width > sx || image->height > sy) {
     status = image_buffer_resize(image, sx, sy);
+    //printf("final resize %d>%d || %d>%d sz %d\n", image->width, sx, image->height, sy, status);
     if (status < 0) {
-      goto end;
+      return 0;
     }
   }
+
+  int size_pixels = st->image.width * st->image.height * 4;
+  unsigned char * pixels = (unsigned char *)malloc(size_pixels);
+  //printf("alloc pixels 1 w %d h %d (%d) -> %p\n", st->image.width, st->image.height, size_pixels, pixels);
+  if (!pixels)
+    return 0;
 
   if (image->use_private_register && image->ncolors > 2 && !image->palette_modified) {
     status = set_default_color(image);
@@ -294,7 +300,13 @@ sixel_parser_finalize(sixel_state_t * st, unsigned char * pixels)
   status = 0;
 
 end:
-  return status;
+  if (status >= 0)
+    return pixels;
+  else {
+    //printf("free pixels\n");
+    free(pixels);
+    return 0;
+  }
 }
 
 /* convert sixel data into indexed pixel bytes and palette data */

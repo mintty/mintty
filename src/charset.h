@@ -35,6 +35,7 @@ extern void cs_reconfig(void);
 
 extern string cs_lang(void);
 
+extern int cs_get_codepage(void);
 extern string cs_get_locale(void);
 extern void cs_set_locale(string);
 
@@ -61,19 +62,16 @@ extern string charset_menu[];
 
 extern int cs_cur_max;
 
-extern bool font_ambig_wide;
-
-#if HAS_LOCALES
 extern bool cs_ambig_wide;
-#else
-#define cs_ambig_wide font_ambig_wide
-#endif
+extern bool cs_single_forced;
 extern int xcwidth(xchar c);
 
 extern bool indicwide(xchar c);
 extern bool extrawide(xchar c);
 extern bool combiningdouble(xchar c);
-extern bool ambigwide(xchar c);
+extern bool is_wide(xchar c);
+extern bool is_ambig(xchar c);
+extern bool is_ambigwide(xchar c);
 
 
 // path conversions
@@ -89,6 +87,7 @@ extern char * path_posix_to_win_a(const char * p);
 #if defined(__midipix__) || defined(debug_wcs)
 //__midipix__
 #define wcslen _wcslen
+#define wcsnlen _wcsnlen
 #define wcscmp _wcscmp
 //CYGWIN_VERSION_API_MINOR < 74
 #define wcschr _wcschr
@@ -112,6 +111,7 @@ extern int wcscmp(const wchar * s1, const wchar * s2);
 
 #define wcscpy(tgt, src) memcpy(tgt, src, (wcslen(src) + 1) * sizeof(wchar))
 #define wcscat(tgt, src) wcscpy(&tgt[wcslen(tgt)], src)
+extern unsigned int wcsnlen(const wchar * s, unsigned int max);
 extern wchar * wcschr(const wchar * s, wchar c);
 extern wchar * wcsrchr(const wchar * s, wchar c);
 extern int wcsncmp(const wchar * s1, const wchar * s2, int len);

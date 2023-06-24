@@ -1,6 +1,6 @@
 #! /bin/bash
 
-emojidata="emoji-data.txt emoji-variation-sequences.txt emoji-sequences.txt emoji-zwj-sequences.txt"
+emojidata="emoji-data.txt emoji-variation-sequences.txt emoji-sequences.txt emoji-zwj-sequences.txt emoji-test.txt"
 make Blocks.txt >&2
 make $emojidata >&2
 
@@ -33,7 +33,7 @@ join="join -a 1 -a 2"
 
 echo joining emojis >&2
 $join <( $join <( $join <( $join .emoji_base .emoji_text) .emoji_emoj) .emoji_pres) .emoji_pict |
-sed -e "s/ / | EM_/g" -e "s/\([^ ]*\)\(.*\)/  {0, 0, 0, {0\2, 0x\1}},/"
+sed -e "s/ / | EM_/g" -e "s/\([^ ]*\)\(.*\)/  {0, 0, 0, {0x\1, 0\2}},/"
 
 ;;
 
@@ -49,7 +49,7 @@ sort | uniq
 
 ;;
 
-seqs)
+seqs1)
 
 cat emoji-sequences.txt emoji-zwj-sequences.txt | grep -v Basic_Emoji |
 sed -e '/^#/ d' -e 's/#.*//' -e 's/\\x{23}/#/' -e '/^$/ d' -e 's/ *;.*; */	"/' -e 's/ *$/"/' |
@@ -57,6 +57,41 @@ sed -e ': x' -e 's/ \(.*	\)/,0x\1/' -e 't x' -e 's/,0x/, 0x/g' -e 's/\(	.* \)0x/
 sed -e 's/^/  {0, 0, 0, {0x/' -e 's/	/}, /' -e 's/$/},/' |
 sed -e 's/\(0x[0-9A-F]*\)/ee(\1)/g' |
 sed -e 's/"Pirate Flag"/"pirate flag"/' |
+sed -e 's/0x\([0-9A-F][0-9A-F][0-9A-F][0-9A-F][^0-9A-F]\)/0x0\1/g' |
+sort | uniq |
+sed -e 's/0x0/0x/g'
+# Note that by sorting order of ',' and '}', 
+# shorter sequences are sorted behind longer sequences, 
+# which is an important property for proper matching.
+
+;;
+
+seqs)
+
+#2B50          ; Basic_Emoji      ; star    # E0.6   [1] (⭐)
+#1F468 200D 1F466 ; RGI_Emoji_ZWJ_Sequence  ; family: man, boy  # E4.0   [1] (👨‍👦)
+#1F636 200D 1F32B ; minimally-qualified # 😶‍🌫 E13.1 face in clouds
+#emoji-test.txt (must set LC_CTYPE=C below to match non-BMP):
+#23F1 FE0F    ; fully-qualified     # ⏱️ E1.0 stopwatch
+#1FAF8 1F3FF  ; fully-qualified   # 🫸🏿 E15.0 rightwards pushing hand: dark skin tone
+
+(
+cat emoji-sequences.txt | grep -v Basic_Emoji
+cat emoji-zwj-sequences.txt
+use_emoji_test=true
+if $use_emoji_test
+then
+echo with emoji-test.txt >&2
+cat emoji-test.txt | grep -v "^[0-9A-F]* *;" |
+LC_CTYPE=C sed -e 's/; *component/;;/' -e 's/; *[-a-z]*qualified/;;/' \
+    -e 's/keycap: #$/keycap: \\x{23}/' \
+    -e 's/;; *\(#.*E[0-9]*\.[0-9]* *\)\(.*\)/;; \2 \1/'
+fi
+) |
+sed -e '/^#/ d' -e 's/#.*//' -e 's/\\x{23}/#/' -e '/^$/ d' -e 's/ *;.*; */	"/' -e 's/ *$/"/' |
+sed -e ': x' -e 's/ \(.*	\)/,0x\1/' -e 't x' -e 's/,0x/, 0x/g' -e 's/\(	.* \)0x/\1/g' |
+sed -e 's/^/  {0, 0, 0, {0x/' -e 's/	/}, /' -e 's/$/},/' |
+sed -e 's/\(0x[0-9A-F]*\)/ee(\1)/g' |
 sed -e 's/0x\([0-9A-F][0-9A-F][0-9A-F][0-9A-F][^0-9A-F]\)/0x0\1/g' |
 sort | uniq |
 sed -e 's/0x0/0x/g'

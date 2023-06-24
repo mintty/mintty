@@ -26,6 +26,9 @@ extern void term_schedule_cblink(void);
 extern void term_schedule_vbell(int already_started, int startpoint);
 
 extern void term_switch_screen(bool to_alt, bool reset);
+extern void term_set_status_type(int type, int lines);
+extern void term_switch_status(bool status_line);
+extern void term_clear_status(void);
 extern void term_check_boundary(int x, int y);
 extern void term_do_scroll(int topline, int botline, int lines, bool sb);
 extern void term_erase(bool selective, bool line_only, bool from_begin, bool to_end);
@@ -67,5 +70,11 @@ extern void print_screen(void);
 
 extern int putlink(char * link);
 extern char * geturl(int n);
+
+extern void compose_clear(void);
+
+/* Direct screen buffer output, for status line */
+extern void write_char(wchar wc, int width);
+extern void write_ucschar(wchar hwc, wchar wc, int width);
 
 #endif

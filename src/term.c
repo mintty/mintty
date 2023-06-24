@@ -1,5 +1,5 @@
 // term.c (part of mintty)
-// Copyright 2008-12 Andy Koppe, 2016-2018 Thomas Wolff
+// Copyright 2008-12 Andy Koppe, 2016-2020 Thomas Wolff
 // Adapted from code from PuTTY-0.60 by Simon Tatham and team.
 // Licensed under the terms of the GNU General Public License v3 or later.
 
@@ -244,6 +244,7 @@ static void
 term_cursor_reset(term_cursor *curs)
 {
   curs->attr = CATTR_DEFAULT;
+  curs->width = 0;
   curs->gl = 0;
   curs->gr = 0;
   curs->oem_acs = 0;
@@ -254,8 +255,17 @@ term_cursor_reset(term_cursor *curs)
   curs->cset_single = CSET_ASCII;
 
   curs->bidimode = 0;
+  curs->rewrap_on_resize = true;
 
   curs->origin = false;
+}
+
+static void
+term_bell_reset(term_bell *bell)
+{
+  bell->vol = 8;  // not reset by xterm
+  bell->last_vol = bell->vol;
+  bell->last_bell = 0;
 }
 
 void
@@ -293,13 +303,16 @@ term_reset(bool full)
 
   if (full) {
     term.lrmargmode = false;
+    term.dim_margins = cfg.dim_margins;
     term.deccolm_allowed = cfg.enable_deccolm_init;  // not reset by xterm
     term.vt220_keys = vt220(cfg.term);  // not reset by xterm
     term.app_keypad = false;  // xterm only with RIS
     term.app_control = 0;
     term.auto_repeat = cfg.auto_repeat;  // not supported by xterm
+    term.repeat_rate = 0;
     term.attr_rect = false;
     term.deccolm_noclear = false;
+    term.erase_to_screen = false;
   }
   term.modify_other_keys = 0;  // xterm resets this
 
@@ -312,6 +325,11 @@ term_reset(bool full)
   if (full) {
     term.newtab = 1;  // set default tabs on resize
     term.rvideo = 0;  // not reset by xterm
+    term_bell_reset(&term.bell);
+    term_bell_reset(&term.marginbell);
+    term.play_tone = cfg.play_tone;
+    term.margin_bell = false;  // not reset by xterm
+    term.ring_enabled = false;
     term.bell_taskbar = cfg.bell_taskbar;  // not reset by xterm
     term.bell_popup = cfg.bell_popup;  // not reset by xterm
     term.mouse_mode = MM_NONE;
@@ -334,6 +352,10 @@ term_reset(bool full)
     term.wide_extra = false;
     term.disable_bidi = false;
     term.enable_bold_colour = cfg.bold_as_colour;
+    term.enable_blink_colour = true;
+    term.readline_mouse_1 = cfg.clicks_place_cursor;
+    term.readline_mouse_2 = cfg.clicks_place_cursor;
+    term.readline_mouse_3 = cfg.clicks_place_cursor;
   }
 
   term.virtuallines = 0;
@@ -354,6 +376,16 @@ term_reset(bool full)
   if (full) {
     term.blink_is_real = cfg.allow_blinking;
     term.hide_mouse = cfg.hide_mouse;
+  }
+
+  term_switch_status(false);
+  if (full) {
+    term_clear_status();
+    // restore initial status line unless type 2 selected
+    if (cfg.status_line && term.st_type == 0)
+      term_set_status_type(1, 0);
+    else if (!cfg.status_line && term.st_type == 1)
+      term_set_status_type(0, 0);
   }
 
   if (full) {
@@ -382,6 +414,18 @@ term_reset(bool full)
   term_schedule_tblink2();
   term_schedule_cblink();
   term_clear_scrollback();
+
+  term.iso_guarded_area = false;
+
+  term.detect_progress = cfg.progress_bar;
+  term.progress_scan = cfg.progress_scan;
+  taskbar_progress(-9);
+
+  term.suspend_update = 0;
+  term.no_scroll = 0;
+  term.scroll_mode = 0;
+
+  term_schedule_search_update();
 
   win_reset_colours();
 }
@@ -439,46 +483,45 @@ term_reconfig(void)
     term.bell_popup = new_cfg.bell_popup;
   if (strcmp(new_cfg.term, cfg.term))
     term.vt220_keys = vt220(new_cfg.term);
-}
-
-static bool
-in_result(pos abspos, result run)
-{
-  return
-    (abspos.x + abspos.y * term.cols >= run.x + run.y * term.cols) &&
-    (abspos.x + abspos.y * term.cols <  run.x + run.y * term.cols + run.len);
-}
-
-static bool
-in_results_recurse(pos abspos, int lo, int hi)
-{
-  if (hi - lo == 0) {
-    return false;
-  }
-  int mid = (lo + hi) / 2;
-  result run = term.results.results[mid];
-  if (run.x + run.y * term.cols > abspos.x + abspos.y * term.cols) {
-    return in_results_recurse(abspos, lo, mid);
-  } else if (run.x + run.y * term.cols + run.len <= abspos.x + abspos.y * term.cols) {
-    return in_results_recurse(abspos, mid + 1, hi);
-  }
-  return true;
+  // status line
+  if (new_cfg.status_line != cfg.status_line
+      && new_cfg.status_line != term.st_type && term.st_type != 2)
+    toggle_status_line();
 }
 
 static int
 in_results(pos scrpos)
 {
-  if (term.results.length == 0) {
+  if (term.results.xquery_length == 0) {
     return 0;
   }
+  int idx = scrpos.x + (scrpos.y + term.sblines) * term.cols;
+  if (!(term.results.range_begin <= idx && idx < term.results.range_end)) {
+    term_search_expand(idx);
+  }
 
-  pos abspos = {
-    .x = scrpos.x,
-    .y = scrpos.y + term.sblines
-  };
+  int b = 0;
+  int e = term.results.length;
+  while (b < e) {
+    int m = (b + e) / 2;
+    if (term.results.results[m].idx > idx) {
+      e = m;
+    } else {
+      b = m + 1;
+    }
+  }
 
-  int match = in_results_recurse(abspos, 0, term.results.length);
-  match += in_result(abspos, term.results.results[term.results.current]);
+  if (e <= 0) {
+    return 0;
+  }
+  result hit = term.results.results[e - 1];
+  if (idx >= hit.idx + hit.len) {
+    return 0;
+  }
+  int match = 1;
+  if (term.results.current.idx <= idx && idx < term.results.current.idx + term.results.current.len) {
+    match += 1;
+  }
   return match;
 }
 
@@ -495,90 +538,8 @@ results_add(result abspos)
   ++term.results.length;
 }
 
-static void
-results_partial_clear(int pos)
-{
-  int i = term.results.length;
-  while (i > 0 && term.results.results[i - 1].y >= pos) {
-    --i;
-  }
-  term.results.length = i;
-}
-
-void
-term_set_search(wchar * needle)
-{
-  free(term.results.query);
-  term.results.query = needle;
-
-  // transform UTF-16 to UCS for matching
-  int wlen = wcslen(needle);
-  xchar * xquery = malloc(sizeof(xchar) * (wlen + 1));
-  wchar prev = 0;
-  int xlen = -1;
-  for (int i = 0; i < wlen; i++) {
-    if ((prev & 0xFC00) == 0xD800 && (needle[i] & 0xFC00) == 0xDC00)
-      xquery[xlen] = ((xchar) (prev - 0xD7C0) << 10) | (needle[i] & 0x03FF);
-    else
-      xquery[++xlen] = needle[i];
-    prev = needle[i];
-  }
-  xquery[++xlen] = 0;
-
-  free(term.results.xquery);
-  term.results.xquery = xquery;
-  term.results.xquery_length = xlen;
-  term.results.update_type = FULL_UPDATE;
-}
-
-static void
-circbuf_init(circbuf * cb, int sz)
-{
-  cb->capacity = sz;
-  cb->length = 0;
-  cb->start = 0;
-  cb->buf = newn(termline*, sz);
-}
-
-static void
-circbuf_destroy(circbuf * cb)
-{
-  cb->capacity = 0;
-  cb->length = 0;
-  cb->start = 0;
-
-  // Free any termlines we have left.
-  for (int i = 0; i < cb->capacity; ++i) {
-    if (cb->buf[i] == NULL)
-      continue;
-    release_line(cb->buf[i]);
-  }
-  free(cb->buf);
-  cb->buf = NULL;
-}
-
-static void
-circbuf_push(circbuf * cb, termline * tl)
-{
-  int pos = (cb->start + cb->length) % cb->capacity;
-
-  if (cb->length < cb->capacity) {
-    ++cb->length;
-  } else {
-    ++cb->start;
-    release_line(cb->buf[pos]);
-  }
-  cb->buf[pos] = tl;
-}
-
-static termline *
-circbuf_get(circbuf * cb, int i)
-{
-  assert(i < cb->length);
-  return cb->buf[(cb->start + i) % cb->capacity];
-}
-
 #ifdef dynamic_casefolding
+
 static struct {
   uint code, fold;
 } * case_folding;
@@ -620,7 +581,9 @@ init_case_folding()
     fclose(cf);
   }
 }
+
 #else
+
 static struct {
   uint code, fold;
 } case_folding[] = {
@@ -628,11 +591,20 @@ static struct {
 };
 #define case_foldn lengthof(case_folding)
 #define init_case_folding()
+
 #endif
 
 static uint
 case_fold(uint ch)
 {
+  // speedup ASCII
+  if (ch < 0x80) {
+    if (ch >= 'A' && ch <= 'Z')
+      return ch + 'a' - 'A';
+    else
+      return ch;
+  }
+
   // binary search in table
   int min = 0;
   int max = case_foldn - 1;
@@ -651,11 +623,38 @@ case_fold(uint ch)
 }
 
 void
+term_set_search(wchar * needle)
+{
+  free(term.results.query);
+  term.results.query = needle;
+
+  // transform UTF-16 to UCS for matching
+  int wlen = wcslen(needle);
+  xchar * xquery = malloc(sizeof(xchar) * (wlen + 1));
+  wchar prev = 0;
+  int xlen = -1;
+  for (int i = 0; i < wlen; i++) {
+    xchar xqueri;
+    if ((prev & 0xFC00) == 0xD800 && (needle[i] & 0xFC00) == 0xDC00)
+      xqueri = ((xchar) (prev - 0xD7C0) << 10) | (needle[i] & 0x03FF);
+    else {
+      ++xlen;
+      xqueri = needle[i];
+    }
+    xquery[xlen] = case_fold(xqueri);
+    prev = needle[i];
+  }
+  xquery[++xlen] = 0;
+
+  free(term.results.xquery);
+  term.results.xquery = xquery;
+  term.results.xquery_length = xlen;
+  term.results.update_type = FULL_UPDATE;
+}
+
+void
 term_update_search(void)
 {
-  init_case_folding();
-
-  int update_type = term.results.update_type;
   if (term.results.update_type == NO_UPDATE)
     return;
   term.results.update_type = NO_UPDATE;
@@ -665,63 +664,59 @@ term_update_search(void)
     return;
   }
 
-  circbuf cb;
-  // Allocate room for the circular buffer of termlines.
-  int lcurr = 0;
-  if (update_type == PARTIAL_UPDATE) {
-    // How much of the backscroll we need to update on a partial update?
-    // Do a ceil: (x + y - 1) / y
-    // On xquery_length - 1
-    int pstart = -((term.results.xquery_length + term.cols - 2) / term.cols) + term.sblines;
-    lcurr = lcurr > pstart ? lcurr:pstart;
-    results_partial_clear(lcurr);
-  } else {
-    term_clear_results();
-  }
-  int llen = term.results.xquery_length / term.cols + 1;
-  if (llen < 2)
-    llen = 2;
+  term_clear_results();
+  // The actual search happens inside in_results().
+}
 
-  circbuf_init(&cb, llen);
-
-  // Fill in our starting set of termlines.
-  for (int i = lcurr; i < term.rows + term.sblines && cb.length < cb.capacity; ++i) {
-    circbuf_push(&cb, fetch_line(i - term.sblines));
+// return search results contained by [begin, end)
+static void
+do_search(int begin, int end)
+{
+  //printf("do_search %d %d\n", begin, end);
+  if (term.results.xquery_length == 0) {
+    return;
   }
 
-  int cpos = term.cols * lcurr;
+  init_case_folding();
+
+  /* the position of current char */
+  int cpos = begin;
   /* the number of matched chars in the current run */
   int npos = 0;
   /* the number of matched cells in the current run (anpos >= npos) */
   int anpos = 0;
-  int end = term.cols * (term.rows + term.sblines);
 
   // Loop over every character and search for query.
+  termline * line = NULL;
+  int line_y = -1;
   while (cpos < end) {
     // Determine the current position.
     int x = (cpos % term.cols);
     int y = (cpos / term.cols);
-
-    // If our current position isn't in the buffer, add it in.
-    if (y - lcurr >= llen) {
-      circbuf_push(&cb, fetch_line(lcurr + llen - term.sblines));
-      ++lcurr;
+    if (line_y != y) {
+      // If our current position isn't in the termline, add it in.
+      if (line) {
+        release_line(line);
+      }
+      line = fetch_line(y - term.sblines);
+      line_y = y;
     }
-    termline * lll = circbuf_get(&cb, y - lcurr);
-    termchar * chr = lll->chars + x;
 
-    if (npos == 0 && cpos + term.results.xquery_length >= end)
+    if (npos == 0 && cpos + term.results.xquery_length >= end) {
+      // Not enough data to match.
       break;
+    }
 
+    termchar * chr = line->chars + x;
     xchar ch = chr->chr;
-    if ((ch & 0xFC00) == 0xD800 && chr->cc_next) {
+    if (is_high_surrogate(chr->chr) && chr->cc_next) {
       termchar * cc = chr + chr->cc_next;
-      if ((cc->chr & 0xFC00) == 0xDC00) {
-        ch = ((xchar) (ch - 0xD7C0) << 10) | (cc->chr & 0x03FF);
+      if (is_low_surrogate(cc->chr)) {
+        ch = combine_surrogates(chr->chr, cc->chr);
       }
     }
     xchar pat = term.results.xquery[npos];
-    bool match = case_fold(ch) == case_fold(pat);
+    bool match = case_fold(ch) == pat;
     if (!match) {
       // Skip the second cell of any wide characters
       if (ch == UCSWIDE) {
@@ -739,15 +734,12 @@ term_update_search(void)
     ++npos;
 
     if (npos >= term.results.xquery_length) {
-      int start = cpos - anpos + 1;
       result run = {
-        .x = start % term.cols,
-        .y = start / term.cols,
+        .idx = cpos - anpos + 1,
         .len = anpos
       };
-#ifdef debug_search
-      printf("%d, %d, %d\n", run.x, run.y, run.len);
-#endif
+      assert(begin <= run.idx && (run.idx + run.len) <= end);
+      // Append result
       results_add(run);
       npos = 0;
       anpos = 0;
@@ -756,7 +748,257 @@ term_update_search(void)
     ++cpos;
   }
 
-  circbuf_destroy(&cb);
+  // Clean up
+  if (line) {
+      release_line(line);
+  }
+}
+
+static void
+results_reverse(result *results, int len)
+{
+  for (int i = 0; i < len / 2; ++i) {
+    result t = results[i];
+    results[i] = results[len - i - 1];
+    results[len - i - 1] = t;
+  }
+}
+
+static int imax(int a, int b) { return a < b ? b : a; }
+static int imin(int a, int b) { return a < b ? a : b; }
+
+// Ensure idx is covered by [range_begin, range_end)
+void
+term_search_expand(int idx)
+{
+  int max_idx = term.cols * (term.sblines + term.rows);
+  idx = imin(idx, max_idx - 1);
+  idx = imax(idx, 0);
+
+  // [range_1_begin, range_2_end) is the search region that covers [idx - look_around, idx + look_around)
+  int look_around = term.cols * term.rows;    // chosen arbitrarily
+  int pad = term.results.xquery_length * 2;   // the doubling is for UCSWIDE
+  int range_1_begin = imax(idx - look_around - pad, 0);
+  int range_2_end = imin(idx + look_around + pad, max_idx);
+
+  // Previous range is empty, expand to [idx - look_around, idx + look_around).
+  if (term.results.range_begin == term.results.range_end) {
+    assert(term.results.length == 0);
+    do_search(range_1_begin, range_2_end);
+    term.results.range_begin = imax(idx - look_around, 0);
+    term.results.range_end = imin(idx + look_around, max_idx);
+  }
+  // Expand range_begin, and append the results to term.results.results.
+  // (Actually the results should be prepended instead of appended, we'll fix that later.)
+  else if (idx < term.results.range_begin) {
+    int previous_len = term.results.length;
+    do_search(range_1_begin, term.results.range_begin);
+
+    // The results from the expanding of range_begin were misplaced, fix it!
+    int appended_len = term.results.length - previous_len;
+    if (appended_len > 0 && previous_len > 0) {
+      // <Previous_results> <Appended_results>
+      results_reverse(term.results.results, previous_len);
+      // <stluser_suoiverP> <Appended_results>
+      results_reverse(term.results.results + previous_len, appended_len);
+      // <stluser_suoiverP> <stluser_dedneppA>
+      results_reverse(term.results.results, previous_len + appended_len);
+      // <Appended_results> <Previous_results>
+    }
+
+    term.results.range_begin = imax(idx - look_around, 0);
+  }
+  // Expand range_end, and append the results to term.results.results.
+  else if (idx >= term.results.range_end) {
+    do_search(term.results.range_end, range_2_end);
+    term.results.range_end = imin(idx + look_around, max_idx);
+  }
+
+  if (term.results.length > 0) {
+    // Invariant: [range_begin, range_end) contains all results.
+    result first = term.results.results[0];
+    result last = term.results.results[term.results.length - 1];
+    term.results.range_begin = imin(term.results.range_begin, first.idx);
+    term.results.range_end = imax(term.results.range_end, last.idx + last.len);
+
+    // Mark the current result (first result) if we can.
+    if (term.results.current.len == 0 && term.results.range_begin == 0) {
+      term.results.current = first;
+    }
+  }
+
+  // Invariant: the results should be sorted and non-overlapping.
+  for (int i = 1; i < term.results.length; ++i) {
+    result prev = term.results.results[i - 1];
+    assert(prev.idx + prev.len <= term.results.results[i].idx);
+    (void)prev;
+  }
+  // Invariant: idx is covered by [range_begin, range_end).
+  assert(term.results.range_begin <= idx && idx < term.results.range_end);
+}
+
+static result
+results_find_ge(int idx)
+{
+  int b = 0;
+  int e = term.results.length;
+  while (b < e) {
+    int m = (b + e) / 2;
+    if (term.results.results[m].idx < idx) {
+      b = m + 1;
+    } else {
+      e = m;
+    }
+  }
+
+  if (b < term.results.length) {
+    return term.results.results[b];
+  } else {
+    return (result) {0, 0};
+  }
+}
+
+static result
+results_find_le(int idx)
+{
+  int b = 0;
+  int e = term.results.length;
+  while (b < e) {
+    int m = (b + e) / 2;
+    if (term.results.results[m].idx > idx) {
+      e = m;
+    } else {
+      b = m + 1;
+    }
+  }
+
+  if (e > 0) {
+    return term.results.results[e - 1];
+  } else {
+    return (result) {0, 0};
+  }
+}
+
+#ifdef debug_search
+static __inline__ uint64_t rdtsc(void)
+{
+  uint32_t hi, lo;
+  __asm__ __volatile__ ("rdtsc" : "=a"(lo), "=d"(hi));
+  return ((uint64_t)lo) | (((uint64_t)hi) << 32);
+}
+#endif
+
+result
+term_search_next(void)
+{
+#ifdef debug_search
+  uint64_t ts0 = rdtsc();
+#endif
+
+  result current = term.results.current;
+  int max_idx = term.cols * (term.sblines + term.rows);
+
+  // Search the region after current result.
+  // If the current result was not marked, then idx == 0,
+  // which means the upcoming search will return the first result in scrollback + screen.
+  int idx = current.idx + current.len;
+  int cycle_count = 0;
+  while (true) {
+    // Expand range_end to cover idx.
+    term_search_expand(idx);
+    // Check if the next result is covered.
+    result found = results_find_ge(idx);
+    if (found.len) {
+#ifdef debug_search
+      printf("term_search_next: cost: %lu\n", rdtsc() - ts0);
+#endif
+      return found;
+    }
+
+    // Not covered, advance idx to uncovered region.
+    idx = term.results.range_end;
+
+    if (idx >= max_idx) {
+      // End of screen reached.
+      if (current.len == 0) {
+        // We have searched [0, max_idx), and no results were found.
+        break;
+      } else {
+        // BUG! Crossing the boundary twice.
+        // If the current result is marked, we should have found a result.
+        assert(cycle_count == 0);
+        if (cycle_count > 0) {
+          break;
+        }
+      }
+      cycle_count++;
+
+      // Search from the beginning.
+      idx = 0;
+      if (term.results.range_begin != 0) {
+        // Clear results before the next expansion to avoid full search.
+        term_clear_results();
+        // term.results.current should be preserved.
+        term.results.current = current;
+      }
+    }
+  }
+
+  return (result) {0, 0};
+}
+
+result
+term_search_prev(void)
+{
+  result current = term.results.current;
+  int max_idx = term.cols * (term.sblines + term.rows);
+  assert(max_idx > 0);
+
+  // Search the region before current result.
+  int idx = current.idx - 1;
+  if (idx < 0) {
+    idx = max_idx - 1;
+  }
+  int cycle_count = 0;
+  while (true) {
+    // Expand range_end to cover idx.
+    term_search_expand(idx);
+    // Check if the previous result is covered.
+    result found = results_find_le(idx);
+    if (found.len) {
+      return found;
+    }
+
+    // Not covered, fall back idx to uncovered region.
+    idx = term.results.range_begin - 1;
+
+    if (idx < 0) {
+      // Beginning of scrollback or screen reached.
+      if (current.len == 0) {
+        // We have searched [0, max_idx), and no results were found.
+        break;
+      } else {
+        // BUG! Crossing the boundary twice.
+        // If the current result is marked, we should have found a result.
+        assert(cycle_count == 0);
+        if (cycle_count > 0) {
+          break;
+        }
+      }
+      cycle_count++;
+
+      // Search from the end.
+      idx = max_idx - 1;
+      if (term.results.range_end != max_idx) {
+        // Clear results before the next expansion to avoid full search.
+        term_clear_results();
+        // term.results.current should be preserved.
+        term.results.current = current;
+      }
+    }
+  }
+
+  return (result) {0, 0};
 }
 
 void
@@ -766,18 +1008,11 @@ term_schedule_search_update(void)
 }
 
 void
-term_schedule_search_partial_update(void)
-{
-  if (term.results.update_type == NO_UPDATE) {
-    term.results.update_type = PARTIAL_UPDATE;
-  }
-}
-
-void
 term_clear_results(void)
 {
   term.results.results = renewn(term.results.results, 16);
-  term.results.current = 0;
+  term.results.current = (result) {0, 0};
+  term.results.range_begin = term.results.range_end = 0;
   term.results.length = 0;
   term.results.capacity = 16;
 }
@@ -794,47 +1029,103 @@ term_clear_search(void)
   term.results.xquery_length = 0;
 }
 
+/*
+   After term_reflow has expanded the scrollback buffer beyond its maximum 
+   (for shunting lines to be rewrapped), it should trim the buffer again 
+   to its limit.
+ */
 static void
-scrollback_push(uchar *line)
+scrollback_trim(void)
 {
-  if (term.sblines == term.sblen) {
+  // Trim scrollback buffer back to max size after shunting reflow lines
+  //printf("scrollback_trim %p %d len %d lines %d tmp %d pos %d disp %d\n", line, newrows, term.sbsize, term.sblines, term.tempsblines, term.sbpos, term.disptop);
+  uchar **scrollback = newn(uchar *, cfg.scrollback_lines);
+  if (!scrollback)
+    return;
+  int new_sblines = 0;
+  for (int i = 0; i < term.sblines; i++) {
+    uchar *cline = term.scrollback[(i + term.sbpos) % term.sblines];
+    if (i < term.sblines - cfg.scrollback_lines)
+      free(cline);
+    else
+      scrollback[new_sblines++] = cline;
+  }
+  free(term.scrollback);
+  term.scrollback = scrollback;
+  term.sblines = new_sblines;
+  term.sbpos = new_sblines;
+  term.sbsize = cfg.scrollback_lines;
+  term.tempsblines = term.sblines;
+
+  if (term.sbpos == term.sbsize)
+    term.sbpos = 0;
+  //printf("-> scrollback_trim len %d lines %d tmp %d pos %d disp %d\n", term.sbsize, term.sblines, term.tempsblines, term.sbpos, term.disptop);
+}
+
+static void
+scrollback_push(uchar *line, int newrows)
+{
+  //printf("scrollback_push %p %d len %d lines %d tmp %d pos %d disp %d\n", line, newrows, term.sbsize, term.sblines, term.tempsblines, term.sbpos, term.disptop);
+  if (term.sbpos == term.sbsize)
+    term.sbpos = 0;
+  if (term.sblines == term.sbsize) {
     // Need to make space for the new line.
-    if (term.sblen < cfg.scrollback_lines) {
+    if (newrows || term.sbsize < cfg.scrollback_lines) {
+      assert(newrows || term.sbpos == 0);
       // Expand buffer
-      assert(term.sbpos == 0);
-      int new_sblen = min(cfg.scrollback_lines, term.sblen * 3 + 1024);
-      term.scrollback = renewn(term.scrollback, new_sblen);
-      term.sbpos = term.sblen;
-      term.sblen = new_sblen;
+      int new_sbsize = newrows
+                      ? (term.sbsize + newrows) * 2
+                      : min(cfg.scrollback_lines, term.sbsize * 3 + 1024);
+      uchar **scrollback = renewn(term.scrollback, new_sbsize);
+      if (!scrollback)
+        goto scrollback_fallback;
+      if (term.sbpos) {
+        // Need to expand full buffer which may have wrapped around, so 
+        // we need to rebase the ring buffer for well-sorted linear expansion;
+        // use expanded part of buffer for shunting
+        for (int i = 0; i < term.sblines; i++)
+          scrollback[term.sbsize + i] = scrollback[(term.sbpos + i) % term.sbsize];
+        for (int i = 0; i < term.sblines; i++)
+          scrollback[i] = scrollback[term.sbsize + i];
+      }
+      term.scrollback = scrollback;
+      term.sbpos = term.sbsize;
+      term.sbsize = new_sbsize;
     }
-    else if (term.sblines) {
-      // Throw away the oldest line
+    else
+  scrollback_fallback:  // whoo! this works
+    if (term.sblines) {
+      // Throw away the oldest line;
+      // sbpos needs to be normalized % sbsize here
       free(term.scrollback[term.sbpos]);
       term.sblines--;
     }
-    else
+    else {
       return;
+    }
   }
-  assert(term.sblines < term.sblen);
-  assert(term.sbpos < term.sblen);
+  assert(term.sblines < term.sbsize);
+  assert(term.sbpos < term.sbsize);
   term.scrollback[term.sbpos++] = line;
-  if (term.sbpos == term.sblen)
+  if (term.sbpos == term.sbsize)
     term.sbpos = 0;
   term.sblines++;
   if (term.tempsblines < term.sblines)
     term.tempsblines++;
+  //printf("-> scrollback_push len %d lines %d tmp %d pos %d disp %d\n", term.sbsize, term.sblines, term.tempsblines, term.sbpos, term.disptop);
 }
 
 static uchar *
 scrollback_pop(void)
 {
   assert(term.sblines > 0);
-  assert(term.sbpos < term.sblen);
+  assert(term.sbpos < term.sbsize);
   term.sblines--;
   if (term.tempsblines)
     term.tempsblines--;
   if (term.sbpos == 0)
-    term.sbpos = term.sblen;
+    term.sbpos = term.sbsize;
+  //printf("-> scrollback_pop len %d lines %d tmp %d pos %d disp %d\n", term.sbsize, term.sblines, term.tempsblines, term.sbpos - 1, term.disptop);
   return term.scrollback[--term.sbpos];
 }
 
@@ -848,9 +1139,410 @@ term_clear_scrollback(void)
     free(scrollback_pop());
   free(term.scrollback);
   term.scrollback = 0;
-  term.sblen = term.sblines = term.sbpos = 0;
+  term.sbsize = term.sblines = term.sbpos = 0;
   term.tempsblines = 0;
   term.disptop = 0;
+}
+
+#define dont_debug_scrollback 1
+
+// mark cursor position in order not to lose it during reflow
+#define TATTR_MARKCURS (TATTR_ACTCURS | TATTR_PASCURS)
+// determine effective line length trimmed to printed characters;
+// need to include ATTR_BOLD | ATTR_DIM for proper TAB unwrapping
+// need to include TATTR_MARKCURS for proper detection of final cursor
+#define attr_clear(attr) ((attr & (TATTR_CLEAR | ATTR_BOLD | ATTR_DIM | TATTR_MARKCURS)) == TATTR_CLEAR)
+
+#ifdef debug_scrollback
+
+static void
+printline(char * tag, termline * tl, int col)
+{
+  char * sep = "[7m▒[27m";  // ┃┇┋▒
+  printf("%s%s", tag, sep);
+  if (col < 0) {
+    col = tl->cols;
+    while (col && attr_clear(tl->chars[col - 1].attr.attr))
+      col --;
+  }
+  for (int j = 0; j <= col; j++)
+    printf("%lc", tl->chars[j].chr);
+  printf("%s%04X %d/%d wr %d tmp %d cc %d\n", sep, tl->lattr, tl->cols, tl->size, tl->wrappos, tl->temporary, tl->cc_free);
+}
+
+static void
+printsb(char * tag)
+{
+  printf("sb %s[%d@%d]-------------\n", tag, term.sblines, term.sbpos);
+  for (int i = 0; i < term.sblines; i++) {
+    uchar *cline = term.scrollback[(i + term.sbpos) % term.sblines];
+    termline *line = decompressline(cline, null);
+    printline("=", line, -1);
+    freeline(line);
+  }
+  printf("--------------------\n");
+}
+
+static void
+printsc(char * tag, char * ltag, termline **lines, int rows)
+{
+  printf("%s[%d]-------------\n", tag, rows);
+  for (int i = 0; i < rows; i++) {
+    printline(ltag, lines[i], -1);
+  }
+  printf("--------------------\n");
+}
+
+#else
+#define printline(tag, tl, col)	
+#define printsb(tag)	
+#define printsc(tag, ltag, lines, rows)	
+#endif
+
+/*
+ * Line rebreaking for screen and scrollback lines
+ */
+static void
+term_reflow(int newrows, int newcols)
+{
+  // First, mark the current cursor position;
+  // also clear old marks elsewhere;
+  // to be sure to catch the cursor position, use the new height 
+  // (lines have already been rearranged) and respective widths of each line;
+  // in case of remaining problems, we couldl further move this marking 
+  // to the beginning of term_resize()
+  for (int i = newrows - 1; i >= 0; i--)
+    for (int j = term.lines[i]->cols - 1; j >= 0; j--)
+      if (i == term.curs.y && j == term.curs.x)
+        term.lines[i]->chars[j].attr.attr |= TATTR_MARKCURS;
+      else
+        term.lines[i]->chars[j].attr.attr &= ~TATTR_MARKCURS;
+
+  // Push all screen lines to scrollback buffer
+  for (int i = 0; i < newrows; i++) {
+    termline *line = term.lines[i];
+    scrollback_push(compressline(line), newrows);
+    freeline(line);
+  }
+  printsb("<rewrap");
+
+  // Handle old scrollback buffer in local variables
+  // so we can use scrollback_push to store it back 
+  // with implicit size management
+  uchar **scrollback = term.scrollback;
+  int sbpos = term.sbpos;
+  int sblines = term.sblines;
+  // Reset scrollback buffer (don't clear contents, which we hold locally)
+  term.scrollback = 0;
+  term.sbsize = term.sblines = term.sbpos = 0;
+  term.tempsblines = 0;
+
+  int cursor_scrolled = 0;
+  void cursor_scroll(termline *tl)
+  {
+    for (int k = 0; k < tl->cols; k++)
+      if (tl->chars[k].attr.attr & TATTR_MARKCURS) {
+        cursor_scrolled = 0;
+        break;
+      }
+    cursor_scrolled ++;
+  }
+
+  // Reflow scrollback buffer
+  int i = 0;
+  while (i < sblines) {
+#ifdef wrapbuf
+#warning missing wrap buffer size management
+    termline *linebuf[99];  // wrap buffer
+    int lin = 0;
+#define inbuf linebuf[lin]
+#else
+    termline * inbuf;
+#endif
+
+    // fetch (without resizeline)
+    uchar *cline = scrollback[(i + sbpos) % sblines];
+    inbuf = decompressline(cline, null);
+    int actcols = inbuf->cols;
+    // determine actual non-empty columns
+    while (actcols && attr_clear(inbuf->chars[actcols - 1].attr.attr))
+      actcols --;
+
+    if ((!(inbuf->lattr & LATTR_WRAPPED) && actcols <= newcols)
+        || !(inbuf->lattr & LATTR_REWRAP)
+       )
+    {
+      // shortcut: skip multiple lines handling
+
+      if (newcols <= inbuf->cols)
+        // skip compressline()
+        scrollback_push(cline, newrows);
+      else {  // need to resizeline when widening
+        free(cline);
+        resizeline(inbuf, newcols);
+        scrollback_push(compressline(inbuf), newrows);
+      }
+      cursor_scroll(inbuf);
+      freeline(inbuf);
+
+      i ++;
+      continue;
+    }
+
+    free(cline);
+
+    int j = 0;  // wrapped lines (buffer) counter
+#ifdef wrapbuf
+    while ((linebuf[j]->lattr & LATTR_WRAPPED) && i + j + 1 < sblines) {
+      j++;
+      uchar *cline = scrollback[(i + j + sbpos) % sblines];
+      linebuf[j] = decompressline(cline, null);
+      free(cline);
+      if (!(linebuf[j]->lattr & LATTR_WRAPCONTD)) {
+        // drop non-continuing line (could save for later)
+        freeline(linebuf[j]);
+        j--;
+        // drop stale wrapped flag from previous line
+        linebuf[j]->lattr &= ~LATTR_WRAPPED;
+        // finish wrapped lines group
+        break;
+      }
+    }
+    printsc("wrapbuf", "~", linebuf, j + 1);
+
+#ifdef skip_rewrap
+    // ignore rewrap and clear out input wrap buffer, for testing
+    for (int jj = 0; jj <= j; jj++) {
+      scrollback_push(compressline(linebuf[jj]), newrows);
+      cursor_scroll(linebuf[jj]);
+      freeline(linebuf[jj]);
+    }
+    term.virtuallines += j;
+    goto wrapped;
+#endif
+
+    bool advance_inbuf()
+    {
+      if (lin >= j)
+        return false;
+      lin ++;
+      return true;
+    }
+#else
+    bool advance_inbuf()
+    {
+      if ((inbuf->lattr & LATTR_WRAPPED) && i + j + 1 < sblines) {
+        // drop current line
+        freeline(inbuf);
+        // advance to next line
+        j++;
+        uchar *cline = scrollback[(i + j + sbpos) % sblines];
+        inbuf = decompressline(cline, null);
+        //free(cline) unless the fetch is reverted...
+        if (!(inbuf->lattr & LATTR_WRAPCONTD)) {
+          // drop non-continuing line (could save for later)
+          freeline(inbuf);
+          // revert look-ahead
+          j--;
+          // could we drop stale wrapped flag from previous line?
+          // restore previous inbuf; inbuf->lattr &= ~LATTR_WRAPPED; ...?
+
+          // cancel wrapped lines group
+          inbuf = 0;
+          return false;
+        }
+        else {
+          free(cline);
+          return true;
+        }
+      }
+      else {
+        // drop current line
+        freeline(inbuf);
+        // finish wrapped lines group
+        inbuf = 0;
+        return false;
+      }
+    }
+#endif
+
+    // now do the actual reflow of a wrapped line group
+    int incol = -1;
+    termline *outbuf = 0;  // rewrap buffer
+    int lout = -1;
+    int outcol = newcols;
+    do {
+      bool do_wrap = outcol >= newcols;
+      if (outcol == newcols - 1 && incol < actcols - 1
+          && inbuf->chars[incol + 1].chr == UCSWIDE
+         )
+      {
+        do_wrap = true;
+        if (lout >= 0)
+          outbuf->lattr |= LATTR_WRAPPED2;
+      }
+      if (do_wrap) {
+        // flush current outbuf line, then make a new one
+        if (lout >= 0) {
+          outbuf->lattr |= LATTR_WRAPPED;
+          scrollback_push(compressline(outbuf), newrows);
+          term.virtuallines++;
+          cursor_scroll(outbuf);
+          //printline("↑", outbuf, -1);
+          freeline(outbuf);
+        }
+
+        // make a new outbuf line
+        lout = 0;
+        outbuf = newline(newcols, true);
+        outbuf->lattr = inbuf->lattr & ~(LATTR_WRAPPED | LATTR_WRAPPED2 | LATTR_WRAPCONTD);
+        // position output column
+        if (incol >= 0) {
+          // subsequent lines
+          outcol = 0;
+          outbuf->lattr |= LATTR_WRAPCONTD;
+        }
+        else
+          // first line
+          outcol = -1;  // include initial combining character
+
+        // char copy follows line allocation => last wrapped line is not empty
+      }
+      copy_termchar(outbuf, outcol, &inbuf->chars[incol]);
+      outcol ++;
+      incol ++;
+      if (incol >= actcols) {
+        // fetch a new inbuf line
+        if (!advance_inbuf())
+          break;
+
+        incol = 0;
+        actcols = inbuf->cols;
+        // determine actual non-empty columns
+        while (actcols && attr_clear(inbuf->chars[actcols - 1].attr.attr))
+          actcols --;
+      }
+    } while (true);
+    // flush last outbuf line
+    if (outbuf) {
+      scrollback_push(compressline(outbuf), newrows);
+      cursor_scroll(outbuf);
+      //printline("↑", outbuf, -1);
+      freeline(outbuf);
+    }
+    //printf("end rewrap loop %d -> %d\n", j, lout);
+
+#ifdef skip_rewrap
+  wrapped:
+#endif
+
+    i += j + 1;
+    term.virtuallines -= j;
+  }
+  free(scrollback);
+  printsb(">rewrap");
+
+  // Rebase graphics positions.
+  // Make sure the anchor position (top-left cell of image) is registered 
+  // as the new image position:
+  // scan lines right to left, scan scrollback buffer bottom to top, so the 
+  // top-left cell of each image will be checked last and get registered; 
+  // this could be changed to a forward approach (reducing image searches) 
+  // if images already handled were remembered in a cache, or marked in 
+  // the image list somehow...
+  for (int i = term.sblines - 1; i >= 0; i--) {
+    uchar *cline = term.scrollback[(i + term.sbpos) % term.sblines];
+    termline *line = decompressline(cline, null);
+    for (int j = line->cols - 1; j >= 0; j--) {
+      termchar * tc = &line->chars[j];
+      if (tc->chr == SIXELCH) {
+        imglist * cur = 0;
+        for (cur = term.imgs.first; cur; cur = cur->next) {
+          if (cur->imgi == tc->attr.imgi)
+            break;
+          //if (cur->top - term.virtuallines >= topline)
+          //  cur->top += lines;
+        }
+        if (cur) {
+          //printf("%lld:%d -> @%d:%d (virt %lld dtop %d) imgi %d %d\n", cur->top, cur->left, i, j, term.virtuallines, term.disptop, tc->attr.imgi, cur->imgi);
+          cur->left = cur->left;
+          cur->top = cur->top;
+        }
+      }
+    }
+#ifdef change_sixel_cells
+    if (changed_line) {
+      uchar * nline = compressline(line);
+      if (nline) {
+        term.scrollback[(i + term.sbpos) % term.sblines] = nline;
+        free(cline);
+      }
+    }
+#endif
+    freeline(line);
+  }
+  term.virtuallines = term.sblines - newrows;
+
+  // Pop all screen lines back from scrollback buffer;
+  // we need to handle the case that, after reflow, there are fewer lines 
+  // available from the scrollback than we need to fill the screen;
+  // as a simple solution, we just align the restored lines towards the bottom
+  // and fill up above with empty lines;
+  // alternatively, we could push additional empty lines into the scrollback 
+  // before pulling back a full screen, in that case from the top and 
+  // handling screen lines as a stack, and apply some final fixing ...
+  for (int i = newrows - 1; i >= 0; i--) {
+#ifdef restore_to_top
+#warning this "fix" does not work after having pushed additional lines...
+    if (i >= term.sblines)
+      term.lines[i] = newline(newcols, false);
+    else
+#endif
+    if (term.sblines > 0) {
+      uchar *cline = scrollback_pop();
+      termline *line = decompressline(cline, null);
+      resizeline(line, newcols);  // to be safe; probably not needed here
+      //printline("↓", line, -1);
+      free(cline);
+      line->temporary = false;  /* reconstituted line is now real */
+      // don't free(term.lines[i]);  // freed above (pushing all screen lines)
+      term.lines[i] = line;
+    }
+    else {
+      term.lines[i] = newline(newcols, false);
+    }
+  }
+  printsc("screen >rewrap", ":", term.lines, newrows);
+
+  // Last, find the marked cursor position and target current cursor to it;
+  // go backwards in case an old cursor mark, that had been scrolled out 
+  // and thus not cleared, was now scrolled in again;
+  // use new size for scanning.
+  // Fallback in case cursor was wrapped / scrolled out of screen:
+  term.curs.y = 0;
+  term.curs.x = 0;
+  // search for cursor marker
+  for (int i = newrows - 1; i >= 0; i--)
+    // need to search whole stored line, even if longer than screen width,
+    // in order to find zoomed-out cursor position
+    for (int j = term.lines[i]->cols - 1; j >= 0; j--)
+      if (term.lines[i]->chars[j].attr.attr & TATTR_MARKCURS) {
+        term.curs.y = i;
+        term.curs.x = min(j, newcols - 1);
+        term.lines[i]->chars[j].attr.attr &= ~TATTR_MARKCURS;
+        i = 0;
+        break;
+      }
+
+  // Trim scrollback buffer to max config size
+  scrollback_trim();
+
+  if (cursor_scrolled > newrows) {
+    // scroll back to display previous cursor position
+    //term.new_disptop = newrows - cursor_scrolled;  // need to check for existence
+    // currently cancelled in term_resize()
+    //term_scroll(0, ...);  // do this later, would crash here
+  }
 }
 
 /*
@@ -860,6 +1552,7 @@ void
 term_resize(int newrows, int newcols)
 {
   trace_resize(("--- term_resize %d %d\n", newrows, newcols));
+
   bool on_alt_screen = term.on_alt_screen;
   term_switch_screen(0, false);
 
@@ -869,6 +1562,31 @@ term_resize(int newrows, int newcols)
   term.marg_bot = newrows - 1;
   term.marg_left = 0;
   term.marg_right = newcols - 1;
+
+  // Disable status area temporarily
+  // to avoid the complexity to consider it during resize or even reflow;
+  // to round up, we will finally clear it explicitly, so we also 
+  // do not need to save status area contents;
+  // ref: DEC clears status line on DECCOLM which we generalize to resize
+  int save_st_rows = term.st_rows;
+  bool save_st_act = term.st_active;
+  // adjust status line state
+  if (term.st_rows) {
+    if (save_st_act) {
+      term_switch_status(false);
+    }
+    for (int i = term.rows; i < term_allrows; i++) {
+      freeline(term.lines[i]);
+      term.lines[i] = newline(newcols, false);
+    }
+    newrows += term.st_rows;
+
+    // remove status area during resize
+    term.rows = term_allrows;
+    term.st_rows = 0;
+  }
+  // remember y of "normal" area
+  short old_term_y = term.curs.y;
 
  /*
   * Resize the screen and scrollback. We only need to shift
@@ -892,7 +1610,6 @@ term_resize(int newrows, int newcols)
 
   termlines *lines = term.lines;
   term_cursor *curs = &term.curs;
-  term_cursor *saved_curs = &term.saved_cursors[term.on_alt_screen];
 
   // Shrink the screen if newrows < rows
   if (newrows < term.rows) {
@@ -903,7 +1620,7 @@ term_resize(int newrows, int newcols)
     // Push removed lines into scrollback
     for (int i = 0; i < store; i++) {
       termline *line = lines[i];
-      scrollback_push(compressline(line));
+      scrollback_push(compressline(line), 0);
       term.virtuallines++;
       freeline(line);
     }
@@ -917,7 +1634,6 @@ term_resize(int newrows, int newcols)
 
     // Adjust cursor position
     curs->y = max(0, curs->y - store);
-    saved_curs->y = max(0, saved_curs->y - store);
 
     // Adjust image position
     term.virtuallines += min(0, store);
@@ -928,7 +1644,9 @@ term_resize(int newrows, int newcols)
   // Expand the screen if newrows > rows
   if (newrows > term.rows) {
     int added = newrows - term.rows;
+    // determine how many lines to restore from scrollback
     int restore = min(added, term.tempsblines);
+    // determine how many empty lines to add
     int create = added - restore;
 
     // Fill bottom of screen with blank lines
@@ -949,7 +1667,6 @@ term_resize(int newrows, int newcols)
 
     // Adjust cursor position
     curs->y += restore;
-    saved_curs->y += restore;
 
     // Adjust image position
     term.virtuallines -= restore;
@@ -958,6 +1675,10 @@ term_resize(int newrows, int newcols)
   // Resize lines
   for (int i = 0; i < newrows; i++)
     resizeline(lines[i], newcols);
+
+  // Reflow screen and scrollback buffer to new width
+  if (cfg.rewrap_on_resize && newcols != term.cols)
+    term_reflow(newrows, newcols);
 
   // Make a new displayed text buffer.
   if (term.displines) {
@@ -990,8 +1711,11 @@ term_resize(int newrows, int newcols)
     term.tabs[i] = term.newtab && (i % 8 == 0);
 
   // Check that the cursor positions are still valid.
-  assert(0 <= curs->y && curs->y < newrows);
-  assert(0 <= saved_curs->y && saved_curs->y < newrows);
+  //assert(0 <= curs->y && curs->y < newrows);
+  // rather be on the safe side:
+
+  // Ensure valid cursor positions.
+  curs->y = min(curs->y, newrows - 1);
   curs->x = min(curs->x, newcols - 1);
 
   curs->wrapnext = false;
@@ -1003,6 +1727,48 @@ term_resize(int newrows, int newcols)
   term.rows0 = newrows;
   term.cols0 = newcols;
 
+  // Status area handling
+
+  // limit status size
+  // here term.rows still include term.st_rows
+  if (save_st_rows >= term.rows / 2) {
+    save_st_rows = max(0, term.rows / 2 - 1);
+    if (!save_st_rows) {
+      // clear status mode
+      save_st_act = false;
+      term.st_type = 0;
+    }
+  }
+  // restore status geometry
+  term.rows -= save_st_rows;
+  term.st_rows = save_st_rows;
+  // fix bottom margin in case status area got resized
+  newrows = term.rows;
+  term.marg_bot = newrows - 1;
+  // restore status line area
+  if (save_st_rows) {
+    for (int i = term.rows; i < term_allrows; i++) {
+      freeline(term.lines[i]);
+      term.lines[i] = newline(newcols, false);
+    }
+    // scroll cursor position out of status line area
+    int n = old_term_y - term.rows + 1;
+    if (n > 0) {
+      // this adjustment must be done after fixing rows/st_rows
+      // but before restoring st_active
+      term_do_scroll(term.marg_top, term.marg_bot + save_st_rows, n, true);
+      curs->y = max(0, curs->y - n);
+    }
+    // restore status mode
+    // must call after restoring (and adjusting) term.rows
+    term_switch_status(save_st_act);
+  }
+  // clear status area on resize (as DEC clears on DECCOLM);
+  // also this simplifies handling above
+  if (term.st_type == 2)
+    term_clear_status();
+
+  // Return to alternate screen
   term_switch_screen(on_alt_screen, false);
 }
 
@@ -1024,6 +1790,14 @@ term_switch_screen(bool to_alt, bool reset)
   term.lines = term.other_lines;
   term.other_lines = oldlines;
 
+  // keep status area (xterm 373)
+  if (term.st_type == 2)
+    for (int i = term.rows; i < term_allrows; i++) {
+      freeline(term.lines[i]);
+      term.lines[i] = term.other_lines[i];
+      term.other_lines[i] = newline(term.cols, false);
+    }
+
   /* swap image list */
   imglist * first = term.imgs.first;
   imglist * last = term.imgs.last;
@@ -1037,6 +1811,136 @@ term_switch_screen(bool to_alt, bool reset)
 
   if (to_alt && reset)
     term_erase(false, false, true, true);
+}
+
+/*
+ * Clear status area.
+ */
+void
+term_clear_status(void)
+{
+  term_cursor_reset(&term.st_other_curs);
+  term_cursor_reset(&term.st_saved_curs);
+
+  // clear status lines
+  for (int i = term.rows; i < term_allrows; i++) {
+    freeline(term.lines[i]);
+    term.lines[i] = newline(term.cols, false);
+  }
+
+  // home status cursor position
+  if (term.st_active) {
+    term.curs.y = term.rows;
+    term.curs.x = 0;
+  }
+  else {
+    term.st_other_curs.y = 0;  // saved status cursor is normalized to 0
+    term.st_other_curs.x = 0;
+  }
+}
+
+/*
+ * Set status type.
+ */
+void
+term_set_status_type(int type, int lines)
+{
+  /*
+    Unlike xterm, we do not resize the window when changing 
+    status area size; this does not only avoid trouble in full-screen 
+    or maximized mode, it also complies with DEC (VT420 p. 221, VT520 p. 5-147):
+	Notes on DECSSDT
+	• If you select no status line (Ps = 0), the terminal uses the 
+	  line as an additional user window line to display data.
+    As an extension, mintty supports a multi-line status area, 
+    configured with a second parameter to DECSSDT 2.
+    The suggestion of such an option could be interpreted from VT520 p. 2-35:
+	[The number of data display lines visible, not counting any status lines.]
+    although that may just be referring to status lines of multiple sessions.
+  */
+  int old_st_rows = term.st_rows;
+  switch (type) {
+    when 0: 
+            term_clear_status();
+            term.st_rows = 0;
+    when 1: 
+            if (term.st_type == 2)
+              term_clear_status();
+            term.st_type = 1; term.st_rows = 1;
+    when 2: 
+            if (term.st_type != 2)
+              term_clear_status();
+            term.st_type = 2;
+            if (lines) {
+              if (lines >= term_allrows / 2)
+                term.st_rows = max(0, term_allrows / 2 - 1);
+              else
+                term.st_rows = lines;
+            }
+            else
+              term.st_rows = 1;
+    otherwise: return;
+  }
+  if (!term.st_rows) {
+    term.st_type = 0;
+    term_switch_status(false);
+  }
+  if (term.st_type != 2)
+    term_switch_status(false);
+  if (term.st_rows != old_st_rows) {
+    // don't need to win_adapt_term_size(false, false);
+    int newrows = term.rows + old_st_rows - term.st_rows;
+    // scroll cursor position out of status line area
+    int n = term.curs.y - newrows + 1;
+    if (n > 0) {
+      bool old_st_act = term.st_active;
+      term_switch_status(false);
+      term_do_scroll(term.marg_top, term.marg_bot, n, true);
+      // fix up
+      term.curs.y = max(0, term.curs.y - n);
+      term_switch_status(old_st_act);
+    }
+    // don't need to term_resize(newrows, -term.cols);
+    term.rows = newrows;
+    term.marg_top = 0;
+    term.marg_bot = newrows - 1;
+    term.marg_left = 0;
+    term.marg_right = term.cols - 1;
+    // clear status lines
+    for (int i = term.rows; i < term_allrows; i++) {
+      freeline(term.lines[i]);
+      term.lines[i] = newline(term.cols, false);
+    }
+    // notify child process
+    struct winsize ws = {newrows, term.cols, term.cols * cell_width, newrows * cell_height};
+    child_resize(&ws);
+  }
+}
+
+/*
+ * Swap active status line / main display.
+ */
+void
+term_switch_status(bool status_line)
+{
+  if (status_line == term.st_active)
+    return;
+
+  term.st_active = status_line;
+
+  term_cursor oldcurs = term.curs;
+  term.curs = term.st_other_curs;
+  // saved status cursor line is normalized to 0, adjust
+  if (status_line) {
+    term.curs.y += term.rows;
+    if (term.curs.y >= term_allrows)
+      term.curs.y = term_allrows - 1;
+  }
+  else
+    oldcurs.y -= term.rows;
+  term.st_other_curs = oldcurs;
+
+  term_update_cs();
 }
 
 /*
@@ -1083,6 +1987,8 @@ term_check_boundary(int x, int y)
 
 /*
    Scroll the actual display (window contents and its cache).
+   NOTE: This was an incomplete and initially unsuccessful attempt 
+   to implement smooth scrolling (DECSCLM, DECSET 4).
  */
 static int dispscroll_top, dispscroll_bot, dispscroll_lines = 0;
 
@@ -1108,12 +2014,13 @@ disp_scroll(int topscroll, int botscroll, int scrolllines)
 static void
 disp_do_scroll(int topscroll, int botscroll, int scrolllines)
 {
-  if (!win_do_scroll(topscroll, botscroll, scrolllines))
+  bool down = scrolllines < 0;
+  int lines = min(abs(scrolllines), term.rows);
+
+  if (!win_do_scroll(topscroll, botscroll, lines))
     return;
 
   // update display cache
-  bool down = scrolllines < 0;
-  int lines = abs(scrolllines);
   termline * recycled[lines];
   if (down) {
     for (int l = 0; l < lines; l++) {
@@ -1158,6 +2065,13 @@ term_do_scroll(int topline, int botline, int lines, bool sb)
   if (term.hovering) {
     term.hovering = false;
     win_update(true);
+  }
+
+  // Support scrolling within (multi-line) status area
+  if (term.st_active) {
+    topline = term.rows;
+    botline = term_allrows - 1;
+    sb = false;
   }
 
   if (term.lrmargmode && (term.marg_left || term.marg_right != term.cols - 1)) {
@@ -1218,6 +2132,19 @@ term_do_scroll(int topline, int botline, int lines, bool sb)
     memmove(top + lines, top, moved_lines * sizeof(termline *));
     memcpy(top, recycled, sizeof recycled);
 
+    // unscroll: Restore lines from scrollback
+    if (sb && topline == 0 && !term.on_alt_screen && cfg.scrollback_lines) {
+      for (int i = topline + lines - 1; i >= topline && term.sblines > 0; i--) {
+        uchar *cline = scrollback_pop();
+        termline *line = decompressline(cline, null);
+        resizeline(line, term.cols);  // ensure sufficient line length
+        free(cline);
+        line->temporary = false;  /* reconstituted line is now real */
+        freeline(term.lines[i]);
+        term.lines[i] = line;
+      }
+    }
+
     // Move selection markers if they're within the scroll region
     void scroll_pos(pos *p) {
       if (!term.show_other_screen && p->y >= topline && p->y < botline) {
@@ -1245,7 +2172,7 @@ term_do_scroll(int topline, int botline, int lines, bool sb)
     // normal screen and scrollback is actually enabled.
     if (sb && topline == 0 && !term.on_alt_screen && cfg.scrollback_lines) {
       for (int i = 0; i < lines; i++)
-        scrollback_push(compressline(term.lines[i]));
+        scrollback_push(compressline(term.lines[i]), 0);
 
       // Shift viewpoint accordingly if user is looking at scrollback
       if (term.disptop < 0)
@@ -1284,6 +2211,10 @@ clear_wrapcontd(termline * line, int y)
   }
 }
 
+// consider status area for erasing
+#define top_y (term.st_active ? term.rows : 0)
+#define bot_y (term.st_active ? term_allrows : term.rows)
+
 /*
  * Erase a large portion of the screen: the whole screen, or the
  * whole line, or parts thereof.
@@ -1309,33 +2240,31 @@ term_erase(bool selective, bool line_only, bool from_begin, bool to_end)
   }
 
   if (from_begin)
-    start = (pos){.y = line_only ? curs->y : 0, .x = 0};
+    start = (pos){.y = line_only ? curs->y : top_y, .x = 0};
   else
     start = (pos){.y = curs->y, .x = curs->x};
 
   if (to_end)
-    end = (pos){.y = line_only ? curs->y + 1 : term.rows, .x = 0};
+    end = (pos){.y = line_only ? curs->y + 1 : bot_y, .x = 0};
   else
     end = (pos){.y = curs->y, .x = curs->x}, incpos(end);
 
   if (!from_begin || !to_end)
     term_check_boundary(curs->x, curs->y);
 
-#ifdef scrollback_erase_lines
-#warning this behaviour is not compatible with xterm
  /* Lines scrolled away shouldn't be brought back on if the terminal resizes. */
   bool erasing_lines_from_top =
     start.y == 0 && start.x == 0 && end.x == 0 && !line_only && !selective;
 
-  if (erasing_lines_from_top && 
+  if (cfg.erase_to_scrollback && erasing_lines_from_top && 
       !(term.lrmargmode && (term.marg_left || term.marg_right != term.cols - 1))
      )
   {
    /* If it's a whole number of lines, starting at the top, and
     * we're fully erasing them, erase by scrolling and keep the
-    * lines in the scrollback. */
+    * lines in the scrollback. This behaviour is not compatible with xterm. */
     int scrolllines = end.y;
-    if (end.y == term.rows) {
+    if (end.y == bot_y) {
      /* Shrink until we find a non-empty row. */
       scrolllines = term_last_nonempty_line() + 1;
     }
@@ -1344,13 +2273,11 @@ term_erase(bool selective, bool line_only, bool from_begin, bool to_end)
 
    /* After an erase of lines from the top of the screen, we shouldn't
     * bring the lines back again if the terminal enlarges (since the user or
-    * application has explictly thrown them away). */
+    * application has explicitly thrown them away). */
     if (!term.on_alt_screen)
       term.tempsblines = 0;
   }
-  else
-#endif
-  {
+  else {
     termline *line = term.lines[start.y];
     while (poslt(start, end)) {
       int cols = min(line->cols, line->size);
@@ -1365,12 +2292,12 @@ term_erase(bool selective, bool line_only, bool from_begin, bool to_end)
                !(line->chars[start.x].attr.attr & ATTR_PROTECTED)
               )
       {
-        line->chars[start.x] = term.erase_char;
-        line->chars[start.x].attr.attr |= TATTR_CLEAR;
+        line->chars[start.x] = 
+          term.erase_to_screen ? basic_erase_char : term.erase_char;
         if (!start.x)
           clear_cc(line, -1);
       }
-      if (inclpos(start, cols) && start.y < term.rows)
+      if (inclpos(start, cols) && start.y < bot_y)
         line = term.lines[start.y];
     }
   }
@@ -1388,8 +2315,8 @@ struct emoji_base {
   void * buf;  // cached image
   int buflen;  // cached image
   struct {
-    uint tags: 11;
     xchar ch: 21;
+    uint tags: 11;
   } __attribute__((packed));
 };
 
@@ -1430,8 +2357,10 @@ emoji_tags(int i)
 
 #ifdef echar16
 // emoji component encoding to wchar to save half the table size
+//	E0XXX	6XXX
+//	1FXXX	5XXX
 #define echar wchar
-#define ee(x) x >= 0xE0000 ? (wchar)((x & 0xFFF) + 0x6000): x >= 0x1F000 ? (wchar)((x & 0xFFF) + 0x5000) : x
+#define ee(x) x >= 0xE0000 ? (wchar)((x & 0xFFF) + 0x6000) : x >= 0x1F000 ? (wchar)((x & 0xFFF) + 0x5000) : x
 #define ed(x) ((x >> 12) == 6 ? (xchar)x + (0xE0000 - 0x6000) : (x >> 12) == 5 ? (xchar)x + (0x1F000 - 0x5000) : x)
 #else
 #define echar xchar
@@ -1440,11 +2369,11 @@ emoji_tags(int i)
 #endif
 
 struct emoji_seq {
-  wchar * efn;  // image filename
-  void * buf;   // cached image
-  int buflen;   // cached image
-  echar chs[8]; // code points
-  char * name;  // short name in emoji-sequences.txt, emoji-zwj-sequences.txt
+  wchar * efn;   // image filename
+  void * buf;    // cached image
+  int buflen;    // cached image
+  echar chs[10]; // code points
+  char * name;   // short name in emoji-sequences.txt, emoji-zwj-sequences.txt
 };
 
 struct emoji_seq emoji_seqs[] = {
@@ -1452,10 +2381,23 @@ struct emoji_seq emoji_seqs[] = {
 #include "emojiseqs.t"
 };
 
+struct emoji_dyn {
+  wchar * efn;   // image filename
+  void * buf;    // cached image
+  int buflen;    // cached image
+  uint len;      // code points
+  echar * chs;   // code points
+};
+
+struct emoji_dyn * emoji_dyns = 0;
+static uint nemoji_dyns = 0;
+
 struct emoji {
   int len: 7;   // emoji width in character cells (== # termchar positions)
-  bool seq: 1;  // true: from emoji_seq, false: from emoji_base
-  int idx: 24;  // index in either emoji_seq or emoji_base
+  uint seq: 2;  // true: from emoji_seq, false: from emoji_base
+                // 2: regional indicators 1F1E6.. 1F1FF
+                // 3: tag sequence 1F3F4 E00XX ... E007F
+  int idx: 23;  // index in either of emoji_bases, emoji_seqs, emoji_dyns
 } __attribute__((packed));
 
 #define dont_debug_emojis 1
@@ -1485,6 +2427,20 @@ clear_emoji_data()
       emoji_seqs[i].buflen = 0;
     }
   }
+  // don't clear emoji_dyns, assuming they only reside in the 'common' style
+#if 0
+  for (uint i = 0; i < nemoji_dyns; i++) {
+    if (emoji_dyns[i].efn)
+      free(emoji_dyns[i].efn);
+    if (emoji_dyns[i].buf)
+      free(emoji_dyns[i].buf);
+    if (emoji_dyns[i].chs)
+      free(emoji_dyns[i].chs);
+  }
+  nemoji_dyns = 0;
+  free(emoji_dyns);
+  emoji_dyns = 0;
+#endif
 }
 
 /*
@@ -1496,7 +2452,33 @@ get_emoji_description(termchar * cpoi)
   //struct emoji e = (struct emoji) cpoi->attr.truefg;
   struct emoji * ee = (void *)&cpoi->attr.truefg;
 
-  if (ee->seq) {
+  if (ee->seq > 1) {
+    char * en = strdup("");
+    for (uint i = 0; i < emoji_dyns[ee->idx].len; i++) {
+      xchar xc = ed(emoji_dyns[ee->idx].chs[i]);
+      char ec[8];
+      sprintf(ec, "U+%04X", xc);
+      strappend(en, ec);
+      strappend(en, " ");
+    }
+    char let[2] = " ";
+    if (ee->seq == 2) {
+      strappend(en, "| Emoji flag ");
+      for (int i = 0; i < 2; i++) {
+        *let = ed(emoji_dyns[ee->idx].chs[i]) - 0x1F1E6 + 'A';
+        strappend(en, let);
+      }
+    }
+    else {
+      strappend(en, "| Emoji tag sequence ");
+      for (uint i = 1; i < emoji_dyns[ee->idx].len - 1; i++) {
+        *let = ed(emoji_dyns[ee->idx].chs[i]) & 0xFF;
+        strappend(en, let);
+      }
+    }
+    return en;
+  }
+  else if (ee->seq == 1) {
     char * en = strdup("");
     for (uint i = 0; i < lengthof(emoji_seqs->chs) && ed(emoji_seqs[ee->idx].chs[i]); i++) {
       xchar xc = ed(emoji_seqs[ee->idx].chs[i]);
@@ -1520,7 +2502,10 @@ static bool
 check_emoji(struct emoji e)
 {
   wchar * * efnpoi;
-  if (e.seq) {
+  if (e.seq > 1) {
+    efnpoi = (wchar * *)&emoji_dyns[e.idx].efn;
+  }
+  else if (e.seq == 1) {
     efnpoi = (wchar * *)&emoji_seqs[e.idx].efn;
   }
   else {
@@ -1542,19 +2527,33 @@ fallback:;
   char * fmt = "%04x";
   char * sep = "-";
   char * suf = ".png";
-  bool zwj = true;
-  bool sel = true;
+  bool zwj = true; // include 200D in filename
+  bool sel = true; // include FE0F in filename
   switch (style) {
+#ifdef unicode_cldr
+    when EMOJIS_CLDR:
+      pre = "/usr/share/unicode/cldr/emoji/emoji_";
+      sep = "_";
+      zwj = true;
+      sel = false;
+#endif
     when EMOJIS_NOTO:
       pre = "noto/emoji_u";
       sep = "_";
       zwj = true;
       sel = false;
-    when EMOJIS_ONE:
-      pre = "emojione/";
+    when EMOJIS_JOYPIXELS:
+      pre = "joypixels/";
       sep = "-";
       zwj = false;
       sel = false;
+    when EMOJIS_ZOOM:
+      pre = "zoom/";
+      sep = "-";
+      zwj = false;
+      sel = false;
+    when EMOJIS_ONE:
+      pre = "emojione/";
     when EMOJIS_APPLE:
       pre = "apple/";
     when EMOJIS_GOOGLE:
@@ -1569,12 +2568,26 @@ fallback:;
       pre = "windows/";
     when EMOJIS_NONE:
       pre = "common/";
+    when EMOJIS_OPENMOJI:
+      pre = "openmoji/";
+      fmt = "%04X";
     otherwise:
       return false;
   }
   char * en = strdup(pre);
   char ec[7];
-  if (e.seq) {
+  if (e.seq > 1) {
+    for (uint i = 0; i < emoji_dyns[e.idx].len; i++) {
+      xchar xc = ed(emoji_dyns[e.idx].chs[i]);
+      if ((xc != 0xFE0F || sel) && (xc != 0x200D || zwj)) {
+        if (i)
+          strappend(en, sep);
+        sprintf(ec, fmt, xc);
+        strappend(en, ec);
+      }
+    }
+  }
+  else if (e.seq == 1) {
     for (uint i = 0; i < lengthof(emoji_seqs->chs) && ed(emoji_seqs[e.idx].chs[i]); i++) {
       xchar xc = ed(emoji_seqs[e.idx].chs[i]);
       if ((xc != 0xFE0F || sel) && (xc != 0x200D || zwj)) {
@@ -1593,8 +2606,8 @@ fallback:;
   wchar * wen = cs__utftowcs(en);
 
   char * ef = get_resource_file(W("emojis"), wen, false);
-#ifdef debug_emojis
-  printf("emoji <%s> file <%s>\n", en, ef);
+#if defined(debug_emojis) && debug_emojis > 1
+  printf("check_emoji seq %d idx %d (style %d) <%s> file <%s>\n", e.seq, e.idx, style, en, ef);
 #endif
   free(wen);
   free(en);
@@ -1607,7 +2620,7 @@ fallback:;
   else {
     // if no emoji graphics found, fallback to "common" emojis
     if (style) {
-      style = 0;
+      style = EMOJIS_NONE;
       goto fallback;
     }
 
@@ -1616,14 +2629,27 @@ fallback:;
   }
 }
 
+static xchar
+xchr(termchar * d)
+{
+  xchar xch = d->chr;
+  if ((xch & 0xFC00) == 0xD800 && d->cc_next) {
+    termchar * cc = d + d->cc_next;
+    if ((cc->chr & 0xFC00) == 0xDC00) {
+      xch = ((xchar) (xch - 0xD7C0) << 10) | (cc->chr & 0x03FF);
+    }
+  }
+  return xch;
+}
+
 static int
-match_emoji_seq(termchar * d, int maxlen, echar * chs)
+match_emoji_seq(termchar * d, int maxlen, echar * chs, uint len)
 {
   int l_text = 0; // number of matched text base character positions
   termchar * basechar = d;
   termchar * curchar = d;
 
-  for (uint i = 0; i < lengthof(emoji_seqs->chs) && ed(chs[i]); i++) {
+  for (uint i = 0; i < len && ed(chs[i]); i++) {
     if (!curchar)
       return 0;
     if (curchar == basechar)
@@ -1687,7 +2713,7 @@ match_emoji(termchar * d, int maxlen)
   uint tags = emoji_tags(tagi);
   if (tags) {
 #if defined(debug_emojis) && debug_emojis > 2
-    printf("%04X%s%s%s%s%s\n", ch,
+    printf("match base %04X%s%s%s%s%s\n", xchr(d),
            tags & EM_pres ? " pres" : "",
            tags & EM_pict ? " pict" : "",
            tags & EM_text ? " text" : "",
@@ -1716,10 +2742,10 @@ match_emoji(termchar * d, int maxlen)
     bool foundseq = false;
     if (tags & EM_base) {
       for (uint i = 0; i < lengthof(emoji_seqs); i++) {
-        int len = match_emoji_seq(d, maxlen, emoji_seqs[i].chs);
+        int len = match_emoji_seq(d, maxlen, emoji_seqs[i].chs, lengthof(emoji_seqs->chs));
         if (len) {
 #if defined(debug_emojis) && debug_emojis > 1
-          printf("match");
+          printf("match seqs");
           for (uint k = 0; k < lengthof(emoji_seqs->chs) && ed(emoji_seqs[i].chs[k]); k++)
             printf(" %04X", ed(emoji_seqs[i].chs[k]));
           printf("\n");
@@ -1746,7 +2772,108 @@ match_emoji(termchar * d, int maxlen)
           }
         }
       }
+
+      if (!emoji.len && !foundseq) {
+        // try to locate in dynamic emoji list
+        for (uint i = 0; i < nemoji_dyns; i++) {
+          int len = match_emoji_seq(d, maxlen, emoji_dyns[i].chs, emoji_dyns[i].len);
+          if (len) {
+#if defined(debug_emojis) && debug_emojis > 1
+            printf("match dyns");
+            for (uint k = 0; k < emoji_dyns[i].len; k++)
+              printf(" %04X", ed(emoji_dyns[i].chs[k]));
+            printf("\n");
+#endif
+            emoji.seq = ed(emoji_dyns[i].chs[0]) == 0x1F3F4 ? 3 : 2;
+            emoji.idx = i;
+            emoji.len = len;
+            if (check_emoji(emoji))
+              break;
+            else {
+              // found a match but there is no emoji graphics for it
+              // remember longest match in case we don't find another
+              if (!foundseq) {
+                longest = emoji;
+                foundseq = true;
+              }
+              // invalidate this match, continue matching
+              emoji.len = 0;
+            }
+          }
+        }
+      }
+      if (!emoji.len && maxlen > 1) {
+        // check whether to add to dynamic emoji list
+        echar * chs = newn(echar, 2);
+        xchar xch = xchr(d);
+        if (xch >= 0x1F1E6 && xch <= 0x1F1FF) {
+          chs[0] = ee(xch);
+          xch = xchr(&d[1]);
+          chs[1] = ee(xch);
+          if (xch >= 0x1F1E6 && xch <= 0x1F1FF) {
+            // two regional indicators
+            emoji.seq = 2;
+            emoji.len = 2;
+          }
+        }
+        else if (xch == 0x1F3F4) {  // check for tag sequence ..E00XX..E007F
+          chs[0] = ee(xch);
+          termchar * curlowsurr = d + d->cc_next;  // low surrogate of U+1F3F4
+
+          int l = 1;
+          while (curlowsurr->cc_next) {
+            curlowsurr += curlowsurr->cc_next;
+            xch = xchr(curlowsurr);
+            l ++;
+            chs = renewn(chs, l);
+            chs[l - 1] = ee(xch);
+
+            if (xch == 0xE007F) {
+              emoji.seq = 3;
+              emoji.len = l;
+              break;
+            }
+            // check for valid Flag Emoji Tag Sequences (Unicode TR #51 C.1)
+            // (http://www.unicode.org/reports/tr51/#flag-emoji-tag-sequences)
+            if (xch > 0xE007F || xch < 0xE0020)
+              break;
+
+            curlowsurr += curlowsurr->cc_next;  // low surrogate of current char
+          }
+        }
+        if (emoji.len) {  // add sequence to dynamic list
+          emoji_dyns = renewn(emoji_dyns, nemoji_dyns + 1);
+
+          emoji_dyns[nemoji_dyns].efn = 0;
+          emoji_dyns[nemoji_dyns].buf = 0;
+          emoji_dyns[nemoji_dyns].buflen = 0;
+          emoji_dyns[nemoji_dyns].len = emoji.len;
+          emoji_dyns[nemoji_dyns].chs = chs;
+
+          emoji.idx = nemoji_dyns;
+
+          bool ok = check_emoji(emoji);
+          if (ok) {
+#if defined(debug_emojis) && debug_emojis > 0
+            printf("emoji_dyn [%d++] seq %d len %d", nemoji_dyns, emoji.seq, emoji.len);
+            for (int i = 0; i < emoji.len; i++)
+              printf(" %04X", ed(chs[i]));
+            printf("\n");
+#endif
+            nemoji_dyns ++;
+          }
+          else {
+            // invalidate this entry
+            if (emoji_dyns[nemoji_dyns].efn)
+              free(emoji_dyns[nemoji_dyns].efn);
+            if (emoji_dyns[nemoji_dyns].chs)
+              free(emoji_dyns[nemoji_dyns].chs);
+            emoji.len = 0;
+          }
+        }
+      }
     }
+
     if (!emoji.len) {
       wchar combchr = 0;
       if (comb) {
@@ -1799,12 +2926,21 @@ match_emoji(termchar * d, int maxlen)
       else
         emoji.len = 0;  // display text style
     }
+
     if (!emoji.len) {
       // not found another match; if we had a "longest match" before, 
       // but continued to search because it had no graphics, let's use it
       if (foundseq)
-        return longest;
+        emoji = longest;
     }
+
+#if defined(debug_emojis) && debug_emojis > 1
+    if (emoji.len) {
+      int i = emoji.idx;
+      struct emoji_base * ee = emoji.seq > 1 ? (struct emoji_base *)&emoji_dyns[i] : emoji.seq ? (struct emoji_base *)&emoji_seqs[i] : &emoji_bases[i];
+      printf("-> seq %d len %d idx %d <%ls> %d\n", emoji.seq, emoji.len, i, ee->efn, !!ee->buf);
+    }
+#endif
   }
 
   return emoji;
@@ -1813,11 +2949,15 @@ match_emoji(termchar * d, int maxlen)
 static void
 emoji_show(int x, int y, struct emoji e, int elen, cattr eattr, ushort lattr)
 {
-  (void)eattr;
   wchar * efn;
   void * * bufpoi;
   int * buflen;
-  if (e.seq) {
+  if (e.seq > 1) {
+    efn = emoji_dyns[e.idx].efn;
+    bufpoi = &emoji_dyns[e.idx].buf;
+    buflen = &emoji_dyns[e.idx].buflen;
+  }
+  else if (e.seq == 1) {
     efn = emoji_seqs[e.idx].efn;
     bufpoi = &emoji_seqs[e.idx].buf;
     buflen = &emoji_seqs[e.idx].buflen;
@@ -1827,11 +2967,16 @@ emoji_show(int x, int y, struct emoji e, int elen, cattr eattr, ushort lattr)
     bufpoi = &emoji_bases[e.idx].buf;
     buflen = &emoji_bases[e.idx].buflen;
   }
-#ifdef debug_emojis
-  printf("emoji_show @%d:%d..%d seq %d idx %d <%ls>\n", y, x, elen, e.seq, e.idx, efn);
+#if defined(debug_emojis) && debug_emojis > 1
+  printf("emoji_show @%d:%d..%d it %d seq %d idx %d <%ls>\n", y, x, elen, !!(eattr.attr & ATTR_ITALIC), e.seq, e.idx, efn);
 #endif
+
+  // Emoji overhang
+  if (elen == 1 && (eattr.attr & TATTR_OVERHANG))
+    elen = 2;
+  //printf("emoj @%d:%d len %d\n", y, x, elen);
   if (efn && *efn)
-    win_emoji_show(x, y, efn, bufpoi, buflen, elen, lattr);
+    win_emoji_show(x, y, efn, bufpoi, buflen, elen, lattr, eattr.attr & ATTR_ITALIC);
 }
 
 #define dont_debug_win_text_invocation
@@ -1839,7 +2984,7 @@ emoji_show(int x, int y, struct emoji e, int elen, cattr eattr, ushort lattr)
 #ifdef debug_win_text_invocation
 
 void
-_win_text(int line, int tx, int ty, wchar *text, int len, cattr attr, cattr *textattr, ushort lattr, bool has_rtl, bool clearpad, uchar phase)
+_win_text(int line, int tx, int ty, wchar *text, int len, cattr attr, cattr *textattr, ushort lattr, char has_rtl, bool clearpad, uchar phase)
 {
   if (*text != ' ') {
     printf("[%d] %d:%d(len %d) attr %08llX", line, ty, tx, len, attr.attr);
@@ -1853,6 +2998,35 @@ _win_text(int line, int tx, int ty, wchar *text, int len, cattr attr, cattr *tex
 #define win_text(tx, ty, text, len, attr, textattr, lattr, has_rtl, clearpad, phase) _win_text(__LINE__, tx, ty, text, len, attr, textattr, lattr, has_rtl, clearpad, phase)
 
 #endif
+
+#define dont_debug_line
+#define dont_debug_dirty 1
+
+#ifdef debug_line
+void trace_line(char * tag, termchar * chars)
+{
+  if (chars[0].chr > 0x80)
+    printf("[%s] %04X %04X %04X %04X %04X %04X\n", tag, chars[0].chr, chars[1].chr, chars[2].chr, chars[3].chr, chars[4].chr, chars[5].chr);
+}
+#else
+#define trace_line(tag, chars)	
+#endif
+
+#define UNLINED (UNDER_MASK | ATTR_STRIKEOUT | ATTR_OVERL | ATTR_OVERSTRIKE)
+#define UNBLINK (FONTFAM_MASK | GRAPH_MASK | UNLINED | TATTR_EMOJI)
+
+// Attributes to be ignored when checking whether to apply overhang:
+// we cannot support overhang over double-width space (TATTR_WIDE),
+// that would produce artefacts in the scrollback;
+// need to ignore:
+//	FONTFAM_MASK implementing option FontChoice
+//	TATTR_NARROW which may have been set before this check
+//	ATTR_BOLD | ATTR_DIM | TATTR_CLEAR which are used for clear space
+#define IGNOVRHANG (FONTFAM_MASK | TATTR_NARROW | ATTR_BOLD | ATTR_DIM | TATTR_CLEAR)
+#define at_cursor_pos(i, j)	((i == term.curs.y) && !((term.curs.x - j) >> 1))
+
+#define IGNWIDTH TATTR_EXPAND | TATTR_NARROW | TATTR_SINGLE | TATTR_CLEAR
+#define IGNEMOJATTR (TATTR_WIDE | ATTR_FGMASK | TATTR_COMBINING | IGNWIDTH)
 
 void
 term_paint(void)
@@ -1871,22 +3045,49 @@ term_paint(void)
     term.cursor_on && !term.show_other_screen
     ? term.curs.y - term.disptop : -1;
 
-  for (int i = 0; i < term.rows; i++) {
+  int nlines_progress = 0;
+  int total_progress = 0;
+
+  // Paint all lines, including status area
+  for (int i = 0; i < term_allrows; i++) {
     pos scrpos;
     scrpos.y = i + term.disptop;
     termline *line = fetch_line(scrpos.y);
-
-   /*
-    * Pre-loop: identify emojis and emoji sequences.
-    */
     // Prevent nested emoji sequence matching from matching partial subseqs
     int emoji_col = 0;  // column from which to match for emoji sequences
+
+    //trace_line("loop0", line->chars);
+
+#if false
+   /*
+    * This was an attempt to support emojis within right-to-left text 
+      introduced in 3.0.1 and removed for 3.5.1 because it spoiled 
+      emoji selection highlighting (#1116), caused some flickering, 
+      and did not even support right-to-left properly anyway.
+      Bidi handling could be tweaked so that this approach would be applied 
+      only in bidi lines, not fixing the other issues however.
+      Previous comment:
+    * Pre-loop: identify emojis and emoji sequences.
+      This is a hacky approach to handling emoji sequences; problems:
+      - temporary attributes are written back into original char matrix 
+        rather than newchars, yielding:
+      - if the emoji sequences gets broken later by partial overwriting,
+        rendering will become inconsistent
+      - rendering of emojis within bidi lines is only partially correct
+      - selection highlighting does not work
+      - rendering is applied repeatedly, resulting in some flickering
+      Moving emoji sequences handling into the first loop below, on the 
+      other hand, would break it even more in bidi lines.
+    */
     for (int j = 0; j < term.cols; j++) {
       termchar *d = line->chars + j;
       cattr tattr = d->attr;
 
+      // handle reverse attributes
+      //...
+
       if (j < term.cols - 1 && d[1].chr == UCSWIDE)
-        tattr.attr |= ATTR_WIDE;
+        tattr.attr |= TATTR_WIDE;
 
      /* Match emoji sequences
       * and replace by emoji indicators
@@ -1909,18 +3110,38 @@ term_paint(void)
           // check whether all emoji components have the same attributes
           bool equalattrs = true;
           for (int i = 1; i < e.len && equalattrs; i++) {
-# define IGNATTR (ATTR_WIDE | ATTR_FGMASK | TATTR_COMBINING)
-            if ((d[i].attr.attr & ~IGNATTR) != (d->attr.attr & ~IGNATTR)
+            if ((d[i].attr.attr & ~IGNEMOJATTR) != (d->attr.attr & ~IGNEMOJATTR)
                || d[i].attr.truebg != d->attr.truebg
                )
               equalattrs = false;
           }
-#ifdef debug_emojis
-          printf("matched len %d seq %d idx %d ok %d atr %d\n", e.len, e.seq, e.idx, ok, equalattrs);
+#if defined(debug_emojis) && debug_emojis > 3
+          printf("paint emoji: matched len %d seq %d idx %d ok %d atr %d\n", e.len, e.seq, e.idx, ok, equalattrs);
 #endif
 
           // modify character data to trigger later emoji display
           if (ok && equalattrs) {
+            // Emoji overhang
+            if (e.len == 1 && j + 1 < term.cols
+             // only if followed by space
+             //&& iswspace(d[1].chr) && !d[1].cc_next
+             //&& d[1].chr != 0x1680 && d[1].chr != 0x3000
+             && d[1].chr == ' ' && !d[1].cc_next
+             // not at cursor position? does not work for emojis
+             //&& !at_cursor_pos(i, j)
+             // and significant attributes are equal
+             && !((d->attr.attr ^ d[1].attr.attr) & ~IGNOVRHANG)
+             // do not overhang numbers, flag letters etc
+             && d->chr >= 0x80 // exclude #️*️0️..9️
+             //&& !(ch >= 0x1F1E6 || ch <= 0x1F1FF) // exclude 🇦..🇿
+             && !(!e.seq && emoji_bases[e.idx].ch >= 0x1F1E6 && emoji_bases[e.idx].ch <= 0x1F1FF)
+               )
+            {
+              d->attr.attr |= TATTR_OVERHANG;
+              // also mark adjacent space to suppress its display
+              d[1].attr.attr |= TATTR_OVERHANG;
+            }
+
             d->attr.attr &= ~ATTR_FGMASK;
             d->attr.attr |= TATTR_EMOJI | e.len;
 
@@ -1937,6 +3158,7 @@ term_paint(void)
             }
             else
               tattr = d->attr;
+
             // inhibit rendering of subsequent emoji sequence components
             for (int i = 1; i < e.len; i++) {
               d[i].attr.attr &= ~ATTR_FGMASK;
@@ -1945,10 +3167,17 @@ term_paint(void)
             }
           }
         }
+#ifdef handle_symbol_overhang_here
+        else {  // not an emoji
+        }
+#endif
       }
 
       d->attr = tattr;
     }
+
+    //trace_line("loopb", line->chars);
+#endif
 
    /* Do Arabic shaping and bidi. */
     termchar *chars = term_bidi_line(line, i);
@@ -1959,6 +3188,8 @@ term_paint(void)
     termline *displine = term.displines[i];
     termchar *dispchars = displine->chars;
     termchar newchars[term.cols];
+
+    //trace_line("loop1", chars);
 
    /*
     * First loop: work along the line deciding what we want
@@ -1976,8 +3207,24 @@ term_paint(void)
       if (tchar == 0x2010)
         tchar = '-';
 
+      if (cfg.printable_controls) {
+        if (tchar >= 0x80 && tchar < 0xA0)
+          tchar = 0x2592;  // ⌷⎕░▒▓
+        else if (tchar < ' ' && cfg.printable_controls > 1)
+          tchar = 0x2591;  // ⌷⎕░▒▓
+        if (tchar >= 0x2580 && tchar <= 0x259F) {
+          // Block Elements (U+2580-U+259F)
+          // ▀▁▂▃▄▅▆▇█▉▊▋▌▍▎▏▐░▒▓▔▕▖▗▘▙▚▛▜▝▞▟
+          tattr.attr |= ((cattrflags)(tchar & 0xF)) << ATTR_GRAPH_SHIFT;
+          uchar gcode = 14 + ((tchar >> 4) & 1);
+          // extend graph encoding with unused font numbers
+          tattr.attr &= ~FONTFAM_MASK;
+          tattr.attr |= (cattrflags)gcode << ATTR_FONTFAM_SHIFT;
+        }
+      }
+
       if (j < term.cols - 1 && d[1].chr == UCSWIDE)
-        tattr.attr |= ATTR_WIDE;
+        tattr.attr |= TATTR_WIDE;
 
      /* Video reversing things */
       bool selected =
@@ -2060,16 +3307,118 @@ term_paint(void)
         tattr.attr &= ~TATTR_MARKED;
       }
 
-     /* 'Real' blinking ? */
-      if (term.blink_is_real && (tattr.attr & ATTR_BLINK)) {
-        if (term.has_focus && term.tblinker)
-          tchar = ' ';
-        tattr.attr &= ~ATTR_BLINK;
+     /* Colour indication for blinking ? */
+      if ((tattr.attr & (ATTR_BLINK | ATTR_BLINK2))
+       && term.enable_blink_colour && colours[BLINK_COLOUR_I] != (colour)-1
+       //&& !(tattr.attr & TATTR_EMOJI)
+         )
+      {
+        if (!(tattr.attr & TATTR_EMOJI)) {
+          tattr.truefg = colours[BLINK_COLOUR_I];
+          tattr.attr = (tattr.attr & ~ATTR_FGMASK) | (TRUE_COLOUR << ATTR_FGSHIFT);
+        }
       }
-      if (term.blink_is_real && (tattr.attr & ATTR_BLINK2)) {
-        if (term.has_focus && term.tblinker2)
-          tchar = ' ';
-        tattr.attr &= ~ATTR_BLINK2;
+     /* Real blinking ? */
+      else if (term.blink_is_real) {
+        if (tattr.attr & ATTR_BLINK2) {
+          if (term.has_focus && term.tblinker2) {
+            tattr.attr |= ATTR_INVISIBLE;
+            tattr.attr &= ~UNBLINK;
+          }
+        }
+        // ATTR_BLINK2 should override ATTR_BLINK to avoid chaotic dual blink
+        else if (tattr.attr & ATTR_BLINK) {
+          if (term.has_focus && term.tblinker) {
+            tattr.attr |= ATTR_INVISIBLE;
+            tattr.attr &= ~UNBLINK;
+          }
+        }
+      }
+
+      if (j < term.cols - 1 && d[1].chr == UCSWIDE)
+        tattr.attr |= TATTR_WIDE;
+
+     /* Match emoji sequences
+      * and replace by emoji indicators
+      */
+      if (cfg.emojis && j >= emoji_col) {
+        struct emoji e;
+        if ((tattr.attr & TATTR_EMOJI) && !(tattr.attr & ATTR_FGMASK)) {
+          // previously marked subsequent emoji sequence component
+          e.len = 0;
+        }
+        else
+          e = match_emoji(d, term.cols - j);
+        if (e.len) {  // we have matched an emoji (sequence)
+          // avoid subsequent matching of a partial emoji subsequence
+          emoji_col = j + e.len;
+
+          // check whether emoji graphics exist for the emoji
+          bool ok = check_emoji(e);
+
+          // check whether all emoji components have the same attributes
+          bool equalattrs = true;
+          for (int i = 1; i < e.len && equalattrs; i++) {
+            if ((d[i].attr.attr & ~IGNEMOJATTR) != (d->attr.attr & ~IGNEMOJATTR)
+               || d[i].attr.truebg != d->attr.truebg
+               )
+              equalattrs = false;
+          }
+#if defined(debug_emojis) && debug_emojis > 3
+          printf("paint emoji: matched len %d seq %d idx %d ok %d atr %d\n", e.len, e.seq, e.idx, ok, equalattrs);
+#endif
+
+          // modify character data to trigger later emoji display
+          if (ok && equalattrs) {
+            // Emoji overhang
+            if (e.len == 1 && j + 1 < term.cols
+             // only if followed by space
+             //&& iswspace(d[1].chr) && !d[1].cc_next
+             //&& d[1].chr != 0x1680 && d[1].chr != 0x3000
+             && d[1].chr == ' ' && !d[1].cc_next
+             // not at cursor position? does not work for emojis
+             //&& !at_cursor_pos(i, j)
+             // and significant attributes are equal
+             && !((d->attr.attr ^ d[1].attr.attr) & ~IGNOVRHANG)
+             // do not overhang numbers, flag letters etc
+             && d->chr >= 0x80 // exclude #️*️0️..9️
+             //&& !(ch >= 0x1F1E6 || ch <= 0x1F1FF) // exclude 🇦..🇿
+             && !(!e.seq && emoji_bases[e.idx].ch >= 0x1F1E6 && emoji_bases[e.idx].ch <= 0x1F1FF)
+               )
+            {
+              d->attr.attr |= TATTR_OVERHANG;
+              // also mark adjacent space to suppress its display
+              d[1].attr.attr |= TATTR_OVERHANG;
+            }
+
+            d->attr.attr &= ~ATTR_FGMASK;
+            d->attr.attr |= TATTR_EMOJI | e.len;
+
+            //d->attr.truefg = (uint)e;
+            struct emoji * ee = &e;
+            uint em = *(uint *)ee;
+            d->attr.truefg = em;
+
+            // refresh cached copy to avoid display delay
+            if (tattr.attr & TATTR_SELECTED) {
+              tattr = d->attr;
+              // need to propagate this to enable emoji highlighting
+              tattr.attr |= TATTR_SELECTED;
+            }
+            else
+              tattr = d->attr;
+            // inhibit rendering of subsequent emoji sequence components
+            for (int i = 1; i < e.len; i++) {
+              d[i].attr.attr &= ~ATTR_FGMASK;
+              d[i].attr.attr |= TATTR_EMOJI;
+              d[i].attr.truefg = em;
+            }
+          }
+        }
+#ifdef handle_symbol_overhang_here
+        else {  // not an emoji
+        }
+#endif
       }
 
      /* Mark box drawing, block and some other characters 
@@ -2079,6 +3428,7 @@ term_paint(void)
       */
       if (tchar >= 0x2320 &&
           ((tchar >= 0x2500 && tchar <= 0x259F)
+           || (tchar >= 0x25E2 && tchar <= 0x25E5)
            || (tchar >= 0x239B && tchar <= 0x23B3)
            || (tchar >= 0x23B7 && tchar <= 0x23BD)
            || wcschr(W("〳〴〵⌠⌡⏐"), tchar)
@@ -2093,73 +3443,214 @@ term_paint(void)
       * Check the font we'll _probably_ be using to see if
       * the character is wide when we don't want it to be.
       */
-      if (tchar >= 0xE000 && tchar < 0xF900) {
-        // don't tamper with width of Private Use characters
+      // Emoji overhang
+      if (tattr.attr & TATTR_OVERHANG) {
+        // don't tamper with width of overhanging characters
       }
-      else if (tchar != dispchars[j].chr ||
-          tattr.attr != (dispchars[j].attr.attr & ~(ATTR_NARROW | DATTR_MASK))
+      else if (tchar >= 0xE0B0 && tchar < 0xE0C0) {
+        // special handling for geometric "Powerline" symbols
+        tattr.attr |= TATTR_ZOOMFULL;
+        if (cs_ambig_wide) {
+          tattr.attr |= TATTR_EXPAND;
+        }
+      }
+#ifdef ignore_private_use_for_auto_narrowing
+#warning auto-narrowing exemption for private use now handled by Symbol overhang below
+      else if ((tchar >= 0xE000 && tchar < 0xF900)
+            || (tchar >= 0xDB80 && tchar < 0xDC00)
               )
       {
-        if ((tattr.attr & ATTR_WIDE) == 0
-            && win_char_width(tchar, tattr.attr) == 2
+        // don't tamper with width of Private Use characters
+      }
+#endif
+      else if (tchar != dispchars[j].chr ||
+          tattr.attr != (dispchars[j].attr.attr & ~(TATTR_NARROW | DATTR_MASK))
+              )
+      {
+        xchar xch = tchar;
+        if ((xch & 0xFC00) == 0xD800 && d->cc_next) {
+          termchar * cc = d + d->cc_next;
+          if ((cc->chr & 0xFC00) == 0xDC00) {
+            xch = ((xchar) (xch - 0xD7C0) << 10) | (cc->chr & 0x03FF);
+          }
+
+          if ((xch >= 0x1F67C && xch <= 0x1F67F)
+              || (xch >= 0x1FB00 && xch <= 0x1FBB3)
+             )
+          {
+            tattr.attr |= TATTR_ZOOMFULL;
+            tattr.attr &= ~ATTR_ITALIC;
+          }
+        }
+
+        if ((tattr.attr & TATTR_WIDE) == 0
+            && cfg.char_narrowing < 100
+            && win_char_width(xch, tattr.attr) == 2
             // && !(line->lattr & LATTR_MODE) ? "do not tamper with graphics"
-            // && ambigwide(tchar) ? but then they will be clipped...
+            // && is_ambigwide(tchar) ? but then they will be clipped...
            )
         {
           //printf("[%d:%d] narrow? %04X..%04X\n", i, j, tchar, chars[j + 1].chr);
-          xchar ch = tchar;
-          if ((ch & 0xFC00) == 0xD800 && d->cc_next) {
-            termchar * cc = d + d->cc_next;
-            if ((cc->chr & 0xFC00) == 0xDC00) {
-              ch = ((xchar) (ch - 0xD7C0) << 10) | (cc->chr & 0x03FF);
-            }
-          }
-          if ((ch >= 0x2190 && ch <= 0x2BFF)
-           || (ch >= 0x1F000 && ch <= 0x1FAFF)
+          if (
+              // do not narrow various symbol ranges;
+              // this is a bit redundant with Symbol overhang below
+                 (xch >= 0x2190 && xch <= 0x25FF)
+              || (xch >= 0x27C0 && xch <= 0x2BFF)
              )
           {
-            //tattr.attr |= ATTR_NARROW1; // ?
+            //tattr.attr |= TATTR_NARROW1; // ?
           }
-          else
+          else {
 #ifdef failed_attempt_to_tame_narrowing
+#warning this is now handled for specific character ranges by Symbol overhang below
             if (j + 1 < term.cols && chars[j + 1].chr != ' ')
 #endif
-            tattr.attr |= ATTR_NARROW;
+            tattr.attr |= TATTR_NARROW;
             //if (ch != 0x25CC)
-            //printf("char %lc U+%04X narrow %d ambig %d\n", ch, ch, !!(tattr.attr & ATTR_NARROW), ambigwide(ch));
+            //printf("char %lc U+%04X narrow %d ambig %d\n", xch, xch, !!(tattr.attr & TATTR_NARROW), is_ambigwide(xch));
+          }
         }
-        else if (tattr.attr & ATTR_WIDE
+        else if ((tattr.attr & TATTR_WIDE)
                  // guard character expanding properly to avoid 
                  // false hits as reported for CJK in #570,
                  // considering that Windows may report width 1 
                  // for double-width characters 
                  // (if double-width by font substitution)
-                 && cs_ambig_wide && !font_ambig_wide
-                 && win_char_width(tchar, tattr.attr) == 1
-                    //? && !widerange(tchar)
+                 && cs_ambig_wide
+                 // the following restriction would be good for
+                 // MS PGothic (but bad non-CJK range anyway)
+                 // but bad for
+                 // MS Mincho: wide Greek/Cyrillic but narrow æ, œ, ...
+                 // SimSun, NSimSun, Yu Gothic
+                 //&& !font_ambig_wide
+                 && win_char_width(xch, tattr.attr) == 1
                  // and reassure to apply this only to ambiguous width chars
-                 && ambigwide(tchar)
+                 && is_ambigwide(tchar) // is_ambig(tchar) && !is_wide(tchar)
+                 // do not widen Geometric Shapes
+                 // (Geometric Shapes Extended are not ambiguous)
+                 && !(0x25A0 <= tchar && tchar <= 0x25FF)
                 )
         {
-          tattr.attr |= ATTR_EXPAND;
+          tattr.attr |= TATTR_EXPAND;
         }
       }
-      else if (dispchars[j].attr.attr & ATTR_NARROW) {
-        tattr.attr |= ATTR_NARROW;
+      else if (dispchars[j].attr.attr & TATTR_NARROW) {
+        tattr.attr |= TATTR_NARROW;
+      }
+
+     /* Symbol overhang */
+      /* Note: to consider Visible space indication for overhang
+         (not to be applied then), there are two options:
+         - move this into the second loop below (first attempt failed)
+         - cancel overhang when adjusting next position with indication
+      */
+      //if (tchar >= 0x0900) printf("@%d %08llX %08llX\n", j, tattr.attr, chars[j + 1].attr.attr);
+      if (tchar >= 0x0900 && j + 1 < term.cols
+       // only if followed by space
+       //&& iswspace(chars[j + 1].chr) && !chars[j + 1].cc_next
+       //&& chars[j + 1].chr != 0x1680
+       && chars[j + 1].chr == ' ' && !chars[j + 1].cc_next
+       // not at cursor position? does not seem proper
+       //&& !at_cursor_pos(i, j)
+       // and significant attributes are equal
+       && !((tattr.attr ^ chars[j + 1].attr.attr) & ~IGNOVRHANG)
+         )
+      {
+        //printf("symb @%d:%d overhang %d attr %08llX attr1 %08llX\n", i, j, !!(chars[j].attr.attr & TATTR_OVERHANG), chars[j].attr.attr, chars[j + 1].attr.attr);
+        if (
+             (tchar >= 0x20A0 && tchar < 0x2400)  // Symbols
+          || (tchar >= 0x2460 && tchar < 0x2500)  // Symbols
+          || (tchar >= 0x25A0 && tchar < 0x2800)  // Symbols
+          || (tchar >= 0x2900 && tchar < 0x2C00)  // Symbols
+          || (tchar >= 0xE000 && tchar < 0xF900)  // Private Use
+          || (tchar >= 0xDB80 && tchar <= 0xDBFF)  // Private Use
+          || (tchar >= 0xDB3C && tchar <= 0xD83E)  // Symbols
+          || indicwide(tchar) || extrawide(tchar)
+           )
+        {
+          tattr.attr |= TATTR_OVERHANG;
+          // clear narrowing; this is rather done in the second loop below;
+          // as we still need this information in case the overhang flag 
+          // is reset when handling the subsequent position
+          //tattr.attr &= ~TATTR_NARROW;
+        }
       }
 
 #define dont_debug_width_scaling
 #ifdef debug_width_scaling
-      if (tattr.attr & (ATTR_EXPAND | ATTR_NARROW | ATTR_WIDE))
-        printf("%04X w %d enw %02X\n", tchar, win_char_width(tchar, tattr.attr), (uint)(((tattr.attr & (ATTR_EXPAND | ATTR_NARROW | ATTR_WIDE)) >> 24)));
+      if (tattr.attr & (TATTR_EXPAND | TATTR_NARROW | TATTR_WIDE))
+        printf("%04X w %d enw %02X\n", tchar, win_char_width(tchar, tattr.attr), (uint)(((tattr.attr & (TATTR_EXPAND | TATTR_NARROW | TATTR_WIDE)) >> 24)));
 #endif
+
+     /* Visible space indication */
+      if (tchar == ' ') {
+        int disp = 0;
+        if (tattr.attr & TATTR_CLEAR) {
+          // TAB indication
+          if (cfg.disp_tab) {
+            static wchar tab[] = W("▹►"); // ▹▹► ▻▻► ▹▹▶ ▷▷▶ ››» ▸▸▶ ▹▹▷ ▹▹▸
+            if (tattr.attr & ATTR_BOLD) {
+              tchar = tab[1];
+              disp = cfg.disp_tab;
+            }
+            else if (tattr.attr & ATTR_DIM) {
+              tchar = tab[0];
+              disp = cfg.disp_tab;
+            }
+          }
+          tattr.attr &= ~(ATTR_BOLD | ATTR_DIM);
+
+          if (!(cfg.disp_clear & 8))
+            tattr.attr &= ~TATTR_CLEAR;
+          if (!disp)
+            disp = cfg.disp_clear & ~8;
+        }
+        else
+          disp = cfg.disp_space;
+
+        if (disp) {
+          if (tchar == ' ')
+            tchar = 0xB7; // ·0x00B7 ⋯0x22EF
+          if (disp & 1)
+            tattr.attr |= ATTR_BOLD;
+          if (disp & 2)
+            tattr.attr |= ATTR_DIM;
+          if ((disp & 4) && cfg.underl_colour != (colour)-1) {
+            tattr.truefg = cfg.underl_colour;
+            tattr.attr |= TRUE_COLOUR << ATTR_FGSHIFT;
+          }
+
+          // Symbol overhang: cancel overhang of previous character
+          // (reason to keep TATTR_NARROW in this loop)
+          if (j)
+            newchars[j - 1].attr.attr &= ~TATTR_OVERHANG;
+        }
+      }
 
      /* FULL-TERMCHAR */
       newchars[j].attr = tattr;
       newchars[j].chr = tchar;
      /* Combining characters are still read from chars */
       newchars[j].cc_next = 0;
-    }
+
+     /* Margin indication */
+      if (term.dim_margins &&
+          (// in normal display:
+           i < term.marg_top || (i > term.marg_bot && i < term.rows)
+           // in status display:
+           || (i >= term.rows && i < term.marg_top + term.rows)
+           || (i > term.marg_bot + term.rows)
+           // outside left/right margins:
+           || j < term.marg_left || j > term.marg_right
+          )
+         )
+      {
+        cattr * ca = &newchars[j].attr;
+        ca->attr |= ATTR_DIM;
+        ca->attr ^= ATTR_REVERSE;
+      }
+
+    }  // end first loop
 
     if (i == curs_y) {
      /* Determine the column the cursor is on, taking bidi into account and
@@ -2169,8 +3660,13 @@ term_paint(void)
       int curs_x = term.curs.x;
       if (forward)
         curs_x = forward[curs_x];
+#ifdef support_triple_width
+      while (curs_x > 0 && chars[curs_x].chr == UCSWIDE)
+        curs_x--;
+#else
       if (curs_x > 0 && chars[curs_x].chr == UCSWIDE)
         curs_x--;
+#endif
 
      /* Determine cursor cell attributes. */
       newchars[curs_x].attr.attr |=
@@ -2179,12 +3675,137 @@ term_paint(void)
         (term.curs.wrapnext ? TATTR_RIGHTCURS : 0);
 
       if (term.cursor_invalid)
+#ifdef debug_dirty
+        printf("INVALID c %d\n", curs_x),
+#endif
         dispchars[curs_x].attr.attr |= ATTR_INVALID;
 
       // try to fix #612 "cursor isn’t hidden right away"
       if (newchars[curs_x].attr.attr != dispchars[curs_x].attr.attr)
+#ifdef debug_dirty
+        printf("INVALID c %d\n", curs_x),
+#endif
         dispchars[curs_x].attr.attr |= ATTR_INVALID;
+
+     /* Numeric input feedback */
+      uint what;
+      wchar * ifs = char_code_indication(&what);
+      if (ifs) {
+        curs_x = max(min(curs_x, (int)term.cols - (int)wcslen(ifs)), 0);
+        while (*ifs) {
+          newchars[curs_x].chr = *ifs++;
+          newchars[curs_x].attr.attr &= ~(TATTR_WIDE | TATTR_EXPAND);
+          newchars[curs_x].attr = CATTR_DEFAULT;
+          if (what >= 4) {
+            newchars[curs_x].attr.attr |= ATTR_ULCOLOUR | ATTR_BOLD;
+            newchars[curs_x].attr.ulcolr = RGB(255, 0, 0);
+          }
+          else {
+            newchars[curs_x].attr.attr |= ATTR_REVERSE | ATTR_DIM;
+            newchars[curs_x].attr.attr |= ATTR_ULCOLOUR | ATTR_BOLD;
+            newchars[curs_x].attr.ulcolr = RGB(255, 0, 0);
+          }
+          switch (what) {
+            when 16:
+              newchars[curs_x].attr.attr |= ATTR_DOUBLYUND;
+            when 10:
+              newchars[curs_x].attr.attr |= ATTR_CURLYUND;
+            when 8:
+              newchars[curs_x].attr.attr |= ATTR_BROKENUND;
+            when 4:  // ALT_ALONE
+              newchars[curs_x].attr.attr |= ATTR_BLINK2;
+            when 2:  // COMP_ACTIVE
+              newchars[curs_x].attr.attr |= ATTR_OVERL;
+            when 1:
+              newchars[curs_x].attr.attr |= ATTR_OVERL | ATTR_BLINK2;
+          }
+          dispchars[curs_x].attr.attr |= ATTR_INVALID;
+          curs_x++;
+        }
+        term.st_kb_flag = what;
+      }
+      else
+        term.st_kb_flag = 0;
+
+     /* Progress indication on current cursor line (after back positioning) */
+      if (term.detect_progress && term.progress_scan == 1) {
+        int j = term.cols;
+        while (--j > 0) {
+          if (chars[j].chr == '%'
+#ifdef detect_percentage_only_at_line_end
+              ||
+              // check empty space indication in chars;
+              // note: TATTR_CLEAR is already cleared in newchars
+              (!(chars[j].attr.attr & TATTR_CLEAR)
+               // accept anything after %
+               && 0
+               // accept termination chars after percentage indication
+               && !wcschr(W(")]."), chars[j].chr)
+              )
+#endif
+             )
+            break;
+        }
+        int p = 0;
+        if (chars[j].chr == '%' && (displine->lattr & LATTR_PROGRESS)) {
+          int f = 1;
+          while (--j >= 0) {
+            if (chars[j].chr >= '0' && chars[j].chr <= '9') {
+              p += f * (chars[j].chr - '0');
+              f *= 10;
+            }
+            else if (chars[j].chr == '.' || chars[j].chr == ',') {
+              p = 0;
+              f = 1;
+            }
+            else {
+              j++;
+              break;
+            }
+          }
+        }
+        if (p <= 100) {
+          taskbar_progress(- term.detect_progress);
+          taskbar_progress(p);
+        }
+      }
     }
+
+   /* Progress indication accumulated on all lines */
+    if (term.detect_progress && term.progress_scan == 2) {
+      int j = term.cols;
+      while (--j > 0) {
+        if (chars[j].chr == '%') {
+          int p = 0;
+          int f = 1;
+          bool pro = false;
+          while (--j >= 0) {
+            if (chars[j].chr >= '0' && chars[j].chr <= '9') {
+              p += f * (chars[j].chr - '0');
+              f *= 10;
+              pro = true;
+            }
+            else if (chars[j].chr == '.' || chars[j].chr == ',') {
+              p = 0;
+              f = 1;
+            }
+            else {
+              j++;
+              break;
+            }
+          }
+
+          if (pro && p <= 100) {
+            nlines_progress ++;
+            total_progress += p;
+          }
+          break;
+        }
+      }
+    }
+
+    //trace_line("loopn", newchars);
+    //trace_line("loopd", dispchars);
 
    /*
     * Now loop over the line again, noting where things have changed.
@@ -2217,9 +3838,13 @@ term_paint(void)
       if (dispchars[j].attr.attr & DATTR_STARTRUN) {
         laststart = j;
         dirtyrect = false;
-        if (firstitalicstart < 0 && newchars[j].attr.attr & ATTR_ITALIC)
+        if (firstitalicstart < 0 && newchars[j].attr.attr & (ATTR_ITALIC | TATTR_OVERHANG))
           firstitalicstart = j;
       }
+
+     /* Symbol overhang: clear narrowing */
+      if (newchars[j].attr.attr & TATTR_OVERHANG)
+        newchars[j].attr.attr &= ~TATTR_NARROW;
 
       if (!dirtyrect  // test this first for potential speed-up
           && (dispchars[j].chr != newchars[j].chr
@@ -2232,12 +3857,15 @@ term_paint(void)
       {
         int start = firstitalicstart >= 0 ? firstitalicstart : laststart;
         firstitalicstart = -1;
+#ifdef debug_dirty
+        printf("INVALID %d..%d\n", start, j - 1);
+#endif
         for (int k = start; k < j; k++)
           dispchars[k].attr.attr |= ATTR_INVALID;
         dirtyrect = true;
         prevdirtyitalic = false;
       }
-      if (dirtyrect && dispchars[j].attr.attr & ATTR_ITALIC)
+      if (dirtyrect && dispchars[j].attr.attr & (ATTR_ITALIC | TATTR_OVERHANG))
         prevdirtyitalic = true;
       else if (dispchars[j].attr.attr & DATTR_STARTRUN)
         prevdirtyitalic = false;
@@ -2245,6 +3873,9 @@ term_paint(void)
         firstdirtyitalic = prevdirtyitalic;
 
       if (dirtyrect)
+#ifdef debug_dirty
+        printf("INVALID %d\n", j),
+#endif
         dispchars[j].attr.attr |= ATTR_INVALID;
     }
     if (prevdirtyitalic) {
@@ -2297,10 +3928,13 @@ term_paint(void)
     cattr textattr[maxtextlen];
     int textlen = 0;
 
-    bool has_rtl = false;
+    char has_rtl = 0;
     uchar bc = 0;
     bool dirty_run = (line->lattr != displine->lattr);
     bool dirty_line = dirty_run;
+#if defined(debug_dirty) && debug_dirty > 1
+    printf("dirty ini %d:* lin %d run %d\n", i, dirty_line, dirty_run);
+#endif
     cattr attr = CATTR_DEFAULT;
     int start = 0;
 
@@ -2316,7 +3950,7 @@ term_paint(void)
     int ovl_x, ovl_y;
     cattr ovl_attr;
     ushort ovl_lattr;
-    bool ovl_has_rtl;
+    char ovl_has_rtl;
 
     void flush_text()
     {
@@ -2334,7 +3968,7 @@ term_paint(void)
 # define debug_out_text
 #endif
 
-    void out_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, ushort lattr, bool has_rtl)
+    void out_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, ushort lattr, char has_rtl)
     {
 #ifdef debug_out_text
       wchar t[len + 1]; wcsncpy(t, text, len); t[len] = 0;
@@ -2350,7 +3984,7 @@ term_paint(void)
       if (attr.attr & TATTR_EMOJI) {
         int elen = attr.attr & ATTR_FGMASK;
         cattr eattr = attr;
-        eattr.attr &= ~(ATTR_WIDE | TATTR_COMBINING);
+        eattr.attr &= ~(TATTR_WIDE | TATTR_COMBINING);
         wchar esp[] = W("        ");
         if (elen) {
           if (!overlaying) {
@@ -2376,10 +4010,15 @@ term_paint(void)
               eattr.attr &= ~ATTR_REVERSE;
             }
 
+            // Emoji overhang
+            if (elen == 1 && attr.attr & TATTR_OVERHANG)
+              elen = 2;
+            // fill emoji background
             win_text(x, y, esp, elen, eattr, textattr, lattr, has_rtl, false, 1);
             flush_text();
           }
-#ifdef debug_emojis
+#if defined(debug_emojis) && debug_emojis > 4
+          // add background to some emojis
           eattr.attr &= ~(ATTR_BGMASK | ATTR_FGMASK);
           eattr.attr |= 6 << ATTR_BGSHIFT | 4;
           esp[0] = '0' + elen;
@@ -2393,8 +4032,8 @@ term_paint(void)
             emoji_show(x, y, *ee, elen, eattr, lattr);
           }
         }
-#ifdef debug_emojis
-        else {
+#if defined(debug_emojis) && debug_emojis > 4
+        else { // mark some emojis
           eattr.attr &= ~(ATTR_BGMASK | ATTR_FGMASK);
           eattr.attr |= 4 << ATTR_BGSHIFT | 6;
           esp[0] = '0';
@@ -2402,10 +4041,28 @@ term_paint(void)
         }
 #endif
       }
+      else if ((attr.attr & TATTR_OVERHANG) && *text == ' ' //iswspace(*text)
+             // skip the skipping if overhanging char was meanwhile changed
+             && start && (newchars[start - 1].attr.attr & TATTR_OVERHANG)
+              )
+      {
+        // Emoji overhang
+        // do not output adjacent space after overhanging emoji;
+        return;
+      }
       else if (overlaying) {
         return;
       }
-      else if (attr.attr & (ATTR_ITALIC | TATTR_COMBDOUBL)) {
+      else if (attr.attr
+          & (ATTR_ITALIC | TATTR_COMBDOUBL | TATTR_OVERHANG | TATTR_MARKCURS)
+        )
+      {
+        /* Split output into 2 phases, for background and foreground, 
+           to support overlay display in some cases:
+           * italics and other potential overhang situations (emojis)
+           * combining doubles
+           * cursor position, to support underlay cursor painting
+         */
         win_text(x, y, text, len, attr, textattr, lattr, has_rtl, false, 1);
         flush_text();
         ovl_x = x;
@@ -2423,6 +4080,8 @@ term_paint(void)
       }
     }
 
+    //trace_line("loop3", newchars);
+
    /*
     * Third loop, for actual drawing.
     */
@@ -2430,6 +4089,12 @@ term_paint(void)
       termchar *d = chars + j;
       cattr tattr = newchars[j].attr;
       wchar tchar = newchars[j].chr;
+#ifdef support_triple_width
+      if (tchar == UCSWIDE) {
+        continue;
+      }
+#endif
+
       // Note: newchars[j].cc_next is always 0; use chars[]
       xchar xtchar = tchar;
 #ifdef proper_non_BMP_classification
@@ -2444,7 +4109,7 @@ term_paint(void)
       }
 #endif
 
-      if ((dispchars[j].attr.attr ^ tattr.attr) & ATTR_WIDE)
+      if ((dispchars[j].attr.attr ^ tattr.attr) & TATTR_WIDE)
         dirty_line = true;
 
 #ifdef debug_run
@@ -2459,7 +4124,7 @@ term_paint(void)
                     || (tattr.truebg != attr.truebg)
                     || (tattr.ulcolr != attr.ulcolr);
 
-      if (tchar != SIXELCH && (tattr.attr & ATTR_NARROW))
+      if (tchar != SIXELCH && (tattr.attr & TATTR_NARROW))
         trace_run("narrow"), break_run = true;
 
       if (tattr.attr & TATTR_EMOJI)
@@ -2505,6 +4170,12 @@ term_paint(void)
         trace_run("bmp"), break_run = true;
 #endif
 
+     /*
+      * Break some special ranges to avoid erratic narrow spacing.
+      */
+      if (j > 0 && (d[-1].chr | 1) == 0xFD3F)
+        trace_run("spec"), break_run = true;
+
       if (!dirty_line) {
         if (dispchars[j].chr == tchar &&
             (dispchars[j].attr.attr & ~DATTR_STARTRUN) == tattr.attr)
@@ -2516,8 +4187,11 @@ term_paint(void)
       uchar tbc = bidi_class(xtchar);
 
       if (textlen && tbc != bc) {
-        if (!is_sep_class(tbc) && !is_sep_class(bc))
-          // break at RTL and other changes to avoid glyph confusion (#285)
+        if (is_rtl_class(tbc) != is_rtl_class(bc))
+          // break at RTL to support RTL font fallback
+          trace_run("rtl"), break_run = true;
+        else if (!is_sep_class(tbc) && !is_sep_class(bc))
+          // break at other changes to avoid glyph confusion (#285)
           trace_run("bcs"), break_run = true;
         //else if (is_punct_class(tbc) || is_punct_class(bc))
         else if ((tbc == EN) ^ (bc == EN))
@@ -2526,19 +4200,26 @@ term_paint(void)
       }
       bc = tbc;
 
+     /* Flush previous output chunk on break_run */
       if (break_run || cfg.bloom) {
         if ((dirty_run && textlen) || overlaying)
           out_text(start, i, text, textlen, attr, textattr, line->lattr, has_rtl);
         start = j;
         textlen = 0;
-        has_rtl = false;
+        has_rtl = 0;
         attr = tattr;
         dirty_run = dirty_line;
+#if defined(debug_dirty) && debug_dirty > 1
+        printf("dirty brk %d:%d lin %d run %d\n", i, j, dirty_line, dirty_run);
+#endif
       }
 
       bool do_copy =
         !termchars_equal_override(&dispchars[j], d, tchar, tattr);
       dirty_run |= do_copy;
+#if defined(debug_dirty) && debug_dirty > 1
+      printf("dirty cop %d:%d lin %d run %d\n", i, j, dirty_line, dirty_run);
+#endif
 
       if (tchar == SIXELCH) {
         // displaying region of a SIXEL image before actual graphics display;
@@ -2558,11 +4239,18 @@ term_paint(void)
       ///textattr[textlen] = tattr;
       textlen++;
 
-      if (!has_rtl)
-        has_rtl = is_rtl_class(tbc);
+      if (is_rtl_class(tbc)) {
+        if (tbc == R)
+          has_rtl |= 1;
+        else if (tbc == AL)
+          has_rtl |= 2;
+        else
+          has_rtl |= 4;
+      }
 
 #define dont_debug_surrogates
 
+     /* Append combining and overstrike characters, combine surrogates */
       if (d->cc_next) {
         termchar *dd = d;
         while (dd->cc_next && textlen < maxtextlen) {
@@ -2570,30 +4258,59 @@ term_paint(void)
           wchar prev = dd->chr;
 #endif
           dd += dd->cc_next;
+          wchar tchar = dd->chr;
 
           // mark combining unless pseudo-combining surrogates
-          if (!is_low_surrogate(dd->chr)) {
+          if (!is_low_surrogate(tchar)) {
             if (tattr.attr & TATTR_EMOJI)
               break;
             attr.attr |= TATTR_COMBINING;
           }
-          if (combiningdouble(dd->chr))
+          if (combiningdouble(tchar))
             attr.attr |= TATTR_COMBDOUBL;
 
-          textattr[textlen] = dd->attr;
-          if (cfg.emojis && dd->chr == 0xFE0E)
+          // copy attribute, handle blinking
+          cattr tattr = dd->attr;
+          if ((tattr.attr & (ATTR_BLINK | ATTR_BLINK2))
+           && term.enable_blink_colour && colours[BLINK_COLOUR_I] != (colour)-1
+           && !(tattr.attr & TATTR_EMOJI)
+             )
+          {  // colour indication for blinking
+            tattr.truefg = colours[BLINK_COLOUR_I];
+            tattr.attr = (tattr.attr & ~ATTR_FGMASK) | (TRUE_COLOUR << ATTR_FGSHIFT);
+          }
+          else if (term.blink_is_real) {
+            if (tattr.attr & ATTR_BLINK2) {
+              if (term.has_focus && term.tblinker2) {
+                tattr.attr |= ATTR_INVISIBLE;
+                tattr.attr &= ~UNBLINK;
+              }
+              dirty_run = true;  // attempt to optimise this failed
+            }
+            // ATTR_BLINK2 should override ATTR_BLINK to avoid chaotic dual blink
+            else if (tattr.attr & ATTR_BLINK) {
+              if (term.has_focus && term.tblinker) {
+                tattr.attr |= ATTR_INVISIBLE;
+                tattr.attr &= ~UNBLINK;
+              }
+              dirty_run = true;  // attempt to optimise this failed
+            }
+          }
+          textattr[textlen] = tattr;
+
+          if (cfg.emojis && tchar == 0xFE0E)
             ; // skip text style variation selector
-          else if (dd->chr >= 0x2066 && dd->chr <= 0x2069)
+          else if (tchar >= 0x2066 && tchar <= 0x2069)
             // hide bidi isolate mark glyphs (if handled zero-width)
             text[textlen++] = 0x200B;  // zero width space
           else
-            text[textlen++] = dd->chr;
+            text[textlen++] = tchar;
 #ifdef debug_surrogates
           ucschar comb = 0xFFFFF;
-          if ((prev & 0xFC00) == 0xD800 && (dd->chr & 0xFC00) == 0xDC00)
-            comb = ((ucschar) (prev - 0xD7C0) << 10) | (dd->chr & 0x03FF);
+          if ((prev & 0xFC00) == 0xD800 && (tchar & 0xFC00) == 0xDC00)
+            comb = ((ucschar) (prev - 0xD7C0) << 10) | (tchar & 0x03FF);
           printf("comb (%04X) %04X %04X (%05X) %11llX\n", 
-                 d->chr, prev, dd->chr, comb, attr.attr);
+                 d->chr, prev, tchar, comb, attr.attr);
 #endif
         }
       }
@@ -2608,16 +4325,27 @@ term_paint(void)
       }
 
      /* If it's a wide char step along to the next one. */
-      if ((tattr.attr & ATTR_WIDE) && ++j < term.cols) {
+      if ((tattr.attr & TATTR_WIDE) && ++j < term.cols) {
         d++;
        /*
         * By construction above, the cursor should not
         * be on the right-hand half of this character.
         * Ever.
         */
-        if (!termchars_equal(&dispchars[j], d))
+        if (!termchars_equal(&dispchars[j], d)) {
           dirty_run = true;
+#if defined(debug_dirty) && debug_dirty > 1
+          printf("dirty neq %d:%d lin %d run %d\n", i, j, dirty_line, dirty_run);
+#endif
+        }
         copy_termchar(displine, j, d);
+#ifdef support_triple_width
+#warning do not handle triple-width here
+        //while (dispchars[j].chr == UCSWIDE) {
+        //  j++;
+        //  start++;
+        //}
+#endif
       }
     }
     if (dirty_run && textlen)
@@ -2637,6 +4365,10 @@ term_paint(void)
     * Release the line data fetched from the screen or scrollback buffer.
     */
     release_line(line);
+  }
+  if (term.detect_progress && term.progress_scan == 2) {
+    taskbar_progress(- term.detect_progress);
+    taskbar_progress(nlines_progress ? total_progress / nlines_progress : 0);
   }
 
   term.cursor_invalid = false;
@@ -2729,9 +4461,18 @@ term_set_focus(bool has_focus, bool may_report)
     term_schedule_cblink();
   }
 
-  if (has_focus != term.focus_reported && may_report) {
+  if (has_focus != term.focus_reported) {
     term.focus_reported = has_focus;
-    if (term.report_focus)
+
+static bool sys_scroll_lock;
+    if (has_focus) {
+      sys_scroll_lock = get_scroll_lock();
+      sync_scroll_lock(term.no_scroll || term.scroll_mode);
+    }
+    else
+      sync_scroll_lock(sys_scroll_lock);
+
+    if (term.report_focus && may_report)
       child_write(has_focus ? "\e[I" : "\e[O", 3);
   }
 }

@@ -26,7 +26,7 @@ SRC_URI="https://github.com/${NAME}/${NAME}/archive/${VERSION}/${NAME}-${VERSION
 #GIT_URI="https://github.com/mintty/mintty.git"
 #GIT_TAG=${VERSION}
 
-DEPEND="gcc-core make"
+BUILD_REQUIRES="gcc-core make"
 
 RESTRICT=postinst_doc
 
@@ -54,8 +54,8 @@ src_install() {
   doins sounds/*.wav sounds/*.WAV sounds/*.md
   insinto /usr/share/mintty/icon
   doins icon/wsl.ico
-  insinto /usr/share/mintty/emojis
-  doins tools/getemojis
+  exeinto /usr/share/mintty/emojis
+  doexe tools/getemojis tools/getflags
 
   for i in 16 24 32 48 64 256
   do

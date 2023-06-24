@@ -19,6 +19,16 @@ The full details of all supported control sequences are only available in the
 [source code](https://github.com/mintty/mintty/blob/master/src/termout.c).
 
 
+## Terminal identification ##
+
+These escape sequences cause mintty to report its identification.
+
+| **request** | **response**                      | **comment** |
+|:------------|:----------------------------------|:------------|
+| `^[[>0c`    | `^[[>77;`_version_`;`_unicode_`c` | secondary devices attributes (DEC); _version_ like 30105, _unicode_ version when using built-in data |
+| `^[[>0q`    | `^[P>\|mintty `_version_`^[\`     | terminal identification query (xterm 354); _version_ like 3.1.5 |
+
+
 ## Escape keycode ##
 
 There are two settings controlling the keycode sent by the [Esc key](http://en.wikipedia.org/wiki/Esc_key).
@@ -89,6 +99,62 @@ When shortcut override mode is on, all shortcut key combinations are sent to the
 | `^[[?7783h`   | on           |
 
 
+## Keyboard auto repeat ##
+
+With the VT520 sequence DECARR the keyboard auto-repeat speed can be 
+limited to the given value in characters per second.
+Unlike original DECARR, a value of 0 disables repeat rate limitation.
+Keyboard auto-repeat can also be disabled with DECSET 8 (DECARM).
+
+| **sequence**   | **comment**         |
+|:---------------|:--------------------|
+| `^[[`_cps_`-p` | max 30              |
+| `^[[-p       ` | unlimited           |
+| `^[[?8l`       | disable auto-repeat |
+| `^[[?8h`       | enable auto-repeat  |
+
+
+## Area attributes change ##
+
+Mintty extends the scope of rectangular area attributes change functions 
+DECCARA and DECRARA to additional attributes as suitable.
+Colour and font changing functions are only supported with DECCARA.
+True colour and underline colour settings are not supported.
+Examples:
+
+| **sequence**             | **function**                                    |
+|:-------------------------|:------------------------------------------------|
+| `^[[2*x`                 | set rectangular area extent                     |
+| `^[[`_Pt_`;`_Pl_`;`_Pb_`;`_Pr_`;3;38:5:20$r` | set italic and palette colour 20 in area |
+| `^[[`_Pt_`;`_Pl_`;`_Pb_`;`_Pr_`;29$r` | clear strikeout in area |
+| `^[[`_Pt_`;`_Pl_`;`_Pb_`;`_Pr_`;9$t` | revert strikeout in area |
+
+
+## Unscroll ##
+
+This sequence scrolls down screen lines like SD (CSI T) but fills the 
+empty lines from the end of the scrollback buffer.
+
+> `^[[`_N_`+T`
+
+
+## Status line / area ##
+
+Mintty implements the DEC VT320 status line and extends the feature to 
+support a multi-line host-writable status area.
+It is configured with a proprietary second parameter to DECSSDT 2.
+Its height is limited to be smaller than half the screen height.
+
+| **sequence**          | **function**                              |
+|:----------------------|:------------------------------------------|
+| `^[[0$~` _or_ `^[[$~` | disable status line                       |
+| `^[[1$~`              | enable indicator status line              |
+| `^[[2$~`              | enable host-writable status line          |
+| `^[[2;`_N_`$~`        | enable host-writable status area, N lines |
+| `^[[0$}` _or_ `^[[$}` | select normal display (for writing)       |
+| `^[[1$}`              | select status display (for writing)       |
+
+
 ## Bidirectional rendering ##
 
 Mintty supports bidi rendering by default. However, some applications 
@@ -131,6 +197,18 @@ and Block Elements (U+2580-U+259F). Others may be added in future versions.
 Note: SPD is a deprecated fun feature.
 
 
+## Reflow / Rewrap / Line rebreaking on resize ##
+
+Mintty supports reflow of wrapped lines if the terminal is resized and its 
+width is changed. This feature, applicable with setting `RewrapOnResize`, 
+can be disabled per line, usable for example for prompt lines.
+
+| **sequence**  | **rewrap on resize** |
+|:--------------|:---------------------|
+| `^[[?2027l`   | disabled             |
+| `^[[?2027h`   | enabled (default)    |
+
+
 ## Scrollbar hiding ##
 
 These sequences can be used to hide or show the scrollbar, whereby the window size remains the same but the number of character columns is changed to account for the width of the scrollbar. If the scrollbar is disabled in the options, it will always remain hidden.
@@ -157,14 +235,16 @@ position, and receive scrollbar events as control sequences.
 This mode is up to future revision. It is currently enabled or disabled 
 implicitly, there is no explicit mode setting sequence.
 
-The application scrollbar indicates a scrollbar view ("scroll offset") 
-within an assumed span of a virtual document ("document height", as 
-maintained by the application). The height of the view ("viewport height") 
+The application scrollbar indicates a scrollbar view (scroll offset _position_) 
+within an assumed span of a virtual document (document _size_, as 
+maintained by the application). The height of the view (viewport _height_) 
 defaults to the actual terminal size (rows); its difference to the 
-terminal size is kept when resizing the terminal. Control sequences 
-can set up the current view position ("scroll offset" from 1 to total size) 
-as well as the total virtual document size ("document height" in assumed lines) 
-and optionally the "viewport height".
+terminal size is kept when resizing the terminal.
+
+Control sequences can set the current view position (scroll offset _position_ 
+of the top end of the marked area in the scrollbar, 
+from 1 to _size_ − _height_ + 1) as well as the total virtual document _size_ 
+(in assumed lines) and optionally the viewport _height_.
 
 | **sequence**                       | **scrollbar**                                        |
 |:-----------------------------------|:-----------------------------------------------------|
@@ -176,6 +256,49 @@ and optionally the "viewport height".
 Relative scrollbar movement and absolute positioning are reported with 
 special sequences; for details see 
 [Keycodes – Application scrollbar events](https://github.com/mintty/mintty/wiki/Keycodes#application-scrollbar-events).
+See there also for an illustrated explanation of the meaning of _pos_ vs _size_ values.
+
+
+## Progress bar ##
+
+— EXPERIMENTAL —
+
+A progress indication on the taskbar icon can be switched or controlled with 
+this escape sequence.
+With a second parameter, the progress value can be controlled explicitly.
+With only one parameter, automatic progress detection is enabled, 
+scanning the current cursor line for a percentage indication (x%) and 
+enabled by a subsequent relative positioning (e.g. a CR return 
+character) like in text progress indications.
+Note that automatic progress bar can also be configured (option ProgressBar).
+
+| **sequence**                 | **comment**                                 |
+|:-----------------------------|:--------------------------------------------|
+| `^[[0%q`                     | disable progress indication                 |
+| `^[[1%q`                     | enable progress indication level 1 (green)  |
+| `^[[2%q`                     | enable progress indication level 2 (yellow) |
+| `^[[3%q`                     | enable progress indication level 3 (red)    |
+| `^[[10%q`                    | reset progress indication as configured     |
+| `^[[`_level_`;`_percent_`%q` | set progress level (1..3) and value         |
+| `^[[;`_percent_`%q`          | change progress value only                  |
+| `^[[8%q`                     | enable continuous "busy" indication         |
+
+An _OSC 9;4_ sequence (compatible with ConEmu or Windows Terminal) 
+is available too, alternatively supporting mnemonic parameters.
+It supports additional values to switch the progress scan mode 
+(option `ProgressScan`).
+
+| **sequence**                            | **comment**                       |
+|:----------------------------------------|:----------------------------------|
+| `^[]9;progress;off^G`                   | disable progress indication       |
+| `^[]9;progress;green^G`                 | enable green progress indication  |
+| `^[]9;progress;yellow^G`                | enable yellow progress indication |
+| `^[]9;progress;red^G`                   | enable red progress indication    |
+| `^[]9;progress;default^G` _or empty_    | reset progress indication         |
+| `^[]9;progress;`_level_`;`_percent_`^G` | set progress level and value      |
+| `^[]9;progress;busy^G`                  | enable busy indication            |
+| `^[]9;progress;single^G`                | single-line scan mode             |
+| `^[]9;progress;multiple^G`              | multi-line scan mode              |
 
 
 ## Mousewheel reporting ##
@@ -212,6 +335,25 @@ Application mousewheel mode is controlled by these sequences:
 |:--------------|:--------------|
 | `^[[?7787l`   | cursor        |
 | `^[[?7787h`   | application   |
+
+
+## Readline mouse modes ##
+
+These three mode settings, switched by DECSET/DECRST sequences (xterm 379) 
+enable mouse-controlled editing on the command line (as detected by the 
+cursor position) by sending virtual cursor or erase keystrokes.
+
+| **sequence**  | **mode**                                                  |
+|:--------------|:----------------------------------------------------------|
+| `^[[?2001h`   | left button places cursor on command line                 |
+| `^[[?2002h`   | middle button pastes at current mouse position            |
+| `^[[?2003h`   | double right-click deletes selection until mouse position |
+
+Note that middle and right button functions only apply if the middle button 
+is configured to Paste (default) and the right button is configured to 
+Extend the selection, respectively.
+The respective DECRST sequences (ending with `l`) disable the corresponding mode.
+These modes can be preset with option `ClicksPlaceCursor` initially and on hard reset.
 
 
 ## Ambiguous width reporting ##
@@ -268,7 +410,7 @@ source of information about which Indic characters should be considered wide;
 most screen applications will not cooperate with this feature as their 
 assumption of character widths is mostly based on the system locale 
 (with the notable exception of the Unicode editor MinEd which supports 
-Indic wide display in its forthcoming release).
+Indic wide display).
 
 Setting wide long Unicode characters mode, a number of Unicode characters 
 that are supposed to be "wide" or "long" will be displayed 
@@ -278,6 +420,39 @@ The list of long Unicode characters considered "wide" is
 U+2001, U+2003, U+2014, U+27DD..U+27DE, U+27F5..U+27FF, 
 U+2910, U+296A..U+296D, U+2B33, U+2E0E..U+2E11, U+2E3A..U+2E3B;
 this list is subject to change in future versions.
+
+
+## Explicit character width ##
+
+— EXPERIMENTAL —
+
+Mintty provides explicit width override as a character attribute, 
+so an application can enforce single-width characters to be rendered wide 
+or double-width ("wide") characters to be rendered narrow.
+Experimentally, for this purpose the ECMA-48 escape sequences 
+"Presentation Expand Or Contract" (PEC) `CSI` _num_ `SP Z` are used, 
+with one extension:
+
+| **sequence** | **effect**                                    |
+|:-------------|:----------------------------------------------|
+| `^[[0 Z`     | default: normal single or double width        |
+| `^[[1 Z`     | expand: enforce double-cell display           |
+| `^[[2 Z`     | contract: enforce single-cell display         |
+| `^[[22 Z`    | zoom down to single-cell display (like setting `Charwidth=single`) |
+| `^[[2;2 Z`   | like `^[[22 Z`                                |
+
+
+## Overstrike ##
+
+Mintty supports overstriking characters, with either an SGR attribute 
+or the VK100-compatible DECSET 20.
+
+| **sequence** | **effect**                                    |
+|:-------------|:----------------------------------------------|
+| `^[[8:7m`    | overstriking character writing mode           |
+| `^[[28m`     | overwriting character writing mode            |
+| `^[[?20h`    | overstriking character writing mode           |
+| `^[[?20l`    | overwriting character writing mode            |
 
 
 ## Font size ##
@@ -293,7 +468,7 @@ The following _OSC_ ("operating system command") sequences can be used to change
 | `^[]7770;^G`           | default             |
 
 As usual, OSC sequences can also be terminated with `^[\` (_ST_, the string terminator) instead of `^G`.
-When the font size is queried, a sequence that would restore the current size is sent, terminated with _ST_: `^[]7770;`_num_`^[\`.
+When the font size is queried, a sequence that would restore the current font size is sent.
 
 
 ## Font and window size ##
@@ -310,7 +485,38 @@ The following _OSC_ ("operating system command") sequences can be used to change
 
 The window size is adapted to zoom with the font size, so the terminal character geometry is kept if possible.
 As usual, OSC sequences can also be terminated with `^[\` (_ST_, the string terminator) instead of `^G`.
-When the font size is queried, a sequence that would restore the current size is sent, terminated with _ST_: `^[]7777;`_num_`^[\`.
+When the font size is queried, a sequence that would restore the current font and window size is sent.
+
+
+## Font style ##
+
+OSC 50 semantics is extended to alternative fonts and the Tek mode font;
+it changes the font that is currently selected (and keeps that setting).
+
+
+## Emojis style ##
+
+Like OSC 50 for font style, this sequence can change the emojis style.
+For values, see setting `Emojis` in the manual.
+
+> `^[]7750;_emojis-style_`^G`
+
+
+## Background image ##
+
+OSC 11 semantics is extended to set or change image background.
+
+| **sequence**         | **locale**                                        |
+|:---------------------|:--------------------------------------------------|
+| `^[]11;_`_image_`^G` | set terminal size background image                |
+| `^[]11;%`_image_`^G` | set image and scale terminal to its aspect ratio  |
+| `^[]11;*`_image_`^G` | set tiled background                              |
+| `^[]11;+`_image_`^G` | set background scaled with aspect ratio and tiled |
+| `^[]11;=^G`          | set background to desktop image (if tiled)        |
+
+If the background filename is followed by a comma and a number between 1 and 254, 
+the background image will be dimmed towards the background colour;
+with a value of 255, the alpha transparency values of the image will be used.
 
 
 ## Locale ##
@@ -339,8 +545,9 @@ to be declared in your shell profile (e.g. `$HOME/.bashrc`).
 
 The following _OSC_ ("operating system command") sequence can be used to copy 
 the window title to the Windows clipboard (like menu function "Copy Title"):
+This sequence is disabled by default setting `AllowSetSelection=no`.
 
-> `^[]7721;1^G`
+> `^[]7721^G`
 
 
 ## Window title set ##
@@ -380,11 +587,11 @@ The _file-URL_ liberally follows a `file:` URL scheme; examples are
 The following _OSC_ ("operating system command") sequence can be used to 
 set a hyperlink attribute which is opened on Ctrl-click.
 
-| **link control**         | **function**           |
-|:-------------------------|:------------------|
-| `^[]8;;`_URL_`^G`        | underlay text with the hyperlink |
+| **link control**         | **function**                                    |
+|:-------------------------|:------------------------------------------------|
+| `^[]8;;`_URL_`^G`        | underlay text with the hyperlink                |
 | `^[]8;;^G`               | clear hyperlink attribute (terminate hyperlink) |
-| `^[]8;id=`ID`;`_URL_`^G` | associate instances of hyperlink |
+| `^[]8;id=`ID`;`_URL_`^G` | associate instances of hyperlink                |
 
 A typical hyperlinked text would be written like
 > `^[]8;;`_URL_`^G`text`^[]8;;^G`
@@ -403,8 +610,26 @@ two features:
   * Shift+cursor-left/right navigates to the previous/next prompt line and scrolls in the scrollback buffer accordingly
   * user-defined commands can refer to environment variable MINED_OUTPUT which contains terminal output as limited by previous marker
 
+| **marker**    | **function**                                              |
+|:--------------|:----------------------------------------------------------|
 | `^[[?7711h`   | mark prompt line (last line in case of multi-line prompt) |
-| `^[[?7711l`   | mark secondary prompt line (upper lines) |
+| `^[[?7711l`   | mark secondary prompt line (upper lines)                  |
+
+
+## Synchronous update ##
+
+A pair of Begin/End Synchronous Update DECSET or DCS sequences suspends 
+the output between them in order to be updated to the screen synchronously.
+The purpose is that applications can control atomic screen update, 
+in order to avoid screen flickering in certain situations of display update.
+
+| **sequence**      | **function**                                        |
+|:------------------|:----------------------------------------------------|
+| `^[[?2026h`       | suspend screen update for 150 ms                    |
+| `^[P=1s^[\`       | suspend screen update for 150 ms                    |
+| `^[P=1;`_N_`s^[\` | suspend screen update for _N_ ms, max 420 ms        |
+| `^[[?2026l`       | update screen (flush output), end update suspending |
+| `^[P=2s^[\`       | update screen (flush output), end update suspending |
 
 
 ## Image support ##
@@ -414,17 +639,18 @@ via iTerm2 controls:
 
 > `^[]1337;File=` _par_`=`_arg_ [ `;`_par_`=`_arg_ ]* `:`_image_ `^G`
 
-| **par**                  | **arg**           | **comment**        |
-|:-------------------------|:------------------|:-------------------|
-| **name=**                | base64-encoded ID | currently not used |
-| **width=**               | size (*)          | cell/pixel/percentage |
-| **height=**              | size (*)          | cell/pixel/percentage |
-| **preserveAspectRatio=** | 1 _or_ 0 | only used if **width** and **height** are given |
-| _image_                  |          | base64-encoded image data |
+| **par**                  | **arg**            | **comment**               |
+|:-------------------------|:-------------------|:--------------------------|
+| **name=**                | base64-encoded ID  | currently not used        |
+| **width=**               | size (*)           | cell/pixel/percentage     |
+| **height=**              | size (*)           | cell/pixel/percentage     |
+| **preserveAspectRatio=** | 1 _(default) or_ 0 | only used if **width** and **height** are given |
+| _image_                  |                    | base64-encoded image data |
 
 The width or height size arguments use cell units by default. Optionally, 
 an appended "px" or "%" refers to the number of pixels or the percentage of 
-screen size at the time of image output.
+screen size at the time of image output. Image size persists when resizing 
+the terminal but scales when zooming the cell size.
 
 If both width and height are given, the preserveAspectRatio parameter can 
 select whether to fit the image in the denoted area or stretch it to fill it.
@@ -435,7 +661,14 @@ If none of width or height are given, the image pixel size is used.
 Image formats supported comprise PNG, JPEG, GIF, TIFF, BMP, Exif.
 
 
-## Graphics end position ##
+## Graphics position ##
+
+Sixel output is anchored at the current cursor position by default 
+(Sixel scrolling mode). DECSET 80 (DECSDM) enables Sixel display mode instead, 
+so Sixel output would start at the top of screen. Note this setting 
+was reversed from mintty 3.0.1 to mintty 3.5.1, following xterm interpretation 
+which has meanwhile also been fixed.
+(The DECSDM setting can be disabled with option `SuppressDEC=80`.)
 
 After output of a Sixel image in Sixel scrolling mode, or other image, 
 the final cursor position can be next to the right bottom of the image, 
@@ -450,6 +683,57 @@ control sequence 8452.
 | `^[[?7730l`   | below left bottom    |
 | `^[[?8452h`   | next to right bottom |
 | `^[[?8452l`   | below image          |
+
+
+## Audio support ##
+
+— EXPERIMENTAL —
+
+Mintty supports audio sound output with this OSC sequence:
+
+> `^[]440;` _sound_ [ `:` _option_ ]* `^G`
+
+where _sound_ is the name of a sound file (.wav) in a mintty configuration 
+subdirectory _sounds_, or a path name of a .wav file.
+
+| **option** | **comment**                                              |
+|:-----------|:---------------------------------------------------------|
+| **async**  | sound playing is decoupled from control processing       |
+| **nostop** | sound is not played if an async sound is already playing |
+| **loop**   | sound is played in asynchronous endless loop             |
+
+An asynchronous sound can be stopped with an empty sound name:
+
+> `^[]440;^G`
+
+Mintty also supports the DECPS Play Sound escape sequence with 
+tone style extension.
+
+| **sequence**                                       | **function**         |
+|:---------------------------------------------------|:---------------------|
+| `^[[`_vol_`;`_duration_`;`_note_[`;`_note_...]`,~` | play notes (16 supported) |
+| `^[[`_vol_`:`_tone_`;`_duration_`;`_note_[`;`_note_...]`,~` | set tone style and play |
+| `^[[0:`_tone_`,~` | change tone style only |
+
+The sequence plays the list of notes with the given volume (0...7) 
+and duration (0...255) in units of 1/32 of a second.
+Supported note values are 1...25, indicating notes c’’ (C5) to c’’’’ (C7).
+
+The range of notes is mirrored to values 101...125 and extended to 41...137, 
+indicating notes ,,C (C0) to c’’’’’ (C8). This extension is experimental 
+and subject to withdrawal in later versions should other standard behaviour 
+be established in terminals.
+
+If the first parameter has a colon-separated sub-parameter appended, 
+it sets the current tone style (which will persist until changed again 
+or reset).
+Tones 1 to 5 are currently defined, 1 is a sine waveform.
+
+The initial tone style can be preselected by setting `PlayTone`; 
+if changed by a sequence, it will be restored by a terminal reset.
+Tone value 0 (also the fallback) resorts to the Windows Beep function.
+Other tones are only effective if the audio output library `libao` 
+is installed.
 
 
 ## Cursor style ##
@@ -472,11 +756,14 @@ blinking interval in milliseconds.
 | **4**   | underscore   | no        |
 | **5**   | line         | yes       |
 | **6**   | line         | no        |
+| **7**   | box          | yes       |
+| **8**   | box          | no        |
 
 Furthermore, the following Linux console sequence can be used to set the 
 size of the active underscore cursor.
 (Note that the second and third parameters from the Linux sequence are not 
 supported; cursor colour can be set with the OSC 12 sequence.)
+The sequence also affects the vertical line cursor.
 
 > `^[[?` _arg_ `c`
 
@@ -489,3 +776,67 @@ supported; cursor colour can be set with the OSC 12 sequence.)
 | **4**   | lower_half   |
 | **5**   | two_thirds   |
 | **6**   | full block   |
+
+
+## Mouse pointer style ##
+
+The following _OSC_ ("operating system command") sequence (xterm 367) 
+can be used to set the mouse pointer shape of the current mouse mode 
+(mintty maintains two different mouse pointer shapes, to distinguish 
+application mouse reporting modes).
+Valid values are Windows predefined cursor names 
+(appstarting, arrow, cross, hand, help, ibeam, icon, no, size, sizeall, sizenesw, sizens, sizenwse, sizewe, uparrow, wait).
+or cursor file names which are looked up in subdirectory `pointers` of 
+a mintty resource directory; supported file types are .cur, .ico, .ani.
+
+| **sequence**          |
+|:----------------------|
+| `^[]22;`_pointer_`^G` |
+
+
+## ANSI colours ##
+
+The following _OSC_ sequences can be used to set or query the foreground and
+background variants of the ANSI colours.
+
+| **sequence**                        | ** effect **                         |
+|:------------------------------------|:-------------------------------------|
+| `^[]7704;`_index_`;`_colour_`^G`    | set fg and bg variants to same value |
+| `^[]7704;`_index_`;`_fg_`;`_bg_`^G` | set fg and bg to separate values     |
+| `^[]7704;`_index_`;?^G`             | query current values                 |
+
+The _index_ argument has to be in range 0 to 15.
+
+The colour values can be comma-separated decimal triples such as `255,85,0`,
+X11 colour names, or hexadecimal colour specifications such as `#`_RRGGBB_,
+`rgb:`_RR_`/`_GG_`/`_BB_, `rgb:`_RRRR_`/`_GGGG_`/`_BBBB_,
+`cmy:`_C_`.`_C_`/`_M_`.`_M_`/`_Y_`.`_Y_ or
+`cmyk:`_C_`.`_C_`/`_M_`.`_M_`/`_Y_`.`_Y_`/`_K_`.`_K_.
+
+If a colour value is left empty, it is reset to the value in the mintty
+configuration. Invalid values are ignored.
+
+The query sequence replies with the single-value sequence if the current values
+for the foreground and background variants are the same, and with the two-value
+sequence otherwise.
+
+Note: Unlike the xterm-compatible sequence OSC 4, which sets palette colours 
+including ANSI colours, OSC 7704 can be used to change ANSI colours only, 
+leaving the associated palette colours 0..15 unchanged, so you could 
+select different colours with SGR 30..37 etc distinct from SGR 38:5 etc.
+
+
+## Printing and screen dump ##
+
+Mintty supports the following DEC, xterm and mintty Media Copy sequences:
+
+| **sequence** | **effect**                      |
+|:-------------|:--------------------------------|
+| `^[[0i`      | print screen to default printer |
+| `^[[5i`      | redirect output to printer      |
+| `^[[4i`      | end output to printer           |
+| `^[[?5i`     | copy output to printer          |
+| `^[[?4i`     | end output to printer           |
+| `^[[10i`     | save screen as HTML             |
+| `^[[12i`     | save screen as PNG image        |
+

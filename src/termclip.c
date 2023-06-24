@@ -1,5 +1,5 @@
 // termclip.c (part of mintty)
-// Copyright 2008-10 Andy Koppe, 2018 Thomas Wolff
+// Copyright 2008-23 Andy Koppe, 2018 Thomas Wolff
 // Adapted from code from PuTTY-0.60 by Simon Tatham and team.
 // Licensed under the terms of the GNU General Public License v3 or later.
 
@@ -10,10 +10,13 @@
 #include "charset.h"
 
 typedef struct {
-  size_t capacity;  // number of items allocated for text/cattrs
-  size_t len;    // number of actual items at text/cattrs (inc. null terminator)
-  wchar *text;   // text to copy (eventually null terminated)
-  cattr *cattrs; // matching cattr for each wchar of text
+  size_t capacity; // number of items allocated for text/cattrs
+  size_t len;      // number of actual items at text/cattrs (incl. NUL)
+  // the text buffer is needed to fill the Unicode clipboard in one chunk
+  wchar * text;    // text to copy (eventually null terminated)
+  // the attributes part of the buffer is only filled as requested
+  bool with_attrs;
+  cattr * cattrs;  // matching cattr for each wchar of text
 } clip_workbuf;
 
 static void
@@ -21,39 +24,105 @@ destroy_clip_workbuf(clip_workbuf * b)
 {
   assert(b && b->capacity); // we're only called after get_selection, which always allocates
   free(b->text);
-  free(b->cattrs);
+  if (b->with_attrs)
+    // the attributes part of the buffer was only filled as requested
+    free(b->cattrs);
   free(b);
 }
 
 // All b members must be 0 initially, ca may be null if the caller doesn't care
 static void
-clip_addchar(clip_workbuf * b, wchar chr, cattr * ca)
+clip_addchar(clip_workbuf * b, wchar chr, cattr * ca, bool tabs, ulong sizehint)
 {
+  // ensure sizehint > 0
+  sizehint = max(sizehint, 8);
+
+  if (tabs && chr == ' ' && ca && ca->attr & TATTR_CLEAR && ca->attr & ATTR_BOLD) {
+    // collapse TAB
+    int l0 = b->len;
+    while (l0) {
+      l0--;
+      if (b->text[l0] == ' ' && b->cattrs[l0].attr & TATTR_CLEAR && b->cattrs[l0].attr & ATTR_DIM)
+        b->len--;
+      else
+        break;
+    }
+    chr = '\t';
+  }
+
+  bool err = false;
+
   if (b->len >= b->capacity) {
-    b->capacity = b->len ? b->len * 2 : 1024;  // x2 strategy, 1K chars initially
-    b->text = renewn(b->text, b->capacity);
-    b->cattrs = renewn(b->cattrs, b->capacity);
+    //b->capacity = b->len ? b->len * 2 : 1024;  // x2 strategy, 1K chars initially
+    //b->capacity += sizehint;
+    //b->capacity = b->capacity ? b->capacity * 3 / 2 : sizehint;
+    b->capacity = b->capacity ? b->capacity * 5 / 4 : sizehint;
+
+    wchar * _text = renewn(b->text, b->capacity);
+    if (_text)
+      b->text = _text;
+    else
+      err = true;
+    if (b->with_attrs) {
+      // the attributes part of the buffer is only filled as requested
+      cattr * _cattrs = renewn(b->cattrs, b->capacity);
+      if (_cattrs)
+        b->cattrs = _cattrs;
+      else
+        err = true;
+    }
+  }
+  if (err) {
+    //printf("buf alloc err\n");
+    return;
+  }
+
+  cattr copattr = ca ? *ca : CATTR_DEFAULT;
+  if (copattr.attr & TATTR_CLEAR) {
+    copattr.attr &= ~(ATTR_BOLD | ATTR_DIM | TATTR_CLEAR);
   }
 
   b->text[b->len] = chr;
-  b->cattrs[b->len] = ca ? *ca : CATTR_DEFAULT;
+  if (b->with_attrs)
+    // the attributes part of the buffer is only filled as requested
+    b->cattrs[b->len] = copattr;
+
   b->len++;
 }
 
 // except OOM, guaranteed at least emtpy null terminated wstring and one cattr
 static clip_workbuf *
-get_selection(pos start, pos end, bool rect, bool allinline)
+get_selection(bool attrs, pos start, pos end, bool rect, bool allinline, bool with_tabs)
 {
-  int old_top_x = start.x;    /* needed for rect==1 */
+  //printf("get_selection attrs %d all %d tabs %d\n", attrs, allinline, with_tabs);
+
   clip_workbuf *buf = newn(clip_workbuf, 1);
-  *buf = (clip_workbuf){0, 0, 0, 0};  // all members to 0 initially
+  *buf = (clip_workbuf){.with_attrs = attrs,
+                        .capacity = 0, .len = 0, .text = 0, .cattrs = 0};
+
+  // estimate buffer size needed, to give memory allocation increments a hint
+  int lines = end.y - start.y;
+  long hint = (long)lines * term.cols / 8;
+  //printf("get_selection %d...%d (%d)\n", start.y, end.y, lines);
+  // check overflow
+  if (lines < 0 || hint < 0) {
+    //printf("buf start > end %d\n", lines);
+    return buf;
+  }
+
+  int old_top_x = start.x;    /* needed for rect==1 */
 
   while (poslt(start, end)) {
     bool nl = false;
     termline *line = fetch_line(start.y);
 
-    if (start.y == term.curs.y) {
-      line->chars[term.curs.x].attr.attr |= TATTR_ACTCURS;
+    if (allinline) {
+      // this tweak (commit 975403 "export HTML: consider cursor", 2.9.1)
+      // causes cursor artefacts in connection with ClicksPlaceCursor=yes
+      // now guarded to cases of HTML copy/export
+      if (start.y == term.curs.y) {
+        line->chars[term.curs.x].attr.attr |= TATTR_ACTCURS;
+      }
     }
 
     pos nlpos;
@@ -136,7 +205,7 @@ get_selection(pos start, pos end, bool rect, bool allinline)
         cbuf[1] = 0;
 
         for (p = cbuf; *p; p++)
-          clip_addchar(buf, *p, pca);
+          clip_addchar(buf, *p, pca, with_tabs, hint);
 
         if (line->chars[x].cc_next)
           x += line->chars[x].cc_next;
@@ -146,16 +215,26 @@ get_selection(pos start, pos end, bool rect, bool allinline)
       start.x++;
     }
     if (nl) {
-      clip_addchar(buf, '\r', 0);
-      clip_addchar(buf, '\n', 0);
+      clip_addchar(buf, '\r', 0, false, hint);
+      clip_addchar(buf, '\n', 0, false, hint);
     }
     start.y++;
     start.x = rect ? old_top_x : 0;
 
     release_line(line);
   }
-  clip_addchar(buf, 0, 0);
+  clip_addchar(buf, 0, 0, false, hint);
+  //printf("get_selection done\n");
   return buf;
+}
+
+static wchar *
+get_sel_str(pos start, pos end, bool rect, bool allinline, bool with_tabs)
+{
+  clip_workbuf * buf = get_selection(false, start, end, rect, allinline, with_tabs);
+  wchar * selstr = buf->text;
+  free(buf);
+  return selstr;
 }
 
 void
@@ -164,7 +243,13 @@ term_copy_as(char what)
   if (!term.selected)
     return;
 
-  clip_workbuf *buf = get_selection(term.sel_start, term.sel_end, term.sel_rect, false);
+  bool with_tabs = what == 'T' || ((!what || what == 't') && cfg.copy_tabs);
+  if (what == 'T' || what == 'p') // map "text with TABs" and "plain" to text
+    what = 't';
+  clip_workbuf *buf = get_selection(true, term.sel_start, term.sel_end, term.sel_rect,
+                                    false, with_tabs);
+  // for CopyAsHTML, get_selection will be called another time
+  // but with different parameters
   win_copy_as(buf->text, buf->cattrs, buf->len, what);
   destroy_clip_workbuf(buf);
 }
@@ -180,16 +265,18 @@ term_open(void)
 {
   if (!term.selected)
     return;
-  clip_workbuf *buf = get_selection(term.sel_start, term.sel_end, term.sel_rect, false);
+
+  wchar * selstr = get_sel_str(term.sel_start, term.sel_end, term.sel_rect, false, false);
 
   // Don't bother opening if it's all whitespace.
-  wchar *p = buf->text;
+  wchar * p = selstr;
   while (iswspace(*p))
     p++;
-  if (*p)
-    win_open(wcsdup(buf->text), true);  // win_open frees its argument
 
-  destroy_clip_workbuf(buf);
+  if (*p)
+    win_open(selstr, true);  // win_open frees its argument
+  else
+    free(selstr);
 }
 
 static bool
@@ -221,12 +308,26 @@ term_paste(wchar *data, uint len, bool all)
 {
   term_cancel_paste();
 
+  uint size = len;
   term.paste_buffer = newn(wchar, len);
   term.paste_len = term.paste_pos = 0;
+
+  bool bracketed_paste_split_by_line = term.bracketed_paste 
+       && cfg.bracketed_paste_split
+       && (cfg.bracketed_paste_split > 1 || !term.on_alt_screen);
 
   // Copy data to the paste buffer, converting both Windows-style \r\n and
   // Unix-style \n line endings to \r, because that's what the Enter key sends.
   for (uint i = 0; i < len; i++) {
+    // swallow closing paste bracket if included in clipboard contents,
+    // in order to prevent (malicious) premature end of bracketing
+    if (term.bracketed_paste) {
+      if (i + 6 <= len && wcsncmp(W("\e[201~"), &data[i], 6) == 0) {
+        i += 6 - 1;
+        continue;
+      }
+    }
+
     wchar wc = data[i];
     if (wc == '\n')
       wc = '\r';
@@ -237,6 +338,19 @@ term_paste(wchar *data, uint len, bool all)
       term.paste_buffer[term.paste_len++] = wc;
     else if (i == 0 || data[i - 1] != '\r')
       term.paste_buffer[term.paste_len++] = wc;
+    else
+      continue;
+
+    // split bracket embedding by line
+    if (bracketed_paste_split_by_line && wc == '\r' && i + 1 < len
+     && (i + 2 != len || 0 != wcsncmp(&data[i], W("\r\n"), 2))
+       )
+    {
+      size += 12;
+      term.paste_buffer = renewn(term.paste_buffer, size);
+      wcsncpy(&term.paste_buffer[term.paste_len], W("\e[201~\e[200~"), 12);
+      term.paste_len += 12;
+    }
   }
 
   if (term.bracketed_paste)
@@ -290,8 +404,8 @@ term_send_paste(void)
 void
 term_select_all(void)
 {
-  term.sel_start = (pos){-sblines(), 0, false};
-  term.sel_end = (pos){term_last_nonempty_line(), term.cols, true};
+  term.sel_start = (pos){-sblines(), 0, 0, 0, false};
+  term.sel_end = (pos){term_last_nonempty_line(), term.cols, 0, 0, true};
   term.selected = true;
   if (cfg.copy_on_select)
     term_copy();
@@ -313,29 +427,35 @@ term_get_text(bool all, bool screen, bool command)
 
     if (y < sbtop) {
       y = sbtop;
-      end = (pos){y, 0, false};
+      end = (pos){y, 0, 0, 0, false};
     }
     else {
       termline * line = fetch_line(y);
       if (line->lattr & LATTR_MARKED) {
+        //printf("incr %d (sbtop %d/%d rows %d)\n", y, sbtop, term.sblines, term.rows);
         if (y > sbtop) {
           y--;
-          end = (pos){y, term.cols, false};
-          termline * line = fetch_line(y);
-          if (line->lattr & LATTR_MARKED)
+          end = (pos){y, term.cols, 0, 0, false};
+          release_line(line);
+          line = fetch_line(y);
+          if (line->lattr & LATTR_MARKED) {
             y++;
+            release_line(line);
+            line = fetch_line(y);
+          }
         }
         else {
-          end = (pos){y, 0, false};
+          end = (pos){y, 0, 0, 0, false};
         }
       }
       else {
         skipprompt = line->lattr & LATTR_UNMARKED;
-        end = (pos){y, term.cols, false};
+        end = (pos){y, term.cols, 0, 0, false};
       }
 
-      if (fetch_line(y)->lattr & LATTR_UNMARKED)
-        end = (pos){y, 0, false};
+      if (line->lattr & LATTR_UNMARKED)
+        end = (pos){y, 0, 0, 0, false};
+      release_line(line);
     }
 
     int yok = y;
@@ -345,26 +465,28 @@ term_get_text(bool all, bool screen, bool command)
       printf("y %d skip %d marked %X\n", y, skipprompt, line->lattr & (LATTR_UNMARKED | LATTR_MARKED));
 #endif
       if (skipprompt && (line->lattr & LATTR_UNMARKED))
-        end = (pos){y, 0, false};
+        end = (pos){y, 0, 0, 0, false};
       else
         skipprompt = false;
       if (line->lattr & LATTR_MARKED) {
+        release_line(line);
         break;
       }
+      release_line(line);
       yok = y;
     }
-    start = (pos){yok, 0, false};
+    start = (pos){yok, 0, 0, 0, false};
 #ifdef debug_user_cmd_clip
     printf("%d:%d...%d:%d\n", start.y, start.x, end.y, end.x);
 #endif
   }
   else if (screen) {
-    start = (pos){term.disptop, 0, false};
-    end = (pos){term_last_nonempty_line(), term.cols, false};
+    start = (pos){term.disptop, 0, 0, 0, false};
+    end = (pos){term_last_nonempty_line(), term.cols, 0, 0, false};
   }
   else if (all) {
-    start = (pos){-sblines(), 0, false};
-    end = (pos){term_last_nonempty_line(), term.cols, false};
+    start = (pos){-sblines(), 0, 0, 0, false};
+    end = (pos){term_last_nonempty_line(), term.cols, 0, 0, false};
   }
   else if (!term.selected) {
     return wcsdup(W(""));
@@ -375,10 +497,7 @@ term_get_text(bool all, bool screen, bool command)
     rect = term.sel_rect;
   }
 
-  clip_workbuf *buf = get_selection(start, end, rect, false);
-  wchar * tbuf = wcsdup(buf->text);
-  destroy_clip_workbuf(buf);
-  return tbuf;
+  return get_sel_str(start, end, rect, false, cfg.copy_tabs);
 }
 
 void
@@ -458,6 +577,8 @@ static char *
 term_create_html(FILE * hf, int level)
 {
   char * hbuf = hf ? 0 : strdup("");
+  size_t hbuf_len = 0;
+  size_t hbuf_cap = 0;
   void
   hprintf(FILE * hf, const char * fmt, ...)
   {
@@ -469,8 +590,14 @@ term_create_html(FILE * hf, int level)
     if (hf)
       fprintf(hf, "%s", buf);
     else {
-      hbuf = renewn(hbuf, strlen(hbuf) + len + 1);
-      strcat(hbuf, buf);
+      if (hbuf_len + len > hbuf_cap) {
+        hbuf_cap = hbuf_cap ? hbuf_cap * 5 / 4 : 5555;
+        hbuf = renewn(hbuf, hbuf_cap + 1);
+      }
+
+      //strcat(hbuf, buf);
+      strcpy(hbuf + hbuf_len, buf);
+      hbuf_len += len;
     }
     free(buf);
   }
@@ -479,8 +606,8 @@ term_create_html(FILE * hf, int level)
   pos end = term.sel_end;
   bool rect = term.sel_rect;
   if (!term.selected) {
-    start = (pos){term.disptop, 0, false};
-    end = (pos){term.disptop + term.rows - 1, term.cols, false};
+    start = (pos){term.disptop, 0, 0, 0, false};
+    end = (pos){term.disptop + term.rows - 1, term.cols, 0, 0, false};
     rect = false;
   }
 
@@ -490,6 +617,7 @@ term_create_html(FILE * hf, int level)
   colour fg_colour = win_get_colour(FG_COLOUR_I);
   colour bg_colour = win_get_colour(BG_COLOUR_I);
   colour bold_colour = win_get_colour(BOLD_COLOUR_I);
+  colour blink_colour = win_get_colour(BLINK_COLOUR_I);
   hprintf(hf,
     "<head>\n"
     "  <meta name='generator' content='mintty'/>\n"
@@ -543,7 +671,7 @@ term_create_html(FILE * hf, int level)
         salpha++;
         sscanf(salpha, "%u%c", &alpha, &(char){0});
       }
-  
+
       if (alpha >= 0) {
         hprintf(hf, "  }\n");
         hprintf(hf, "  #vt100 pre {\n");
@@ -553,15 +681,15 @@ term_create_html(FILE * hf, int level)
         hprintf(hf, "  }\n");
         hprintf(hf, "  .background {\n");
       }
-  
+
       hprintf(hf, "    background-image: url('%s');\n", bg);
       if (!tiled) {
         hprintf(hf, "    background-attachment: no-repeat;\n");
         hprintf(hf, "    background-size: 100%% 100%%;\n");
       }
-  
+
       free(bg);
-  
+
       if (alpha < 0) {
         hprintf(hf, "  }\n");
         hprintf(hf, "  #vt100 pre {\n");
@@ -597,6 +725,9 @@ term_create_html(FILE * hf, int level)
   if (bold_colour != (colour)-1)
     hprintf(hf, "  .bold-color { color: #%02X%02X%02X }\n",
             red(bold_colour), green(bold_colour), blue(bold_colour));
+  else if (blink_colour != (colour)-1)
+    hprintf(hf, "  .blink-color { color: #%02X%02X%02X }\n",
+            red(blink_colour), green(blink_colour), blue(blink_colour));
   for (int i = 0; i < 16; i++) {
     colour ansii = win_get_colour(ANSI0 + i);
     uchar r = red(ansii), g = green(ansii), b = blue(ansii);
@@ -642,7 +773,7 @@ term_create_html(FILE * hf, int level)
   hprintf(hf, "  <div class=background id='vt100'>\n");
   hprintf(hf, "   <pre>");
 
-  clip_workbuf * buf = get_selection(start, end, rect, level >= 3);
+  clip_workbuf * buf = get_selection(true, start, end, rect, level >= 3, false);
   int i0 = 0;
   bool odd = true;
   for (uint i = 0; i < buf->len; i++) {
@@ -650,7 +781,7 @@ term_create_html(FILE * hf, int level)
         // buf->cattrs[i] ~!= buf->cattrs[i0] ?
         // we need to check more than termattrs_equal_fg
         // but less than termchars_equal_override
-# define IGNATTR (ATTR_WIDE | TATTR_COMBINING)
+# define IGNATTR (TATTR_WIDE | TATTR_COMBINING)
         || (buf->cattrs[i].attr & ~IGNATTR) != (buf->cattrs[i0].attr & ~IGNATTR)
         || buf->cattrs[i].truefg != buf->cattrs[i0].truefg
         || buf->cattrs[i].truebg != buf->cattrs[i0].truebg
@@ -680,6 +811,10 @@ term_create_html(FILE * hf, int level)
       if ((ca->attr & ATTR_BOLD) && fga < 8 && term.enable_bold_colour && !rev) {
         if (bold_colour != (colour)-1)
           fg = bold_colour;
+      }
+      else if ((ca->attr & (ATTR_BLINK | ATTR_BLINK2)) && term.enable_blink_colour) {
+        if (blink_colour != (colour)-1)
+          fg = blink_colour;
       }
       if (dim) {
         fg = ((fg & 0xFEFEFEFE) >> 1)
@@ -771,6 +906,18 @@ term_create_html(FILE * hf, int level)
             }
             else
               hprintf(hf, " bold-color");
+            fg = (colour)-1;
+          }
+        }
+        else if (ca->attr & (ATTR_BLINK | ATTR_BLINK2) && term.enable_blink_colour) {
+          if (fg == blink_colour) {
+            if (enhtml) {
+              add_style("color: ");
+              hprintf(hf, "#%02X%02X%02X;",
+                      red(blink_colour), green(blink_colour), blue(blink_colour));
+            }
+            else
+              hprintf(hf, " blink-color");
             fg = (colour)-1;
           }
         }
@@ -953,8 +1100,7 @@ term_export_html(bool do_open)
 {
   struct timeval now;
   gettimeofday(& now, 0);
-  char * htmlf = newn(char, MAX_PATH + 1);
-  strftime(htmlf, MAX_PATH, "mintty.%F_%T.html", localtime (& now.tv_sec));
+  char * htmlf = save_filename(".html");
 
   int hfd = open(htmlf, O_WRONLY | O_CREAT | O_EXCL, 0600);
   if (hfd < 0) {
@@ -990,10 +1136,10 @@ print_screen(void)
   else
     return;
 
-  pos start = (pos){term.disptop, 0, false};
-  pos end = (pos){term.disptop + term.rows - 1, term.cols, false};
+  pos start = (pos){term.disptop, 0, 0, 0, false};
+  pos end = (pos){term.disptop + term.rows - 1, term.cols, 0, 0, false};
   bool rect = false;
-  clip_workbuf * buf = get_selection(start, end, rect, false);
+  clip_workbuf * buf = get_selection(false, start, end, rect, false, false);
   printer_wwrite(buf->text, buf->len);
   printer_finish_job();
   destroy_clip_workbuf(buf);

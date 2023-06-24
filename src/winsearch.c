@@ -14,7 +14,7 @@ static HWND search_prev_wnd;
 static HWND search_next_wnd;
 static HWND search_edit_wnd;
 static WNDPROC default_edit_proc;
-static HFONT search_font;
+static HFONT search_font = 0;
 
 static void win_hide_search(void);
 
@@ -26,12 +26,11 @@ int SEARCHBAR_HEIGHT = 26;
 static int
 current_delta(bool adjust)
 {
-  if (term.results.length == 0) {
+  if (term.results.current.len == 0) {
     return 0;
   }
 
-  result * res = term.results.results + term.results.current;
-  int y = res->y - term.sblines;
+  int y = term.results.current.idx / term.cols - term.sblines;
   int delta = 0;
   if (y < term.disptop) {
     delta = y - term.disptop;
@@ -62,15 +61,19 @@ current_delta(bool adjust)
 }
 
 static void
-scroll_to_result(void)
+scroll_to_result(result res)
 {
-  if (term.results.length == 0) {
+  if (res.len == 0) {
     return;
   }
 
-  int delta = current_delta(true);
+  if (current_delta(false) == 0) {
+    // Update term.results.current iff the current result is in screen.
+    term.results.current = res;
+  }
 
   // Scroll if we must!
+  int delta = current_delta(true);
   if (delta != 0) {
     term_scroll(0, delta);
   }
@@ -79,23 +82,13 @@ scroll_to_result(void)
 static void
 next_result(void)
 {
-  if (term.results.length == 0) {
-    return;
-  }
-  if (current_delta(false) == 0)
-    term.results.current = (term.results.current + 1) % term.results.length;
-  scroll_to_result();
+  scroll_to_result(term_search_next());
 }
 
 static void
 prev_result(void)
 {
-  if (term.results.length == 0) {
-    return;
-  }
-  if (current_delta(false) == 0)
-    term.results.current = (term.results.current + term.results.length - 1) % term.results.length;
-  scroll_to_result();
+  scroll_to_result(term_search_prev());
 }
 
 static LRESULT CALLBACK
@@ -142,6 +135,8 @@ edit_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
   return CallWindowProc(default_edit_proc, mesg.hwnd, mesg.message, mesg.wParam, mesg.lParam);
 }
 
+#define dont_darken_searchbar
+
 static LRESULT CALLBACK
 search_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 {
@@ -170,6 +165,21 @@ search_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
       if (wp) {
         update = true;
       }
+#ifdef darken_searchbar
+    when WM_CTLCOLOREDIT: {
+      bool support_dark_mode = true;
+      /// ... determine support_dark_mode as in win_dark_mode
+      if (support_dark_mode) {
+        HDC hdc = (HDC)wp;
+        colour fg = RGB(222, 22, 22); // test value
+        colour bg = RGB(22, 22, 22);  // test value
+        /// ... retrieve fg, bg from DarkMode_Explorer theme
+        SetTextColor(hdc, fg);
+        SetBkColor(hdc, bg);
+        return (INT_PTR)CreateSolidBrush(bg);
+      }
+    }
+#endif
   }
 
   if (update) {
@@ -213,14 +223,17 @@ win_toggle_search(bool show, bool focus)
   printf("ctrl/but %d/%d cell %d/%d font h %d s %d\n", ctrl_height, button_width, cell_height, cell_width, font_height, font_size);
 #endif
 
-  const char * search_bar = cfg.search_bar;
+  const wchar * search_bar = cfg.search_bar;
   int pos_close = -1;
   int pos_prev = -1;
   int pos_next = -1;
   int pos_edit = -1;
   int barpos = margin;
-  while (search_bar && * search_bar)
-    switch (* search_bar ++) {
+  wchar * prev_but = _W("◀");
+  wchar * next_but = _W("▶");
+  wchar * close_but = _W("X");
+  while (search_bar && * search_bar) {
+    switch (* search_bar) {
       when 'x' or 'X':
         place_field(& barpos, button_width, & pos_close);
       when '<':
@@ -229,7 +242,46 @@ win_toggle_search(bool show, bool focus)
         place_field(& barpos, button_width, & pos_next);
       when 's' or 'S':
         place_field(& barpos, edit_width, & pos_edit);
+      when 0x25B2 ... 0x25B5 or 0x25C0 ... 0x25C5:
+        place_field(& barpos, button_width, & pos_prev);
+        * prev_but = * search_bar;
+      when 0x25B6 ... 0x25BF:
+        place_field(& barpos, button_width, & pos_next);
+        * next_but = * search_bar;
+      when 0x2190 ... 0x2193 or 0x21D0 ... 0x21D3 or 0x21E0 ... 0x21E3
+        or 0x21E6 ... 0x21E9 or 0x261C ... 0x261F:
+        if ((* search_bar & 0xF) % 6 > 1) {
+          place_field(& barpos, button_width, & pos_next);
+          * next_but = * search_bar;
+        }
+        else {
+          place_field(& barpos, button_width, & pos_prev);
+          * prev_but = * search_bar;
+        }
+      when 0x21FD or 0x21FE or 0x27F5 or 0x27F6 or 0x261A or 0x261B:
+        if ((* search_bar & 0xF) % 5 % 3) {
+          place_field(& barpos, button_width, & pos_next);
+          * next_but = * search_bar;
+        }
+        else {
+          place_field(& barpos, button_width, & pos_prev);
+          * prev_but = * search_bar;
+        }
+      when 0x3008 ... 0x300B:
+        if (* search_bar & 1) {
+          place_field(& barpos, button_width, & pos_next);
+          * next_but = * search_bar;
+        }
+        else {
+          place_field(& barpos, button_width, & pos_prev);
+          * prev_but = * search_bar;
+        }
+      when 0x2717 or 0x2718 /*or 0x274C or 0x2573*/:
+        place_field(& barpos, button_width, & pos_close);
+        * close_but = * search_bar;
     }
+    search_bar ++;
+  }
   place_field(& barpos, button_width, & pos_close);
   place_field(& barpos, button_width, & pos_prev);
   place_field(& barpos, button_width, & pos_next);
@@ -257,21 +309,32 @@ win_toggle_search(bool show, bool focus)
     search_wnd = CreateWindowExA(0, SEARCHBARCLASS, "", WS_CHILD, 0, 0, 0, 0, wnd, 0, inst, NULL);
 
     //__ label of search bar close button; not actually "localization"
-    search_close_wnd = CreateWindowExW(0, W("BUTTON"), _W("X"), WS_CHILD | WS_VISIBLE,
+    search_close_wnd = CreateWindowExW(0, W("BUTTON"), close_but, WS_CHILD | WS_VISIBLE,
                                      pos_close, margin, button_width, ctrl_height,
                                      search_wnd, NULL, inst, NULL);
     //__ label of search bar prev button; not actually "localization"
-    search_prev_wnd = CreateWindowExW(0, W("BUTTON"), _W("◀"), WS_CHILD | WS_VISIBLE,
+    search_prev_wnd = CreateWindowExW(0, W("BUTTON"), prev_but, WS_CHILD | WS_VISIBLE,
                                      pos_prev, margin, button_width, ctrl_height,
                                      search_wnd, NULL, inst, NULL);
     //__ label of search bar next button; not actually "localization"
-    search_next_wnd = CreateWindowExW(0, W("BUTTON"), _W("▶"), WS_CHILD | WS_VISIBLE,
+    search_next_wnd = CreateWindowExW(0, W("BUTTON"), next_but, WS_CHILD | WS_VISIBLE,
                                      pos_next, margin, button_width, ctrl_height,
                                      search_wnd, NULL, inst, NULL);
     search_edit_wnd = CreateWindowExA(WS_EX_CLIENTEDGE, "EDIT", "", WS_CHILD | WS_VISIBLE | WS_TABSTOP | ES_AUTOHSCROLL,
                                      0, 0, 0, 0,
                                      search_wnd, NULL, inst, NULL);
 
+#ifdef darken_searchbar
+    win_dark_mode(search_prev_wnd);
+    win_dark_mode(search_next_wnd);
+    win_dark_mode(search_close_wnd);
+    // these two do not darken anything
+    //win_dark_mode(search_wnd);
+    //win_dark_mode(search_edit_wnd);
+#endif
+
+    if (search_font)
+      DeleteObject(search_font);
     search_font = CreateFontW(sf_height, 0, 0, 0, FW_DONTCARE, false, false, false,
                              DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
                              DEFAULT_QUALITY, FIXED_PITCH | FF_DONTCARE,

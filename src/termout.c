@@ -1,10 +1,10 @@
 // termout.c (part of mintty)
-// Copyright 2008-12 Andy Koppe, 2017-19 Thomas Wolff
+// Copyright 2008-22 Andy Koppe, 2017-22 Thomas Wolff
 // Adapted from code from PuTTY-0.60 by Simon Tatham and team.
 // Licensed under the terms of the GNU General Public License v3 or later.
 
 #include "termpriv.h"
-#include "winpriv.h"  // win_get_font, win_change_font, win_led, win_set_scrollview
+#include "winpriv.h"  // colours, win_get_font, win_change_font, win_led, win_set_scrollview
 
 #include "win.h"
 #include "appinfo.h"
@@ -13,10 +13,12 @@
 #include "print.h"
 #include "sixel.h"
 #include "winimg.h"
+#include "tek.h"
 #include "base64.h"
 #include "unicodever.t"
 
 #include <termios.h>
+#include <sys/time.h>
 
 #define TERM_CMD_BUF_INC_STEP 128
 #define TERM_CMD_BUF_MAX_SIZE (1024 * 1024)
@@ -30,9 +32,9 @@
 
 static string primary_da1 = "\e[?1;2c";
 static string primary_da2 = "\e[?62;1;2;4;6;9;15;22;29c";
-static string primary_da3 = "\e[?63;1;2;4;6;9;15;22;29c";
-static string primary_da4 = "\e[?64;1;2;4;6;9;15;21;22;28;29c";
-static string primary_da5 = "\e[?65;1;2;4;6;9;15;21;22;28;29c";
+static string primary_da3 = "\e[?63;1;2;4;6;9;11;15;22;29c";
+static string primary_da4 = "\e[?64;1;2;4;6;9;11;15;21;22;28;29c";
+static string primary_da5 = "\e[?65;1;2;4;6;9;11;15;21;22;28;29c";
 /* Registered Extensions to the Character Cell Display Service Class
 	1	132 Column Display
 	2	Printer Port
@@ -40,6 +42,7 @@ static string primary_da5 = "\e[?65;1;2;4;6;9;15;21;22;28;29c";
 	4	Sixels Display
 	6	Selectively Erasable Characters
 	9	National Replacement Character Sets
+	11	Status Line (DEC STD 070)
 	15	Technical Character Set
 	21	Horizontal Scrolling
 	22	Color Text
@@ -76,6 +79,12 @@ term_push_cmd(char c)
   return true;
 }
 
+static void
+enable_progress(void)
+{
+  term.lines[term.curs.y]->lattr |= LATTR_PROGRESS;
+}
+
 /*
  * Move the cursor to a given position, clipping at boundaries.
  * We may or may not want to clip at the scroll margin: marg_clip is
@@ -103,10 +112,19 @@ move(int x, int y, int marg_clip)
     x = 0;
   if (x >= term.cols)
     x = term.cols - 1;
-  if (y < 0)
-    y = 0;
-  if (y >= term.rows)
-    y = term.rows - 1;
+
+  if (term.st_active) {
+    if (curs->y < term.rows)
+      y = term.rows;
+    if (y >= term_allrows)
+      y = term_allrows - 1;
+  }
+  else {
+    if (y < 0)
+      y = 0;
+    if (y >= term.rows)
+      y = term.rows - 1;
+  }
 
   curs->x = x;
   curs->y = y;
@@ -115,11 +133,21 @@ move(int x, int y, int marg_clip)
 
 /*
  * Save the cursor and SGR mode.
+   About status line save/restore cursor, refer to DEC VT420 p. 271, VT520 p. 5-92:
+	Notes on DECSC and DECRC
+	• The terminal maintains a separate DECSC buffer for the main 
+	  display and the status line. This feature lets you save a 
+	  separate operating state for the main display and the status line.
  */
 static void
 save_cursor(void)
 {
-  term.saved_cursors[term.on_alt_screen] = term.curs;
+  if (term.st_active) {
+    term.st_saved_curs = term.curs;
+    term.st_saved_curs.y -= term.rows;
+  }
+  else
+    term.saved_cursors[term.on_alt_screen] = term.curs;
 }
 
 /*
@@ -129,15 +157,24 @@ static void
 restore_cursor(void)
 {
   term_cursor *curs = &term.curs;
-  *curs = term.saved_cursors[term.on_alt_screen];
-  term.erase_char.attr = curs->attr;
-  term.erase_char.attr.attr &= (ATTR_FGMASK | ATTR_BGMASK);
+
+  if (term.st_active) {
+    *curs = term.st_saved_curs;
+    curs->y += term.rows;
+  }
+  else {
+    *curs = term.saved_cursors[term.on_alt_screen];
+    term.erase_char.attr = curs->attr;
+    term.erase_char.attr.attr &= (ATTR_FGMASK | ATTR_BGMASK);
+    term.erase_char.attr.attr |= TATTR_CLEAR;
+  }
 
  /* Make sure the window hasn't shrunk since the save */
   if (curs->x >= term.cols)
     curs->x = term.cols - 1;
-  if (curs->y >= term.rows)
-    curs->y = term.rows - 1;
+  short rows = term.st_active ? term_allrows : term.rows;
+  if (curs->y >= rows)
+    curs->y = rows - 1;
 
  /* In origin mode, make sure the cursor position is within margins */
   if (curs->origin) {
@@ -145,10 +182,12 @@ restore_cursor(void)
       curs->x = term.marg_left;
     else if (curs->x > term.marg_right)
       curs->x = term.marg_right;
-    if (curs->y < term.marg_top)
-      curs->y = term.marg_top;
-    else if (curs->y > term.marg_bot)
-      curs->y = term.marg_bot;
+    if (!term.st_active) {
+      if (curs->y < term.marg_top)
+        curs->y = term.marg_top;
+      else if (curs->y > term.marg_bot)
+        curs->y = term.marg_bot;
+    }
   }
 
  /*
@@ -200,25 +239,34 @@ insert_char(int n)
   }
 }
 
-static bool
-illegal_rect_char(xchar chr)
+static int
+charwidth(xchar chr)
 {
-  int width;
 #if HAS_LOCALES
-  if (cfg.charwidth)
-    width = xcwidth(chr);
+  if (cfg.charwidth % 10)
+    return xcwidth(chr);
   else
-    width = wcwidth(chr);
+    if (chr > 0xFFFF)
+      return wcswidth((wchar[]){high_surrogate(chr), low_surrogate(chr)}, 2);
+    else
+      return wcwidth(chr);
 #else
-  width = xcwidth(chr);
+  return xcwidth(chr);
 #endif
-  return width != 1;
 }
+
+#define top_y (term.st_active ? term.rows : 0)
+#define bot_y (term.st_active ? term_allrows : term.rows)
+#define marg_y (term.st_active ? term_allrows - 1 : term.marg_bot)
 
 static void
 attr_rect(cattrflags add, cattrflags sub, cattrflags xor, short y0, short x0, short y1, short x1)
 {
   //printf("attr_rect %d,%d..%d,%d +%llX -%llX ^%llX\n", y0, x0, y1, x1, add, sub, xor);
+  if (term.st_active) {
+    y0 += term.rows;
+    y1 += term.rows;
+  }
   y0--; x0--; y1--; x1--;
 
   if (term.curs.origin) {
@@ -227,12 +275,12 @@ attr_rect(cattrflags add, cattrflags sub, cattrflags xor, short y0, short x0, sh
     y1 += term.marg_top;
     x1 += term.marg_left;
   }
-  if (y0 < 0)
-    y0 = 0;
+  if (y0 < top_y)
+    y0 = top_y;
   if (x0 < 0)
     x0 = 0;
-  if (y1 >= term.rows)
-    y1 = term.rows - 1;
+  if (y1 >= bot_y)
+    y1 = bot_y - 1;
   if (x1 >= term.cols)
     x1 = term.cols - 1;
   //printf("%d,%d..%d,%d\n", y0, x0, y1, x1);
@@ -264,11 +312,32 @@ attr_rect(cattrflags add, cattrflags sub, cattrflags xor, short y0, short x0, sh
   }
 }
 
+//static void write_char(wchar c, int width);
+static void term_do_write(const char *buf, uint len, bool fix_status);
+
+/*
+   Fix cursor position with respect to status area;
+   this final fix saves a lot of detailed checks elsewhere.
+ */
+static void
+term_fix_status(void)
+{
+  if (term.st_active && term.curs.y < term.rows)
+    term.curs.y = term.rows;
+  else if (!term.st_active && term.curs.y >= term.rows)
+    term.curs.y = term.rows - 1;
+}
+
 static void
 fill_rect(xchar chr, cattr attr, bool sel, short y0, short x0, short y1, short x1)
 {
   //printf("fill_rect %d,%d..%d,%d\n", y0, x0, y1, x1);
-  if (chr == UCSWIDE || illegal_rect_char(chr))
+  if (term.st_active) {
+    y0 += term.rows;
+    y1 += term.rows;
+  }
+  int width = charwidth(chr);
+  if (chr == UCSWIDE || width < 1)
     return;
   wchar low = 0;
   if (chr > 0xFFFF) {
@@ -284,15 +353,74 @@ fill_rect(xchar chr, cattr attr, bool sel, short y0, short x0, short y1, short x
     y1 += term.marg_top;
     x1 += term.marg_left;
   }
-  if (y0 < 0)
-    y0 = 0;
+  if (y0 < top_y)
+    y0 = top_y;
   if (x0 < 0)
     x0 = 0;
-  if (y1 >= term.rows)
-    y1 = term.rows - 1;
+  if (y1 >= bot_y)
+    y1 = bot_y - 1;
   if (x1 >= term.cols)
     x1 = term.cols - 1;
   //printf("%d,%d..%d,%d\n", y0, x0, y1, x1);
+
+  //printf("gl %d gr %d csets %d %d %d %d /%d sup %d acs %d\n", term.curs.gl, term.curs.gr, term.curs.csets[0], term.curs.csets[1], term.curs.csets[2], term.curs.csets[3], term.curs.cset_single, term.curs.decsupp, term.curs.oem_acs);
+  if ((chr > ' ' && chr < 0x80 
+       && (term.curs.csets[term.curs.gl] != CSET_ASCII
+           ||
+           term.curs.cset_single != CSET_ASCII
+          )
+      )
+      ||
+      (chr >= 0x80 && chr < 0x100 
+       && ((term.curs.gr && term.curs.csets[term.curs.gr] != CSET_ASCII)
+           || term.curs.oem_acs
+          )
+      )
+      || (chr >= 0x2580 && chr <= 0x259F)
+     )
+  {
+    term_cursor csav = term.curs;
+    term.curs.attr = attr;
+#ifdef debug_FRA_special
+    // make this code branch visible
+    term.curs.attr.attr &= ~ATTR_FGMASK;
+    term.curs.attr.attr |= RED_I << ATTR_FGSHIFT;
+#endif
+    term.curs.width = 1;
+    if (!(width < 2 || (cs_ambig_wide && is_ambig(chr))))
+      term.curs.attr.attr |= TATTR_CLEAR | TATTR_NARROW;
+    term.state = NORMAL;
+
+    char * cbuf = 0;
+    if (chr > 0xFF) {
+      wchar * wc = (wchar[]){chr, low, 0};
+      cbuf = cs__wcstombs(wc);
+    }
+    for (int y = y0; y <= y1; y++) {
+      term.curs.y = y;
+      for (int x = x0; x <= x1; x++) {
+        term.curs.x = x;
+        term.curs.cset_single = csav.cset_single;
+        if (chr > 0xFF) {
+          //write_char(chr, 1); // would skip NRCS handling in term_do_write
+          term_do_write(cbuf, strlen(cbuf), false);
+        }
+        else {
+          char c = chr;
+          term_do_write(&c, 1, false);
+        }
+      }
+    }
+    if (cbuf)
+      free(cbuf);
+
+    term.curs = csav;
+    term.curs.cset_single = CSET_ASCII;
+    return;
+  }
+
+  if (width > 1)
+    attr.attr |= TATTR_CLEAR | TATTR_NARROW;
 
   for (int y = y0; y <= y1; y++) {
     termline * l = term.lines[y];
@@ -336,6 +464,11 @@ static void
 copy_rect(short y0, short x0, short y1, short x1, short y2, short x2)
 {
   //printf("copy_rect %d,%d..%d,%d -> %d,%d\n", y0, x0, y1, x1, y2, x2);
+  if (term.st_active) {
+    y0 += term.rows;
+    y1 += term.rows;
+    y2 += term.rows;
+  }
   y0--; x0--; y1--; x1--; y2--; x2--;
 
   if (term.curs.origin) {
@@ -346,21 +479,21 @@ copy_rect(short y0, short x0, short y1, short x1, short y2, short x2)
     y2 += term.marg_top;
     x2 += term.marg_left;
   }
-  if (y0 < 0)
-    y0 = 0;
+  if (y0 < top_y)
+    y0 = top_y;
   if (x0 < 0)
     x0 = 0;
-  if (y1 >= term.rows)
-    y1 = term.rows - 1;
+  if (y1 >= bot_y)
+    y1 = bot_y - 1;
   if (x1 >= term.cols)
     x1 = term.cols - 1;
 
-  if (y2 < 0)
-    y2 = 0;
+  if (y2 < top_y)
+    y2 = top_y;
   if (x2 < 0)
     x2 = 0;
-  if (y2 + y1 - y0 >= term.rows)
-    y1 = term.rows + y0 - y2 - 1;
+  if (y2 + y1 - y0 >= bot_y)
+    y1 = bot_y + y0 - y2 - 1;
   if (x2 + x1 - x0 >= term.cols)
     x1 = term.cols + x0 - x2 - 1;
   //printf("%d,%d..%d,%d -> %d,%d\n", y0, x0, y1, x1, y2, x2);
@@ -376,7 +509,7 @@ copy_rect(short y0, short x0, short y1, short x1, short y2, short x2)
       copy_termchar(dst, x + x2 - x0, &src->chars[x]);
       //printf("copy %d:%d -> %d:%d\n", y, x, y + y2 - y0, x + x2 - x0);
       if ((x == x0 && src->chars[x].chr == UCSWIDE)
-       || (x == x1 && illegal_rect_char(src->chars[x].chr))
+       || (x == x1 && charwidth(src->chars[x].chr) != 1)
          )
       {
         clear_cc(dst, x);
@@ -459,11 +592,11 @@ insdel_column(int col, bool del, int n)
   }
   x0++; x1++; x2++; e0++; e1++;
   int yt = term.marg_top + 1;
-  int yb = term.marg_bot + 1;
+  int yb = marg_y + 1;
   if (term.curs.origin) {
     // compensate for the originmode applied in the functions called below
     yt = 1;
-    yb = term.marg_bot - term.marg_top + 1;
+    yb = marg_y - term.marg_top + 1;
     x0 -= term.marg_left;
     x1 -= term.marg_left;
     x2 -= term.marg_left;
@@ -478,6 +611,10 @@ static uint
 sum_rect(short y0, short x0, short y1, short x1)
 {
   //printf("sum_rect %d,%d..%d,%d\n", y0, x0, y1, x1);
+  if (term.st_active) {
+    y0 += term.rows;
+    y1 += term.rows;
+  }
 
   y0--; x0--; y1--; x1--;
 
@@ -487,12 +624,12 @@ sum_rect(short y0, short x0, short y1, short x1)
     y1 += term.marg_top;
     x1 += term.marg_left;
   }
-  if (y0 < 0)
-    y0 = 0;
+  if (y0 < top_y)
+    y0 = top_y;
   if (x0 < 0)
     x0 = 0;
-  if (y1 >= term.rows)
-    y1 = term.rows - 1;
+  if (y1 >= bot_y)
+    y1 = bot_y - 1;
   if (x1 >= term.cols)
     x1 = term.cols - 1;
   //printf("%d,%d..%d,%d\n", y0, x0, y1, x1);
@@ -528,6 +665,64 @@ sum_rect(short y0, short x0, short y1, short x1)
 
 
 static void
+do_linefeed(void)
+{
+  term_cursor *curs = &term.curs;
+  if (curs->y == marg_y)
+    term_do_scroll(term.marg_top, term.marg_bot, 1, true);
+  else if (curs->y < bot_y - 1)
+    curs->y++;
+}
+
+static void
+wrapparabidi(ushort parabidi, termline * line, int y)
+{
+  line->lattr = (line->lattr & ~LATTR_BIDIMASK) | parabidi | LATTR_WRAPCONTD;
+
+#ifdef determine_parabidi_during_output
+  if (parabidi & (LATTR_BIDISEL | LATTR_AUTOSEL))
+    return;
+
+  // if direction autodetection pending:
+  // from current line, extend backward and forward to adjust 
+  // "paragraph" bidi attributes (esp. direction) to wrapped lines
+  termline * paraline = line;
+  int paray = y;
+  while ((paraline->lattr & LATTR_WRAPCONTD) && paray > -sblines()) {
+    paraline = fetch_line(--paray);
+    paraline->lattr = (paraline->lattr & ~LATTR_BIDIMASK) | parabidi;
+    release_line(paraline);
+  }
+  paraline = line;
+  paray = y;
+  while ((paraline->lattr & LATTR_WRAPPED) && paray < term.rows) {
+    paraline = fetch_line(++paray);
+    paraline->lattr = (paraline->lattr & ~LATTR_BIDIMASK) | parabidi;
+    release_line(paraline);
+  }
+#else
+  (void)y;
+#endif
+}
+
+static termline *
+do_wrap(termline * line, ushort lattr)
+{
+  term_cursor * curs = &term.curs;
+
+  line->lattr |= lattr;
+  line->wrappos = curs->x;
+  ushort parabidi = getparabidi(line);
+  do_linefeed();
+  curs->x = term.marg_left;
+  curs->wrapnext = false;
+  line = term.lines[curs->y];
+  wrapparabidi(parabidi, line, curs->y);
+
+  return line;
+}
+
+static void
 write_bell(void)
 {
   if (cfg.bell_flash)
@@ -549,7 +744,7 @@ write_backspace(void)
   else if (curs->x == 0 && (curs->y == term.marg_top || !term.autowrap
                        || (!cfg.old_wrapmodes && !term.rev_wrap)))
     /* skip */;
-  else if (curs->x == term.marg_left && curs->y > term.marg_top) {
+  else if (curs->x == term.marg_left && curs->y > term.marg_top && !term.st_active) {
     curs->y--;
     curs->x = term.marg_right;
   }
@@ -567,19 +762,40 @@ write_tab(void)
 {
   term_cursor *curs = &term.curs;
 
+  if (cfg.wrap_tab && curs->wrapnext && term.autowrap) {
+    termline * line = term.lines[curs->y];
+    (void)do_wrap(line, LATTR_WRAPPED);
+  }
+
+  int last = -1;
   do {
     if (curs->x == term.marg_right)
       break;
+    last = curs->x;
+    if (term.lines[curs->y]->chars[last].chr == ' '
+        && (term.lines[curs->y]->chars[last].attr.attr & TATTR_CLEAR)
+       )
+      term.lines[curs->y]->chars[last].attr.attr |= ATTR_DIM;
     curs->x++;
   } while (curs->x < term.cols - 1 && !term.tabs[curs->x]);
+  if (last >= 0
+      && term.lines[curs->y]->chars[last].chr == ' '
+      && (term.lines[curs->y]->chars[last].attr.attr & TATTR_CLEAR)
+     )
+    term.lines[curs->y]->chars[last].attr.attr |= ATTR_BOLD;
 
   if ((term.lines[curs->y]->lattr & LATTR_MODE) != LATTR_NORM) {
     if (curs->x >= term.cols / 2)
       curs->x = term.cols / 2 - 1;
+    if (cfg.wrap_tab > 1 && curs->x == term.cols / 2 - 1)
+      curs->wrapnext = true;
   }
   else {
     if (curs->x >= term.cols)
       curs->x = term.cols - 1;
+    if (cfg.wrap_tab > 1 && 
+        (curs->x == term.cols - 1 || curs->x == term.marg_right))
+      curs->wrapnext = true;
   }
 }
 
@@ -591,6 +807,7 @@ write_return(void)
     term.curs.x = 0;
   else
     term.curs.x = term.marg_left;
+  enable_progress();
 }
 
 static void
@@ -601,10 +818,7 @@ write_linefeed(void)
     return;
 
   clear_wrapcontd(term.lines[curs->y], curs->y);
-  if (curs->y == term.marg_bot)
-    term_do_scroll(term.marg_top, term.marg_bot, 1, true);
-  else if (curs->y < term.rows - 1)
-    curs->y++;
+  do_linefeed();
   curs->wrapnext = false;
 }
 
@@ -637,16 +851,21 @@ static int last_width = 0;
 cattr last_attr = {.attr = ATTR_DEFAULT,
                    .truefg = 0, .truebg = 0, .ulcolr = (colour)-1};
 
-static void
+void
 write_char(wchar c, int width)
 {
   //if (kb_trace) printf("[%ld] write_char 'q'\n", mtime());
 
+  if (tek_mode) {
+    tek_write(c, width);
+    return;
+  }
+
   if (!c)
     return;
 
-  term_cursor *curs = &term.curs;
-  termline *line = term.lines[curs->y];
+  term_cursor * curs = &term.curs;
+  termline * line = term.lines[curs->y];
 
   // support non-BMP for the REP function;
   // this is a hack, it would be cleaner to fold the term_write block
@@ -662,38 +881,13 @@ write_char(wchar c, int width)
   last_char = c;
   last_attr = curs->attr;
 
-  void wrapparabidi(ushort parabidi, termline * line, int y)
-  {
-    line->lattr = (line->lattr & ~LATTR_BIDIMASK) | parabidi | LATTR_WRAPCONTD;
-
-#ifdef determine_parabidi_during_output
-    if (parabidi & (LATTR_BIDISEL | LATTR_AUTOSEL))
-      return;
-
-    // if direction autodetection pending:
-    // from current line, extend backward and forward to adjust 
-    // "paragraph" bidi attributes (esp. direction) to wrapped lines
-    termline * paraline = line;
-    int paray = y;
-    while ((paraline->lattr & LATTR_WRAPCONTD) && paray > -sblines()) {
-      paraline = fetch_line(--paray);
-      paraline->lattr = (paraline->lattr & ~LATTR_BIDIMASK) | parabidi;
-      release_line(paraline);
-    }
-    paraline = line;
-    paray = y;
-    while ((paraline->lattr & LATTR_WRAPPED) && paray < term.rows) {
-      paraline = fetch_line(++paray);
-      paraline->lattr = (paraline->lattr & ~LATTR_BIDIMASK) | parabidi;
-      release_line(paraline);
-    }
-#else
-    (void)y;
-#endif
-  }
-
   void put_char(wchar c)
   {
+    if (term.ring_enabled && curs->x == term.marg_right + 1 - 8) {
+      win_margin_bell(&cfg);
+      term.ring_enabled = false;
+    }
+
     clear_cc(line, curs->x);
     line->chars[curs->x].chr = c;
     line->chars[curs->x].attr = curs->attr;
@@ -702,6 +896,10 @@ write_char(wchar c, int width)
     if (term.lrmargmode)
       line->lattr &= ~LATTR_MODE;
 #endif
+    if (term.curs.rewrap_on_resize)
+      line->lattr |= LATTR_REWRAP;
+    else
+      line->lattr &= ~LATTR_REWRAP;
     if (!(line->lattr & LATTR_WRAPCONTD))
       line->lattr = (line->lattr & ~LATTR_BIDIMASK) | curs->bidimode;
     //TODO: if changed, propagate mode onto paragraph
@@ -710,17 +908,7 @@ write_char(wchar c, int width)
   }
 
   if (curs->wrapnext && term.autowrap && width > 0) {
-    line->lattr |= LATTR_WRAPPED;
-    line->wrappos = curs->x;
-    ushort parabidi = getparabidi(line);
-    if (curs->y == term.marg_bot)
-      term_do_scroll(term.marg_top, term.marg_bot, 1, true);
-    else if (curs->y < term.rows - 1)
-      curs->y++;
-    curs->x = term.marg_left;
-    curs->wrapnext = false;
-    line = term.lines[curs->y];
-    wrapparabidi(parabidi, line, curs->y);
+    line = do_wrap(line, LATTR_WRAPPED);
   }
 
   bool overstrike = false;
@@ -728,6 +916,59 @@ write_char(wchar c, int width)
     width = 0;
     overstrike = true;
     curs->wrapnext = false;
+  }
+
+  bool single_width = false;
+
+  // adjust to explicit width attribute; not for combinings and low surrogates
+  if (curs->width && width > 0) {
+    //if ((c & 0xFFF) == 0x153) printf("%llX %d\n", curs->attr.attr, width);
+    if (curs->width == 1) {
+      if (!(width < 2 || (cs_ambig_wide && is_ambig(c))))
+        curs->attr.attr |= TATTR_CLEAR | TATTR_NARROW;
+      width = 1;
+    }
+    else if (curs->width == 11) {
+      if (width > 1) {
+        if (!(cs_ambig_wide && is_ambig(c))) {
+          single_width = true;
+          curs->attr.attr |= TATTR_SINGLE;
+        }
+        width = 1;
+      }
+    }
+    else if (curs->width == 2) {
+      if (width < 2) {
+        curs->attr.attr |= TATTR_EXPAND;
+        width = 2;
+      }
+    }
+#ifdef support_triple_width
+    else if (curs->width == 3) {
+      if (width < 2 || (cs_ambig_wide && is_ambig(c)))
+        curs->attr.attr |= TATTR_EXPAND;
+#define TATTR_TRIPLE 0x0080000000000000u
+      curs->attr.attr |= TATTR_TRIPLE;
+      width = 3;
+    }
+#endif
+  }
+
+#ifdef enforce_ambiguous_narrow_here
+  // enforce ambiguous-narrow as configured or for WSL;
+  // this could be done here but is now sufficiently achieved in charset.c
+  if (cs_ambig_narrow && width > 1 && is_ambig(c))
+    width = 1;
+#endif
+
+  if (cfg.charwidth >= 10 || cs_single_forced) {
+    if (width > 1) {
+      single_width = true;
+      width = 1;
+    }
+    else if (is_wide(c) || (cs_ambig_wide && is_ambig(c))) {
+      single_width = true;
+    }
   }
 
   if (term.insert && width > 0)
@@ -738,6 +979,8 @@ write_char(wchar c, int width)
       term_check_boundary(curs->x, curs->y);
       term_check_boundary(curs->x + 1, curs->y);
       put_char(c);
+      if (single_width)
+        line->chars[curs->x].attr.attr |= TATTR_SINGLE;
     when 2 or 3:  // Double-width char (Triple-width was an experimental option).
      /*
       * If we're about to display a double-width character 
@@ -754,29 +997,38 @@ write_char(wchar c, int width)
       */
       term_check_boundary(curs->x, curs->y);
       term_check_boundary(curs->x + width, curs->y);
-      if (curs->x == term.marg_right || curs->x == term.cols - 1) {
+      if (curs->x == term.marg_right || curs->x == term.cols - 1
+       || ((line->lattr & LATTR_MODE) != LATTR_NORM && curs->x >= (term.cols - 1) / 2)
+         )
+      {
         line->chars[curs->x] = term.erase_char;
-        line->lattr |= LATTR_WRAPPED | LATTR_WRAPPED2;
-        line->wrappos = curs->x;
-        ushort parabidi = getparabidi(line);
-        if (curs->y == term.marg_bot)
-          term_do_scroll(term.marg_top, term.marg_bot, 1, true);
-        else if (curs->y < term.rows - 1)
-          curs->y++;
-        curs->x = term.marg_left;
-        line = term.lines[curs->y];
-        wrapparabidi(parabidi, line, curs->y);
-       /* Now we must term_check_boundary again, of course. */
-        term_check_boundary(curs->x, curs->y);
-        term_check_boundary(curs->x + width, curs->y);
+        if (term.autowrap) {
+          line = do_wrap(line, LATTR_WRAPPED | LATTR_WRAPPED2);
+         /* Now we must term_check_boundary again, of course. */
+          term_check_boundary(curs->x, curs->y);
+          term_check_boundary(curs->x + width, curs->y);
+
+          put_char(c);
+          curs->x++;
+          put_char(UCSWIDE);
+        }
+        else {
+         /* drop character that does not fit into last column */
+        }
       }
-      put_char(c);
-      curs->x++;
+      else {
+        put_char(c);
+        curs->x++;
+        put_char(UCSWIDE);
+      }
 #ifdef support_triple_width
-      if (width > 2)
-        curs->x += width - 2;
+      if (width > 2) {
+        for (int i = 2; i < width; i++) {
+          curs->x++;
+          put_char(UCSWIDE);
+        }
+      }
 #endif
-      put_char(UCSWIDE);
     when 0 or -1:  // Combining character or Low surrogate.
 #ifdef debug_surrogates
       printf("write_char %04X %2d %08llX\n", c, width, curs->attr.attr);
@@ -820,6 +1072,14 @@ write_char(wchar c, int width)
   }
 
   curs->x++;
+  if ((line->lattr & LATTR_MODE) != LATTR_NORM) {
+    if (curs->x >= term.cols / 2) {
+      curs->x --;
+      if (term.autowrap)
+        curs->wrapnext = true;
+    }
+  }
+  else
   if (curs->x == term.marg_right + 1 || curs->x == term.cols) {
     curs->x--;
     if (term.autowrap || cfg.old_wrapmodes)
@@ -827,30 +1087,38 @@ write_char(wchar c, int width)
   }
 }
 
-static struct {
+#define dont_debug_scriptfonts
+
+struct rangefont {
   ucschar first, last;
   uchar font;
   char * scriptname;
-} scriptfonts[] = {
+};
+static struct rangefont scriptfonts[] = {
 #include "scripts.t"
 };
+static struct rangefont blockfonts[] = {
+#include "blocks.t"
+};
 static bool scriptfonts_init = false;
+static bool use_blockfonts = false;
 
 static void
-mapfont(char * script, uchar f)
+mapfont(struct rangefont * ranges, uint len, char * script, uchar f)
 {
-  for (uint i = 0; i < lengthof(scriptfonts); i++)
-    if (0 == strcmp(scriptfonts[i].scriptname, script))
-      scriptfonts[i].font = f;
+  for (uint i = 0; i < len; i++) {
+    if (0 == strcmp(ranges[i].scriptname, script))
+      ranges[i].font = f;
+  }
   if (0 == strcmp(script, "CJK")) {
-    mapfont("Han", f);
-    mapfont("Hangul", f);
-    mapfont("Katakana", f);
-    mapfont("Hiragana", f);
-    mapfont("Bopomofo", f);
-    mapfont("Kanbun", f);
-    mapfont("Fullwidth", f);
-    mapfont("Halfwidth", f);
+    mapfont(ranges, len, "Han", f);
+    mapfont(ranges, len, "Hangul", f);
+    mapfont(ranges, len, "Katakana", f);
+    mapfont(ranges, len, "Hiragana", f);
+    mapfont(ranges, len, "Bopomofo", f);
+    mapfont(ranges, len, "Kanbun", f);
+    mapfont(ranges, len, "Fullwidth", f);
+    mapfont(ranges, len, "Halfwidth", f);
   }
 }
 
@@ -871,7 +1139,10 @@ cfg_apply(char * conf, char * item)
       *sepp = '\0';
 
     if (!item || !strcmp(cmdp, item)) {
-      mapfont(cmdp, atoi(paramp));
+      if (*cmdp == '|')
+        mapfont(blockfonts, lengthof(blockfonts), cmdp + 1, atoi(paramp));
+      else
+        mapfont(scriptfonts, lengthof(scriptfonts), cmdp, atoi(paramp));
     }
 
     if (sepp) {
@@ -896,6 +1167,7 @@ init_scriptfonts(void)
     char * cfg_scriptfonts = cs__wcstombs(cfg.font_choice);
     cfg_apply(cfg_scriptfonts, 0);
     free(cfg_scriptfonts);
+    use_blockfonts = wcschr(cfg.font_choice, '|');
   }
   scriptfonts_init = true;
 }
@@ -910,9 +1182,26 @@ scriptfont(ucschar ch)
 
   int i, j, k;
 
+  if (use_blockfonts) {
+    i = -1;
+    j = lengthof(blockfonts);
+    while (j - i > 1) {
+      k = (i + j) / 2;
+      if (ch < blockfonts[k].first)
+        j = k;
+      else if (ch > blockfonts[k].last)
+        i = k;
+      else {
+        uchar f = blockfonts[k].font;
+        if (f)
+          return f;
+        break;
+      }
+    }
+  }
+
   i = -1;
   j = lengthof(scriptfonts);
-
   while (j - i > 1) {
     k = (i + j) / 2;
     if (ch < scriptfonts[k].first)
@@ -925,20 +1214,27 @@ scriptfont(ucschar ch)
   return 0;
 }
 
-static void
+void
 write_ucschar(wchar hwc, wchar wc, int width)
 {
   cattrflags attr = term.curs.attr.attr;
   ucschar c = hwc ? combine_surrogates(hwc, wc) : wc;
   uchar cf = scriptfont(c);
 #ifdef debug_scriptfonts
-  if (c && cf)
-    printf("scriptfont %04X: %d\n", c, cf);
+  if (c && (cf || c > 0xFF))
+    printf("write_ucschar %04X scriptfont %d\n", c, cf);
 #endif
   if (cf && cf <= 10 && !(attr & FONTFAM_MASK))
     term.curs.attr.attr = attr | ((cattrflags)cf << ATTR_FONTFAM_SHIFT);
 
   if (hwc) {
+    if (width == 1
+        && (cfg.charwidth == 10 || cs_single_forced)
+        && (is_wide(c) || (cs_ambig_wide && is_ambig(c)))
+       )
+    { // ensure indication of cjksingle width handling to trigger down-zooming
+      width = 2;
+    }
     write_char(hwc, width);
     write_char(wc, -1);  // -1 indicates low surrogate
   }
@@ -951,12 +1247,10 @@ write_ucschar(wchar hwc, wchar wc, int width)
 static void
 write_error(void)
 {
-  // Write one of REPLACEMENT CHARACTER or, if that does not exist,
-  // MEDIUM SHADE which looks appropriately erroneous.
-  wchar errch = 0xFFFD;
-  win_check_glyphs(&errch, 1, term.curs.attr.attr);
-  if (!errch)
-    errch = 0x2592;
+  // Write one of REPLACEMENT CHARACTER, MEDIUM SHADE, or other 
+  // replacement character as exists in the font and 
+  // which looks appropriately erroneous. Could be made configurable.
+  wchar errch = get_errch(W("�▒¤¿?"), term.curs.attr.attr);
   write_char(errch, 1);
 }
 
@@ -965,27 +1259,163 @@ static bool
 contains(string s, int i)
 {
   while (*s) {
-    while (*s == ',')
+    while (*s == ',' || *s == ' ')
       s++;
     int si = -1;
     int len;
     if (sscanf(s, "%d%n", &si, &len) <= 0)
       return false;
     s += len;
-    if (si == i && (!*s || *s == ','))
+    if (si == i && (!*s || *s == ',' || *s == ' '))
       return true;
   }
   return false;
+}
+
+
+static short prev_state = 0;
+
+static void
+tek_gin_fin(void)
+{
+  if (tek_mode == TEKMODE_GIN)
+    tek_mode = TEKMODE_ALPHA;
+}
+
+/* Process Tek mode ESC control */
+static void
+tek_esc(char c)
+{
+  if (prev_state)
+    term.state = prev_state;
+  else
+    term.state = NORMAL;
+
+  switch (c) {
+    when '\e':   /* stay in ESC state */
+      term.state = TEK_ESCAPE;
+    when '\n':   /* LF: stay in ESC state */
+      term.state = TEK_ESCAPE;
+    when 0 or '\r':   /* stay in ESC state */
+      term.state = TEK_ESCAPE;
+    when '\a':   /* BEL: Bell */
+      write_bell();
+    when '\b' or '\t' or '\v':     /* BS or HT or VT */
+      tek_write(c, -2);
+    when CTRL('L'):   /* FF: Alpha mode, clear screen */
+      tek_mode = TEKMODE_ALPHA;
+      term.state = NORMAL;
+      tek_bypass = false;
+      tek_clear();
+    when CTRL('E'):   /* ENQ: terminal type query */
+      tek_bypass = true;
+      tek_enq();
+    when CTRL('N'):   /* LS1: Locking-shift one */
+      tek_alt(true);
+    when CTRL('O'):   /* LS0: Locking-shift zero */
+      tek_alt(false);
+    when CTRL('W'):   /* ETB: Make Copy */
+      term_save_image(false);
+      tek_bypass = false;
+      tek_gin_fin();
+    when CTRL('X'):   /* CAN: Set Bypass */
+      tek_bypass = true;
+    when CTRL('Z'):   /* SUB: Gin mode */
+      tek_gin();
+      tek_mode = TEKMODE_GIN;
+      term.state = NORMAL;
+      tek_bypass = true;
+    when 0x1C:   /* FS: Special Plot mode */
+      tek_mode = TEKMODE_SPECIAL_PLOT;
+      term.state = TEK_ADDRESS0;
+    when 0x1D:   /* GS: Graph mode */
+      tek_mode = TEKMODE_GRAPH0;
+      term.state = TEK_ADDRESS0;
+    when 0x1E:   /* RS: Incremental Plot mode */
+      tek_mode = TEKMODE_INCREMENTAL_PLOT;
+      term.state = TEK_INCREMENTAL;
+    when 0x1F:   /* US: Normal mode */
+      tek_mode = TEKMODE_ALPHA;
+      term.state = NORMAL;
+    when '`' ... 'g':  /* Normal mode */
+      tek_beam(false, false, c & 7);
+    when 'h' ... 'o':  /* Defocused mode */
+      tek_beam(true, false, c & 7);
+    when 'p' ... 'w':  /* Write-Thru mode */
+      tek_beam(false, true, c & 7);
+    when '8' ... ';':
+      tek_font(c - '8');
+    when '?':
+      if (term.state == TEK_ADDRESS0 || term.state == TEK_ADDRESS)
+        term_do_write("", 1, false);
+    when CTRL('C'):
+      tek_mode = TEKMODE_OFF;
+      term.state = NORMAL;
+      win_invalidate_all(false);
+    when ']':  /* OSC: operating system command */
+      term.state = OSC_START;
+  }
+}
+
+/* Process Tek mode control character */
+static void
+tek_ctrl(char c)
+{
+  if (term.state == TEK_ADDRESS0 || term.state == TEK_ADDRESS)
+    prev_state = term.state;
+
+  switch (c) {
+    when '\e':   /* ESC: Escape */
+      prev_state = term.state;
+      term.state = TEK_ESCAPE;
+    when '\a':   /* BEL: Bell */
+      write_bell();
+      tek_bypass = false;
+      tek_gin_fin();
+    when '\b' or '\t' or '\v':     /* BS or HT or VT */
+      if (tek_mode == TEKMODE_ALPHA)
+        tek_write(c, -2);
+    when '\n':   /* LF: Line feed */
+      tek_bypass = false;
+      tek_write(c, -2);
+      tek_gin_fin();
+    when '\r':   /* CR: Carriage return */
+      tek_mode = TEKMODE_ALPHA;
+      term.state = NORMAL;
+      tek_bypass = false;
+      tek_write(c, -2);
+    when CTRL('O'):   /* SI */
+      tek_gin_fin();
+    when 0x1C:   /* FS: Point Plot mode */
+      tek_mode = TEKMODE_POINT_PLOT;
+      term.state = TEK_ADDRESS0;
+    when 0x1D:   /* GS: Graph mode */
+      tek_mode = TEKMODE_GRAPH0;
+      term.state = TEK_ADDRESS0;
+    when 0x1E:   /* RS: Incremental Plot mode */
+      tek_mode = TEKMODE_INCREMENTAL_PLOT;
+      term.state = TEK_INCREMENTAL;
+    when 0x1F:   /* US: Normal mode */
+      tek_mode = TEKMODE_ALPHA;
+      term.state = NORMAL;
+      tek_bypass = false;
+  }
 }
 
 /* Process control character, returning whether it has been recognised. */
 static bool
 do_ctrl(char c)
 {
+  if (tek_mode) {
+    tek_ctrl(c);
+    return true;
+  }
+
   switch (c) {
     when '\e':   /* ESC: Escape */
       term.state = ESCAPE;
       term.esc_mod = 0;
+      return true;  // keep preceding char for REP
     when '\a':   /* BEL: Bell */
       write_bell();
     when '\b':     /* BS: Back space */
@@ -1025,6 +1455,7 @@ do_ctrl(char c)
     otherwise:
       return false;
   }
+  last_char = 0;  // cancel preceding char for REP
   return true;
 }
 
@@ -1061,8 +1492,8 @@ do_vt52(uchar c)
       move(0, 0, 0);
     when 'I':  /* Reverse line feed. */
       if (curs->y == term.marg_top)
-        term_do_scroll(term.marg_top, term.marg_bot, -1, true);
-      else if (curs->y > 0)
+        term_do_scroll(term.marg_top, term.marg_bot, -1, false);
+      else if (curs->y > top_y)
         curs->y--;
       curs->wrapnext = false;
     when 'J':  /* Erase from the cursor to the end of the screen. */
@@ -1130,7 +1561,7 @@ do_vt52_colour(bool fg, uchar c)
   }
   else {
     term.curs.attr.attr &= ~ATTR_BGMASK;
-    term.curs.attr.attr |= ((c & 0xF) + ANSI0) << ATTR_BGSHIFT;
+    term.curs.attr.attr |= ((c & 0xF) + BG_ANSI0) << ATTR_BGSHIFT;
   }
 }
 
@@ -1148,8 +1579,8 @@ lookup_cset(ushort nrc_code, uchar csmask, bool enabled)
     {'0', 1, 1, CSET_LINEDRW},	// DEC Special Line Drawing
     {'>', 1, 1, CSET_TECH},		// DEC Technical
     {'U', 1, 1, CSET_OEM},		// OEM Codepage 437
-    {'<', 1, 1, CSET_DECSUPP},	// DEC Supplementary (VT200)
-    {CPAIR('%', '5'), 1, 1, CSET_DECSPGR},	// DEC Supplementary Graphics (VT300)
+    {'<', 1, 1, CSET_DECSUPP},	// DEC User-preferred Supplemental (VT200)
+    {CPAIR('%', '5'), 1, 1, CSET_DECSPGR},	// DEC Supplementary (VT300)
     // definitions for NRC support:
     {'4', 1, 0, CSET_NL},	// Dutch
     {'C', 1, 0, CSET_FI},	// Finnish
@@ -1176,7 +1607,7 @@ lookup_cset(ushort nrc_code, uchar csmask, bool enabled)
     {CPAIR('"', '?'), 1, 1, CSET_DEC_Greek_Supp},
     {CPAIR('"', '4'), 1, 1, CSET_DEC_Hebrew_Supp},
     {CPAIR('%', '0'), 1, 1, CSET_DEC_Turkish_Supp},
-    {CPAIR('&', '4'), 1, 0, CSET_NRCS_Cyrillic},
+    {CPAIR('&', '4'), 1, 1, CSET_DEC_Cyrillic},
     {CPAIR('"', '>'), 1, 0, CSET_NRCS_Greek},
     {CPAIR('%', '='), 1, 0, CSET_NRCS_Hebrew},
     {CPAIR('%', '2'), 1, 0, CSET_NRCS_Turkish},
@@ -1229,6 +1660,7 @@ do_esc(uchar c)
     if (cs) {
       curs->csets[gi] = cs;
       term_update_cs();
+      last_char = 0;  // cancel preceding char for REP
       return;
     }
   }
@@ -1240,6 +1672,7 @@ do_esc(uchar c)
       memset(term.csi_argv, 0, sizeof(term.csi_argv));
       memset(term.csi_argv_defined, 0, sizeof(term.csi_argv_defined));
       term.esc_mod = 0;
+      return;  // keep preceding char for REP
     when ']':  /* OSC: operating system command */
       term.state = OSC_START;
     when 'P':  /* DCS: device control string */
@@ -1263,8 +1696,8 @@ do_esc(uchar c)
       }
     when 'M':  /* RI: reverse index - backwards LF */
       if (curs->y == term.marg_top)
-        term_do_scroll(term.marg_top, term.marg_bot, -1, true);
-      else if (curs->y > 0)
+        term_do_scroll(term.marg_top, term.marg_bot, -1, false);
+      else if (curs->y > top_y)
         curs->y--;
       curs->wrapnext = false;
     when 'Z':  /* DECID: terminal type query */
@@ -1283,15 +1716,16 @@ do_esc(uchar c)
         term.marg_top = curs->y;
     when 'm':  /* HP Memory Unlock */
       term.marg_top = 0;
-    when CPAIR('#', '8'):    /* DECALN: fills screen with Es :-) */
+    when CPAIR('#', '8'): {  /* DECALN: fills screen with Es :-) */
       term.curs.origin = false;
       term.curs.wrapnext = false;
-      term.curs.attr = CATTR_DEFAULT;
       term.marg_top = 0;
       term.marg_bot = term.rows - 1;
       term.marg_left = 0;
       term.marg_right = term.cols - 1;
       move(0, 0, 0);
+      cattr savattr = term.curs.attr;
+      term.curs.attr = CATTR_DEFAULT;
       for (int i = 0; i < term.rows; i++) {
         termline *line = term.lines[i];
         for (int j = 0; j < term.cols; j++) {
@@ -1300,7 +1734,9 @@ do_esc(uchar c)
         }
         line->lattr = LATTR_NORM;
       }
+      term.curs.attr = savattr;
       term.disptop = 0;
+    }
     when CPAIR('#', '3'):  /* DECDHL: 2*height, top */
       if (!term.lrmargmode) {
         term.lines[curs->y]->lattr &= LATTR_BIDIMASK;
@@ -1354,7 +1790,14 @@ do_esc(uchar c)
         insdel_column(term.marg_left, true, 1);
       else
         move(curs->x + 1, curs->y, 1);
+    when 'V':  /* Start of Guarded Area (SPA) */
+      term.curs.attr.attr |= ATTR_PROTECTED;
+      term.iso_guarded_area = true;
+    when 'W':  /* End of Guarded Area (EPA) */
+      term.curs.attr.attr &= ~ATTR_PROTECTED;
+      term.iso_guarded_area = true;
   }
+  last_char = 0;  // cancel preceding char for REP
 }
 
 static void
@@ -1546,10 +1989,10 @@ do_sgr(void)
         attr.attr |= ATTR_DEFFG;
       when 40 ... 47: /* background */
         attr.attr &= ~ATTR_BGMASK;
-        attr.attr |= (term.csi_argv[i] - 40 + ANSI0) << ATTR_BGSHIFT;
+        attr.attr |= (term.csi_argv[i] - 40 + BG_ANSI0) << ATTR_BGSHIFT;
       when 100 ... 107: /* bright background */
         attr.attr &= ~ATTR_BGMASK;
-        attr.attr |= ((term.csi_argv[i] - 100 + 8 + ANSI0) << ATTR_BGSHIFT);
+        attr.attr |= ((term.csi_argv[i] - 100 + 8 + BG_ANSI0) << ATTR_BGSHIFT);
       when 48: /* palette/true-colour background */
         if (i + 2 < argc && term.csi_argv[i + 1] == 5) {
           // set background to palette colour
@@ -1644,6 +2087,7 @@ do_sgr(void)
   term.curs.attr = attr;
   term.erase_char.attr = attr;
   term.erase_char.attr.attr &= (ATTR_FGMASK | ATTR_BGMASK);
+  term.erase_char.attr.attr |= TATTR_CLEAR;
 }
 
 /*
@@ -1665,6 +2109,8 @@ set_modes(bool state)
           term.app_keypad = state;
         when 2:  /* DECANM: VT100/VT52 mode */
           if (state) {
+            if (term.st_active)
+              return;
             // Designate USASCII for character sets G0-G3
             for (uint i = 0; i < lengthof(term.curs.csets); i++)
               term.curs.csets[i] = CSET_ASCII;
@@ -1699,10 +2145,11 @@ set_modes(bool state)
             move(0, 0, 0);
         when 7:  /* DECAWM: auto wrap */
           term.autowrap = state;
-          term.curs.wrapnext = false;
+          if (!state)
+            term.curs.wrapnext = false;
         when 45:  /* xterm: reverse (auto) wraparound */
           term.rev_wrap = state;
-          term.curs.wrapnext = false;
+          //term.curs.wrapnext = false;
         when 8:  /* DECARM: auto key repeat */
           term.auto_repeat = state;
         when 9:  /* X10_MOUSE */
@@ -1712,13 +2159,29 @@ set_modes(bool state)
           term.cursor_blinkmode = state;
           term.cursor_invalid = true;
           term_schedule_cblink();
+        when 20: /* DEC VK100 overstrike */
+          if (state)
+            term.curs.attr.attr |= ATTR_OVERSTRIKE;
+          else
+            term.curs.attr.attr &= ~ATTR_OVERSTRIKE;
         when 25: /* DECTCEM: enable/disable cursor */
           term.cursor_on = state;
           // Should we set term.cursor_invalid or call term_invalidate ?
+#ifdef end_suspend_output_by_enabling_cursor
+          if (state) {
+            term.suspend_update = false;
+            do_update();
+          }
+#endif
         when 30: /* Show/hide scrollbar */
           if (state != term.show_scrollbar) {
             term.show_scrollbar = state;
             win_update_scrollbar(false);
+          }
+        when 38: /* DECTEK: Enter Tektronix Mode (VT240, VT330) */
+          if (state) {
+            tek_mode = TEKMODE_ALPHA;
+            tek_init(true, cfg.tek_glow);
           }
         when 40: /* Allow/disallow DECCOLM (xterm c132 resource) */
           term.deccolm_allowed = state;
@@ -1726,6 +2189,8 @@ set_modes(bool state)
           term.deccolm_noclear = state;
         when 42: /* DECNRCM: national replacement character sets */
           term.decnrc_enabled = state;
+        when 44: /* turn on margin bell (xterm) */
+          term.margin_bell = state;
         when 67: /* DECBKM: backarrow key mode */
           term.backspace_sends_bs = state;
         when 69: /* DECLRMM/VT420 DECVSSM: enable left/right margins DECSLRM */
@@ -1741,7 +2206,9 @@ set_modes(bool state)
             term.marg_right = term.cols - 1;
           }
         when 80: /* DECSDM: SIXEL display mode */
-          term.sixel_display = !state;
+          term.sixel_display = state;
+        when 117: /* DECECM: erase to default colour */
+          term.erase_to_screen = state;
         when 1000: /* VT200_MOUSE */
           term.mouse_mode = state ? MM_VT200 : 0;
           win_update_mouse();
@@ -1757,6 +2224,8 @@ set_modes(bool state)
           term.mouse_enc = state ? ME_UTF8 : 0;
         when 1006: /* Xterm's CSI-style mouse encoding */
           term.mouse_enc = state ? ME_XTERM_CSI : 0;
+        when 1016: /* Xterm's CSI-style mouse encoding with pixel resolution */
+          term.mouse_enc = state ? ME_PIXEL_CSI : 0;
         when 1015: /* Urxvt's CSI-style mouse encoding */
           term.mouse_enc = state ? ME_URXVT_CSI : 0;
         when 1037:
@@ -1800,11 +2269,17 @@ set_modes(bool state)
           }
         when 1061:       /* VT220 keyboard emulation */
           term.vt220_keys = state;
+        when 2001:       /* Readline mouse button-1 */
+          term.readline_mouse_1 = state;
+        when 2002:       /* Readline mouse button-2 */
+          term.readline_mouse_2 = state;
+        when 2003:       /* Readline mouse button-3 */
+          term.readline_mouse_3 = state;
         when 2004:       /* xterm bracketed paste mode */
           term.bracketed_paste = state;
 
         /* Mintty private modes */
-        when 7700:       /* CJK ambigous width reporting */
+        when 7700:       /* CJK ambiguous width reporting */
           term.report_ambig_width = state;
         when 7711:       /* Scroll marker in current line */
           if (state)
@@ -1859,6 +2334,14 @@ set_modes(bool state)
             term.curs.bidimode &= ~LATTR_BIDISEL;
           else
             term.curs.bidimode |= LATTR_BIDISEL;
+        when 2026:
+          term.suspend_update = state ? 150 : 0;
+          if (!state) {
+            do_update();
+            usleep(1000);  // flush update
+          }
+        when 2027:
+          term.curs.rewrap_on_resize = state;
       }
     }
     else { /* SM/RM: set/reset mode */
@@ -1930,6 +2413,8 @@ get_mode(bool privatemode, int arg)
         return 2 - (term.mouse_mode == MM_X10);
       when 12: /* AT&T 610 blinking cursor */
         return 2 - term.cursor_blinkmode;
+      when 20: /* DEC VK100 overstrike */
+        return 2 - !!(term.curs.attr.attr & ATTR_OVERSTRIKE);
       when 25: /* DECTCEM: enable/disable cursor */
         return 2 - term.cursor_on;
       when 30: /* Show/hide scrollbar */
@@ -1938,12 +2423,16 @@ get_mode(bool privatemode, int arg)
         return 2 - term.deccolm_allowed;
       when 42: /* DECNRCM: national replacement character sets */
         return 2 - term.decnrc_enabled;
+      when 44: /* margin bell (xterm) */
+        return 2 - term.margin_bell;
       when 67: /* DECBKM: backarrow key mode */
         return 2 - term.backspace_sends_bs;
       when 69: /* DECLRMM: enable left and right margin mode DECSLRM */
         return 2 - term.lrmargmode;
       when 80: /* DECSDM: SIXEL display mode */
-        return 2 - !term.sixel_display;
+        return 2 - term.sixel_display;
+      when 117: /* DECECM: erase to default colour */
+        return 2 - term.erase_to_screen;
       when 1000: /* VT200_MOUSE */
         return 2 - (term.mouse_mode == MM_VT200);
       when 1002: /* BTN_EVENT_MOUSE */
@@ -1956,6 +2445,8 @@ get_mode(bool privatemode, int arg)
         return 2 - (term.mouse_enc == ME_UTF8);
       when 1006: /* Xterm's CSI-style mouse encoding */
         return 2 - (term.mouse_enc == ME_XTERM_CSI);
+      when 1016: /* Xterm's CSI-style mouse encoding with pixel resolution */
+        return 2 - (term.mouse_enc == ME_PIXEL_CSI);
       when 1015: /* Urxvt's CSI-style mouse encoding */
         return 2 - (term.mouse_enc == ME_URXVT_CSI);
       when 1037:
@@ -1978,7 +2469,7 @@ get_mode(bool privatemode, int arg)
         return 2 - term.bracketed_paste;
 
       /* Mintty private modes */
-      when 7700:       /* CJK ambigous width reporting */
+      when 7700:       /* CJK ambiguous width reporting */
         return 2 - term.report_ambig_width;
       when 7711:       /* Scroll marker in current line */
         return 2 - !!(term.lines[term.curs.y]->lattr & LATTR_MARKED);
@@ -2014,6 +2505,8 @@ get_mode(bool privatemode, int arg)
         return 2 - !!(term.curs.bidimode & LATTR_BOXMIRROR);
       when 2501: /* bidi direction auto-detection */
         return 2 - !(term.curs.bidimode & LATTR_BIDISEL);
+      when 2027:
+        return 2 - term.curs.rewrap_on_resize;
       otherwise:
         return 0;
     }
@@ -2111,6 +2604,63 @@ pop_attrs(cattr * _ca, cattrflags * _caflagsmask)
   return true;
 }
 
+static COLORREF * colours_stack[10] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+static int colours_cur = 0;
+static int colours_num = 0;
+
+static void
+push_colours(uint ix)
+{
+  if (ix > 10)
+    return;
+
+  if (ix) {  // store
+    colours_cur = ix;
+    ix--;
+  }
+  else {  // push
+    if (colours_cur < 10) {
+      ix = colours_cur;
+      colours_cur++;
+    }
+    else
+      return;
+  }
+  //printf("push %d\n", ix);
+
+  if (!colours_stack[ix]) {
+    colours_stack[ix] = malloc(COLOUR_NUM * sizeof(COLORREF));
+    if (colours_stack[ix])
+      colours_num++;
+  }
+  if (colours_stack[ix])
+    memcpy(colours_stack[ix], colours, COLOUR_NUM * sizeof(COLORREF));
+}
+
+static void
+pop_colours(uint ix)
+{
+  if (ix > 10)
+    return;
+
+  if (ix) {  // retrieve
+    colours_cur = ix;
+    ix--;
+  }
+  else {  // pop
+    if (colours_cur) {
+      colours_cur--;
+      ix = colours_cur;
+    }
+    else
+      return;
+  }
+  //printf("pop %d\n", ix);
+
+  if (colours_stack[ix])
+    memcpy(colours, colours_stack[ix], COLOUR_NUM * sizeof(COLORREF));
+}
+
 /*
  * dtterm window operations and xterm extensions.
    CSI Ps ; Ps ; Ps t
@@ -2149,7 +2699,7 @@ do_winop(void)
       // Ps = 9 ; 1  -> Maximize window (i.e., resize to screen size).
       // Ps = 9 ; 2  -> Maximize window vertically.
       // Ps = 9 ; 3  -> Maximize window horizontally.
-      int rows0 = term.rows, cols0 = term.cols;
+      int rows0 = term.rows0, cols0 = term.cols0;
       if (arg1 == 2) {
         // maximize window vertically
         win_set_geom(0, -1, 0, -1);
@@ -2162,11 +2712,13 @@ do_winop(void)
       }
       else if (arg1 == 1) {
         win_maximise(1);
+        term.rows0 = rows0; term.cols0 = cols0;
       }
       else if (arg1 == 0) {
         win_maximise(0);
-        win_set_chars(term.rows0, term.cols0);
+        win_set_chars(rows0, cols0);
       }
+      usleep(1000);
     }
     when 10:
       if (term.csi_argc != 2)
@@ -2178,6 +2730,7 @@ do_winop(void)
         win_maximise(-2);
       else if (arg1 == 1 || arg1 == 0)
         win_maximise(arg1 ? 2 : 0);
+      usleep(1000);
     when 11: child_write(win_is_iconic() ? "\e[2t" : "\e[1t", 4);
     when 13: {
       int x, y;
@@ -2218,6 +2771,39 @@ do_winop(void)
 }
 
 static void
+set_taskbar_progress(int state, int percent)
+{
+  //printf("set_taskbar_progress (%d) %d %d%%\n", term.detect_progress, state, percent);
+  if (state == 0 && percent < 0) {  // disable progress indication
+    // skipping this if percent < 0 to allow percent-only setting with state 0
+    taskbar_progress(-9);
+    term.detect_progress = 0;
+  }
+  else if (state == 8) {  // "busy"
+    taskbar_progress(-8);
+    term.detect_progress = 0;
+  }
+  else if (state == 10) {  // reset to default
+    term.detect_progress = cfg.progress_bar;
+    taskbar_progress(-9);
+  }
+  else if (state <= 3) {
+    if (state > 0)
+      taskbar_progress(- state);
+    if (percent >= 0) {
+      // if we disable (above), then request percentage only (here), 
+      // colour will be 1/green regardless of previous/configured setting;
+      // to improve this, we'd have to introduce another variable,
+      // term.previous_progress
+      taskbar_progress(percent);
+      term.detect_progress = 0;
+    }
+    else  // enable automatic progress detection
+      term.detect_progress = state;
+  }
+}
+
+static void
 do_csi(uchar c)
 {
   term_cursor *curs = &term.curs;
@@ -2239,8 +2825,9 @@ do_csi(uchar c)
       cattr cur_attr = term.curs.attr;
       term.curs.attr = last_attr;
       wchar h = last_high, c = last_char;
-      for (int i = 0; i < arg0_def1; i++)
-        write_ucschar(h, c, last_width);
+      if (last_char)
+        for (int i = 0; i < arg0_def1; i++)
+          write_ucschar(h, c, last_width);
       term.curs.attr = cur_attr;
     }
     when 'A':        /* CUU: move up N lines */
@@ -2254,11 +2841,14 @@ do_csi(uchar c)
         write_primary_da();
     when CPAIR('>', 'c'):     /* Secondary DA: report device version */
       if (!arg0) {
-        if (cfg.charwidth)
+        if (cfg.charwidth % 10)
           child_printf("\e[>77;%u;%uc", DECIMAL_VERSION, UNICODE_VERSION);
         else
           child_printf("\e[>77;%u;0c", DECIMAL_VERSION);
       }
+    when CPAIR('>', 'q'):     /* Report terminal name and version */
+      if (!arg0)
+        child_printf("\eP>|%s %s\e\\", APPNAME, VERSION);
     when 'a':        /* HPR: move right N cols */
       move(curs->x + arg0_def1, curs->y, 1);
     when 'C':        /* CUF: Cursor right */
@@ -2272,21 +2862,24 @@ do_csi(uchar c)
       }
       else
         move(curs->x - arg0_def1, curs->y, 1);
+      enable_progress();
     when 'E':        /* CNL: move down N lines and CR */
       move(0, curs->y + arg0_def1, 1);
     when 'F':        /* CPL: move up N lines and CR */
       move(0, curs->y - arg0_def1, 1);
-    when 'G' or '`': /* CHA or HPA: set horizontal position */
-      move((curs->origin ? term.marg_left : 0) + arg0_def1 - 1,
-           curs->y, 
-           curs->origin ? 2 : 0);
+    when 'G' or '`': { /* CHA or HPA: set horizontal position */
+      short x = (curs->origin ? term.marg_left : 0) + arg0_def1 - 1;
+      if (x < curs->x)
+        enable_progress();
+      move(x, curs->y, curs->origin ? 2 : 0);
+    }
     when 'd':        /* VPA: set vertical position */
       move(curs->x,
-           (curs->origin ? term.marg_top : 0) + arg0_def1 - 1,
+           (curs->origin ? term.marg_top : 0) + arg0_def1 + top_y - 1,
            curs->origin ? 2 : 0);
     when 'H' or 'f':  /* CUP or HVP: set horiz. and vert. positions at once */
       move((curs->origin ? term.marg_left : 0) + (arg1 ?: 1) - 1,
-           (curs->origin ? term.marg_top : 0) + arg0_def1 - 1,
+           (curs->origin ? term.marg_top : 0) + arg0_def1 + top_y - 1,
            curs->origin ? 2 : 0);
     when 'I':  /* CHT: move right N TABs */
       for (int i = 0; i < arg0_def1; i++)
@@ -2300,16 +2893,38 @@ do_csi(uchar c)
       else if (arg0 <= 2) {
         bool above = arg0 == 1 || arg0 == 2;
         bool below = arg0 == 0 || arg0 == 2;
-        term_erase(term.esc_mod, false, above, below);
+        term_erase(term.esc_mod | term.iso_guarded_area, false, above, below);
       }
+#ifdef debug_selection
+    when CPAIR('!', 'J'):
+      if (arg0 == 3)
+        term_select_all();
+#endif
     when 'K' or CPAIR('?', 'K'):  /* EL/DECSEL: (selective) erase in line */
       if (arg0 <= 2) {
         bool right = arg0 == 0 || arg0 == 2;
         bool left  = arg0 == 1 || arg0 == 2;
-        term_erase(term.esc_mod, true, left, right);
+        term_erase(term.esc_mod | term.iso_guarded_area, true, left, right);
       }
+    when 'X': {      /* ECH: write N spaces w/o moving cursor */
+      termline *line = term.lines[curs->y];
+      int cols = min(line->cols, line->size);
+      int n = min(arg0_def1, cols - curs->x);
+      if (n > 0) {
+        int p = curs->x;
+        term_check_boundary(curs->x, curs->y);
+        term_check_boundary(curs->x + n, curs->y);
+        while (n--) {
+          if (!term.iso_guarded_area ||
+              !(line->chars[p].attr.attr & ATTR_PROTECTED)
+             )
+            line->chars[p] = term.erase_char;
+          p++;
+        }
+      }
+    }
     when 'L':        /* IL: insert lines */
-      if (curs->y >= term.marg_top && curs->y <= term.marg_bot
+      if (curs->y >= term.marg_top && curs->y <= marg_y
        && curs->x >= term.marg_left && curs->x <= term.marg_right
          )
       {
@@ -2317,7 +2932,7 @@ do_csi(uchar c)
         curs->x = term.marg_left;
       }
     when 'M':        /* DL: delete lines */
-      if (curs->y >= term.marg_top && curs->y <= term.marg_bot
+      if (curs->y >= term.marg_top && curs->y <= marg_y
        && curs->x >= term.marg_left && curs->x <= term.marg_right
          )
       {
@@ -2363,8 +2978,8 @@ do_csi(uchar c)
           when 20: caflagsmask |= FONTFAM_MASK;
           when 53: caflagsmask |= ATTR_OVERL;
           when 58: caflagsmask |= ATTR_ULCOLOUR;
-          when 10: caflagsmask |= ATTR_FGMASK;
-          when 11: caflagsmask |= ATTR_BGMASK;
+          when 30 or 10: caflagsmask |= ATTR_FGMASK;
+          when 31 or 11: caflagsmask |= ATTR_BGMASK;
           when 73: caflagsmask |= ATTR_SUPERSCR;
           when 74: caflagsmask |= ATTR_SUBSCR;
         }
@@ -2406,6 +3021,16 @@ do_csi(uchar c)
           term.curs.attr.ulcolr = ca.ulcolr;
       }
     }
+    when CPAIR('#', 'P'):  /* Push dynamic colours onto stack (XTPUSHCOLORS) */
+      push_colours(arg0);
+    when CPAIR('#', 'Q'):  /* Pop dynamic colours from stack (XTPOPCOLORS) */
+      pop_colours(arg0);
+      win_invalidate_all(false);  // refresh
+    when CPAIR('#', 'R'):  /* Report colours stack entry (XTREPORTCOLORS) */
+      child_printf("\e[?%d;%d#Q", colours_cur, colours_num);
+    when CPAIR('"', 'p'):  /* DECSCL: set conformance level */
+      term_switch_status(false);
+      // ignore otherwise
     when CPAIR('$', 'p'): { /* DECRQM: request (private) mode */
       int arg = term.csi_argv[0];
       child_printf("\e[%s%u;%u$y",
@@ -2430,6 +3055,14 @@ do_csi(uchar c)
       }
       else if (arg0 == 10 && !term.esc_mod) {
         term_export_html(false);
+      }
+#ifdef support_SVG
+      else if (arg0 == 11 && !term.esc_mod) {
+        term_export_svg();
+      }
+#endif
+      else if (arg0 == 12 && !term.esc_mod) {
+        term_save_image(false);
       }
       else if (arg0 == 0 && !term.esc_mod) {
         print_screen();
@@ -2469,14 +3102,25 @@ do_csi(uchar c)
       restore_cursor();
     when 'm':        /* SGR: set graphics rendition */
       do_sgr();
-    when 't':        /* DECSLPP: set page size - ie window height */
+#if 0
+    /* added in 3.6.2 (#1171), withdrawn in 3.6.3 (conflict with XTQMODKEYS) */
+    when CPAIR('?', 'm'):  /* DEC private SGR (EK-PPLV2-PM-B01) */
+      switch (arg0) {
+        when 4: term.curs.attr.attr &= ~ATTR_SUBSCR;
+                term.curs.attr.attr |= ATTR_SUPERSCR;
+        when 5: term.curs.attr.attr &= ~ATTR_SUPERSCR;
+                term.curs.attr.attr |= ATTR_SUBSCR;
+        when 24: term.curs.attr.attr &= ~(ATTR_SUPERSCR | ATTR_SUBSCR);
+      }
+#endif
+    when 't':
      /*
       * VT340/VT420 sequence DECSLPP, for setting the height of the window.
       * DEC only allowed values 24/25/36/48/72/144, so dtterm and xterm
       * claimed values below 24 for various window operations, 
       * and also allowed any number of rows from 24 and above to be set.
       */
-      if (arg0 >= 24) {
+      if (arg0 >= 24) {  /* DECSLPP: set page size - ie window height */
         if (*cfg.suppress_win && contains(cfg.suppress_win, 24))
           ; // skip suppressed window operation
         else {
@@ -2492,9 +3136,12 @@ do_csi(uchar c)
     when 'T':        /* SD: Scroll down */
       /* Avoid clash with unsupported hilight mouse tracking mode sequence */
       if (term.csi_argc <= 1) {
-        term_do_scroll(term.marg_top, term.marg_bot, -arg0_def1, true);
+        term_do_scroll(term.marg_top, term.marg_bot, -arg0_def1, false);
         curs->wrapnext = false;
       }
+    when CPAIR('+', 'T'):     /* unscroll (kitty) */
+      term_do_scroll(term.marg_top, term.marg_bot, -arg0_def1, true);
+      curs->wrapnext = false;
     when CPAIR('*', '|'):     /* DECSNLS */
      /*
       * Set number of lines on screen
@@ -2510,18 +3157,6 @@ do_csi(uchar c)
       */
       win_set_chars(term.rows, arg0 ?: cfg.cols);
       term.selected = false;
-    when 'X': {      /* ECH: write N spaces w/o moving cursor */
-      termline *line = term.lines[curs->y];
-      int cols = min(line->cols, line->size);
-      int n = min(arg0_def1, cols - curs->x);
-      if (n > 0) {
-        int p = curs->x;
-        term_check_boundary(curs->x, curs->y);
-        term_check_boundary(curs->x + n, curs->y);
-        while (n--)
-          line->chars[p++] = term.erase_char;
-      }
-    }
     when 'x':        /* DECREQTPARM: report terminal characteristics */
       if (arg0 <= 1)
         child_printf("\e[%u;1;1;120;120;1;0x", arg0 + 2);
@@ -2532,6 +3167,7 @@ do_csi(uchar c)
           curs->x--;
         while (curs->x > 0 && !term.tabs[curs->x]);
       }
+      enable_progress();
     }
     when CPAIR('$', 'w'):     /* DECTABSR: tab stop report */
       if (arg0 == 2) {
@@ -2544,12 +3180,16 @@ do_csi(uchar c)
           }
         child_printf("\e\\");
       }
-    when CPAIR('>', 'm'):     /* xterm: modifier key setting */
+    when CPAIR('>', 'm'):     /* xterm XTMODKEYS: modifier key setting */
       /* only the modifyOtherKeys setting is implemented */
       if (!arg0)
         term.modify_other_keys = 0;
       else if (arg0 == 4)
         term.modify_other_keys = arg1;
+    when CPAIR('?', 'm'):     /* xterm XTQMODKEYS: query XTMODKEYS */
+      /* only the modifyOtherKeys setting is implemented */
+      if (arg0 == 4)
+        child_printf("\e[>4;%dm", term.modify_other_keys);
     when CPAIR('>', 'p'):     /* xterm: pointerMode */
       if (arg0 == 0)
         term.hide_mouse = false;
@@ -2570,24 +3210,30 @@ do_csi(uchar c)
       term.cursor_size = arg0;
     when CPAIR('"', 'q'):  /* DECSCA: select character protection attribute */
       switch (arg0) {
-        when 0 or 2: term.curs.attr.attr &= ~ATTR_PROTECTED;
-        when 1: term.curs.attr.attr |= ATTR_PROTECTED;
+        when 0 or 2:
+          term.curs.attr.attr &= ~ATTR_PROTECTED;
+          term.iso_guarded_area = false;
+        when 1:
+          term.curs.attr.attr |= ATTR_PROTECTED;
+          term.iso_guarded_area = false;
       }
     when 'n':        /* DSR: device status report */
       if (arg0 == 6)  // CPR
         child_printf("\e[%d;%dR",
-                     curs->y + 1 - (curs->origin ? term.marg_top : 0),
+                     curs->y + 1 - (curs->origin ? term.marg_top : 0) - top_y,
                      curs->x + 1 - (curs->origin ? term.marg_left : 0));
       else if (arg0 == 5)
-        child_write("\e[0n", 4);
+        child_write("\e[0n", 4);  // "in good operating condition"
     when CPAIR('?', 'n'):  /* DSR, DEC specific */
       switch (arg0) {
         when 6:  // DECXCPR
           child_printf("\e[?%d;%dR",  // VT420: third parameter "page"...
-                       curs->y + 1 - (curs->origin ? term.marg_top : 0),
+                       curs->y + 1 - (curs->origin ? term.marg_top : 0) - top_y,
                        curs->x + 1 - (curs->origin ? term.marg_left : 0));
         when 15:
           child_printf("\e[?%un", 11 - !!*cfg.printer);
+        when 26:  // Keyboard Report
+          child_printf("\e[?27;0;%cn", term.has_focus ? '0' : '8');
         // DEC Locator
         when 53 or 55:
           child_printf("\e[?53n");
@@ -2705,27 +3351,124 @@ do_csi(uchar c)
       }
     when CPAIR('$', 'r')  /* DECCARA: VT420 Change Attributes in Area */
       or CPAIR('$', 't'): {  /* DECRARA: VT420 Reverse Attributes in Area */
-      cattrflags a1 = 0, a2 = 0;
-      for (uint i = 4; i < term.csi_argc; i++)
+      cattrflags a1 = 0, a2 = 0, ac = 0, af = 0;
+      for (uint i = 4; i < term.csi_argc; i++) {
+        int sub_pars = 0;
+        if (term.csi_argv[i] & SUB_PARS)
+          for (uint j = i + 1; j < term.csi_argc; j++) {
+            sub_pars++;
+            if (term.csi_argv[j] & SUB_PARS)
+              term.csi_argv[j] &= ~SUB_PARS;
+            else
+              break;
+          }
         switch (term.csi_argv[i]) {
-          when 0: a2 = ATTR_BOLD | ATTR_UNDER | ATTR_BLINK | ATTR_REVERSE;
+          when 0: a2 = ATTR_BOLD | ATTR_UNDER | ATTR_BLINK | ATTR_REVERSE
+                  | ATTR_DIM | ATTR_ITALIC | ATTR_BLINK2 | ATTR_STRIKEOUT
+                  ;
           when 1: a1 |= ATTR_BOLD;
           when 4: a1 |= ATTR_UNDER;
+                  a2 |= UNDER_MASK;
           when 5: a1 |= ATTR_BLINK;
           when 7: a1 |= ATTR_REVERSE;
-          when 22: a2 |= ATTR_BOLD;
-          when 24: a2 |= ATTR_UNDER;
-          when 25: a2 |= ATTR_BLINK;
+          when 22: a2 |= ATTR_BOLD | ATTR_DIM | ATTR_SHADOW;
+          when 24: a2 |= UNDER_MASK;
+          when 25: a2 |= ATTR_BLINK | ATTR_BLINK2;
           when 27: a2 |= ATTR_REVERSE;
-          //when 2: a1 |= ATTR_DIM;
-          //when 3: a1 |= ATTR_ITALIC;
-          //when 6: a1 |= ATTR_BLINK2;
-          //when 8: a1 |= ATTR_INVISIBLE;
-          //when 9: a1 |= ATTR_STRIKEOUT;
+          // extensions
+          when 1 | SUB_PARS:
+                  if (i + 1 < term.csi_argc && term.csi_argv[i + 1] == 1)
+                    a1 |= ATTR_SHADOW;
+          when 2: a1 |= ATTR_DIM;
+          when 3: a1 |= ATTR_ITALIC;
+          when 23: a2 |= ATTR_ITALIC;
+          when 4 | SUB_PARS:
+                  if (i + 1 < term.csi_argc) {
+                    a2 |= UNDER_MASK;
+                    switch (term.csi_argv[i + 1]) {
+                      when 0:
+                        ;
+                      when 1:
+                        a1 |= ATTR_UNDER;
+                      when 2:
+                        a1 |= ATTR_DOUBLYUND;
+                      when 3:
+                        a1 |= ATTR_CURLYUND;
+                      when 4:
+                        a1 |= ATTR_BROKENUND;
+                      when 5:
+                        a1 |= ATTR_BROKENUND | ATTR_DOUBLYUND;
+                    }
+                  }
+          when 6: a1 |= ATTR_BLINK2;
+          when 8: a1 |= ATTR_INVISIBLE;
+          when 28: a2 |= ATTR_INVISIBLE;
+          when 9: a1 |= ATTR_STRIKEOUT;
+          when 29: a2 |= ATTR_STRIKEOUT;
+          when 21: a1 |= ATTR_DOUBLYUND;
+                   a2 |= UNDER_MASK;
+          when 51 or 52: a1 |= ATTR_FRAMED;
+          when 54: a2 |= ATTR_FRAMED;
+          when 53: a1 |= ATTR_OVERL;
+          when 55: a2 |= ATTR_OVERL;
+          when 73: a1 |= ATTR_SUPERSCR;
+          when 74: a1 |= ATTR_SUBSCR;
+          when 75: a2 |= ATTR_SUPERSCR | ATTR_SUBSCR;
+          // colour
+          when 30 ... 37:
+                   a2 |= ATTR_FGMASK;
+                   ac = (term.csi_argv[i] - 30) << ATTR_FGSHIFT;
+          when 40 ... 47:
+                   a2 |= ATTR_BGMASK;
+                   ac = (term.csi_argv[i] - 40) << ATTR_BGSHIFT;
+          when 90 ... 97:
+                   a2 |= ATTR_FGMASK;
+                   ac = (term.csi_argv[i] - 90 + 8 + ANSI0) << ATTR_FGSHIFT;
+          when 100 ... 107:
+                   a2 |= ATTR_BGMASK;
+                   ac = (term.csi_argv[i] - 100 + 8 + BG_ANSI0) << ATTR_BGSHIFT;
+          when 39: a2 |= ATTR_FGMASK;
+                   ac = ATTR_DEFFG;
+          when 49: a2 |= ATTR_BGMASK;
+                   ac = ATTR_DEFBG;
+          when 59: a2 |= ATTR_ULCOLOUR;
+          when 38 | SUB_PARS:
+            if (sub_pars == 2 && term.csi_argv[i + 1] == 5) {
+              a2 |= ATTR_FGMASK;
+              ac = ((term.csi_argv[i + 2] & 0xFF) << ATTR_FGSHIFT);
+            }
+            // true colour not implemented
+          when 48 | SUB_PARS:
+            if (sub_pars == 2 && term.csi_argv[i + 1] == 5) {
+              a2 |= ATTR_BGMASK;
+              ac = ((term.csi_argv[i + 2] & 0xFF) << ATTR_BGSHIFT);
+            }
+            // true colour not implemented
+          when 58 | SUB_PARS:
+            if (sub_pars == 2 && term.csi_argv[i + 1] == 5) {
+              // underline colour not implemented
+              //a1 |= ATTR_ULCOLOUR;
+              //ul = term.csi_argv[i + 2] & 0xFF;
+            }
+          // font
+          when 10 ... 20:
+            if (term.csi_argv[i] == 11 && !*cfg.fontfams[1].name)
+              continue;
+            a2 |= FONTFAM_MASK;
+            af = (cattrflags)(term.csi_argv[i] - 10) << ATTR_FONTFAM_SHIFT;
         }
+        i += sub_pars;
+      }
+      // withdraw cancelled changes
       a1 &= ~a2;
+#ifdef debug_deccara
       if (c == 'r')
-        attr_rect(a1, a2, 0, arg0_def1, arg1 ?: 1,
+        printf("-%16llX\n+%16llX\n", a1, a2);
+      else
+        printf("^%16llX\n", a1);
+#endif
+      if (c == 'r')
+        attr_rect(a1 | ac | af, a2, 0, arg0_def1, arg1 ?: 1,
                   term.csi_argv[2] ?: urows, term.csi_argv[3] ?: ucols);
       else
         attr_rect(0, 0, a1, arg0_def1, arg1 ?: 1,
@@ -2738,22 +3481,22 @@ do_csi(uchar c)
     }
     when CPAIR('\'', '}'):  /* DECIC: VT420 Insert Columns */
       if (curs->x >= term.marg_left && curs->x <= term.marg_right
-       && curs->y >= term.marg_top && curs->y <= term.marg_bot
+       && curs->y >= term.marg_top && curs->y <= marg_y
          )
         insdel_column(curs->x, false, arg0_def1);
     when CPAIR('\'', '~'):  /* DECDC: VT420 Delete Columns */
       if (curs->x >= term.marg_left && curs->x <= term.marg_right
-       && curs->y >= term.marg_top && curs->y <= term.marg_bot
+       && curs->y >= term.marg_top && curs->y <= marg_y
          )
         insdel_column(curs->x, true, arg0_def1);
     when CPAIR(' ', 'A'):     /* SR: ECMA-48 shift columns right */
       if (curs->x >= term.marg_left && curs->x <= term.marg_right
-       && curs->y >= term.marg_top && curs->y <= term.marg_bot
+       && curs->y >= term.marg_top && curs->y <= marg_y
          )
         insdel_column(term.marg_left, false, arg0_def1);
-    when CPAIR(' ', '@'):     /* SR: ECMA-48 shift columns left */
+    when CPAIR(' ', '@'):     /* SL: ECMA-48 shift columns left */
       if (curs->x >= term.marg_left && curs->x <= term.marg_right
-       && curs->y >= term.marg_top && curs->y <= term.marg_bot
+       && curs->y >= term.marg_top && curs->y <= marg_y
          )
         insdel_column(term.marg_left, true, arg0_def1);
     when CPAIR('#', 't'):  /* application scrollbar */
@@ -2764,7 +3507,117 @@ do_csi(uchar c)
       push_mode(-1, win_get_ime());
     when CPAIR('<', 'r'):  /* TTIMERS: restore IME state (Tera Term) */
       win_set_ime(pop_mode(-1));
+    when CPAIR(' ', 't'):     /* DECSWBV: VT520 warning bell volume */
+      if (arg0 <= 8)
+        term.bell.vol = arg0;
+    when CPAIR(' ', 'u'):     /* DECSMBV: VT520 margin bell volume */
+      if (!arg0)
+        term.marginbell.vol = 8;
+      else if (arg0 <= 8)
+        term.marginbell.vol = arg0;
+    when CPAIR(' ', 'Z'): /* PEC: ECMA-48 Presentation Expand Or Contract */
+      if (!arg0)
+        curs->width = 0;
+      else if (arg0 == 1)   // expanded
+        curs->width = 2;
+      else if (arg0 == 2) { // condensed
+        if (arg1 == 2)      // single-cell zoomed down
+          curs->width = 11;
+        else
+          curs->width = 1;
+      }
+      else if (arg0 == 22)  // single-cell zoomed down
+        curs->width = 11;
+#ifdef support_triple_width
+      else if (arg0 == 3)   // triple-cell
+        curs->width = 3;
+#endif
+    when CPAIR('-', 'p'): /* DECARR: VT520 Select Auto Repeat Rate */
+      if (arg0 <= 30)
+        term.repeat_rate = arg0;
+    when CPAIR('%', 'q'):  /* setup progress indicator on taskbar icon */
+      set_taskbar_progress(arg0, term.csi_argc > 1 ? arg1 : -1);
+    when 'y':  /* DECTST */
+      if (arg0 == 4) {
+        cattr attr = (cattr)
+                     {.attr = ATTR_DEFFG | (TRUE_COLOUR << ATTR_BGSHIFT),
+                      .truefg = 0, .truebg = 0, .ulcolr = (colour)-1,
+                      .link = -1
+                     };
+        switch (arg1) {
+          when 10: attr.truebg = RGB(0, 0, 255);
+          when 11: attr.truebg = RGB(255, 0, 0);
+          when 12: attr.truebg = RGB(0, 255, 0);
+          when 13: attr.truebg = RGB(255, 255, 255);
+          otherwise: return;
+        }
+        for (int i = 0; i < term.rows; i++) {
+          termline *line = term.lines[i];
+          for (int j = 0; j < term.cols; j++) {
+            line->chars[j] =
+              (termchar) {.cc_next = 0, .chr = ' ', attr};
+          }
+          line->lattr = LATTR_NORM;
+        }
+        term.disptop = 0;
+      }
+#ifdef suspend_display_update_via_CSI
+    when CPAIR('&', 'q'):  /* suspend display update (ms) */
+      term.suspend_update = min(arg0, term.rows * term.cols / 8);
+      //printf("susp = %d\n", term.suspend_update);
+      if (term.suspend_update == 0) {
+        do_update();
+        // mysteriously, a delay here makes the output flush 
+        // more likely to happen, yet not reliably...
+        usleep(1000);
+      }
+#endif
+    when CPAIR(',', '~'): {  /* DECPS: VT520 Play Sound */
+      // CSI vol[:tone];duration[1/32s];note;... ,~
+      uint i = 0;
+      uint volarg = term.csi_argv[0];
+      if (volarg & SUB_PARS) {
+        volarg &= ~SUB_PARS;
+        ++i;
+        term.play_tone = term.csi_argv[1];
+      }
+
+      uint ms = term.csi_argv[++i] * 1000 / 32;
+
+      float vol = 0.0;
+      if (volarg <= 7)
+        vol = (float)volarg / 7.0;
+      else if (volarg <= 100)
+        vol = (float)volarg / 100.0;
+
+static float freq_C5_C7[26] =
+          {0.0, 523.2511, 554.3653, 587.3295, 622.2540, 659.2551, 698.4565, 
+           739.9888, 783.9909, 830.6094, 880.0000, 932.3275, 987.7666, 
+           1046.502, 1108.731, 1174.659, 1244.508, 1318.510, 1396.913, 
+           1479.978, 1567.982, 1661.219, 1760.000, 1864.655, 1975.533, 
+           2093.005};
+
+      while (++i < term.csi_argc)
+        if (term.csi_argv[i] <= 25)
+          win_beep(term.play_tone, vol, freq_C5_C7[term.csi_argv[i]], ms);
+        else if (term.csi_argv[i] >= 41 && term.csi_argv[i] <= 137) {
+          uint freqi = ((term.csi_argv[i] - 41) % 12 + 1);
+          float freq = freq_C5_C7[freqi] * (1 << (term.csi_argv[i] - 41) / 12) / 32;
+          win_beep(term.play_tone, vol, freq, ms);
+        }
+    }
+    when CPAIR('$', '~'): {  /* DECSSDT: select status line type */
+      term_set_status_type(arg0, arg1);
+    }
+    when CPAIR('$', '}'): {  /* DECSASD: select active status display */
+      bool status_line = arg0;
+      if (term.st_type == 2) {
+        term_switch_status(status_line);
+      }
+    }
   }
+
+  last_char = 0;  // cancel preceding char for REP
 }
 
 /*
@@ -2776,6 +3629,9 @@ fill_image_space(imglist * img)
   cattrflags attr0 = term.curs.attr.attr;
   // refer SIXELCH cells to image for display/discard management
   term.curs.attr.imgi = img->imgi;
+#ifdef debug_img_disp
+  printf("fill %d:%d %d\n", term.curs.y, term.curs.x, img->imgi);
+#endif
 
   short x0 = term.curs.x;
   if (term.sixel_display) {  // sixel display mode
@@ -2822,6 +3678,7 @@ do_dcs(void)
   char *s = term.cmd_buf;
   if (!term.cmd_len)
     *s = 0;
+  //printf("DCS %04X state %d <%s>\n", term.dcs_cmd, term.state, s);
 
   switch (term.dcs_cmd) {
 
@@ -2870,32 +3727,26 @@ do_dcs(void)
         return;
       }
 
-      int size_pixels = st->image.width * st->image.height * 4;
-      unsigned char * pixels = (unsigned char *)malloc(size_pixels);
-      //printf("alloc pixels 1 w %d h %d (%d) -> %p\n", st->image.width, st->image.height, size_pixels, pixels);
-      if (!pixels)
-        return;
-
-      status = sixel_parser_finalize(st, pixels);
+      unsigned char * pixels = sixel_parser_finalize(st);
+      //printf("sixel_parser_finalize %p\n", pixels);
       sixel_parser_deinit(st);
-      if (status < 0) {
+      if (!pixels) {
         //printf("free state 3 %p\n", term.imgs.parser_state);
         free(term.imgs.parser_state);
-        //printf("free pixels\n");
-        free(pixels);
         term.imgs.parser_state = NULL;
         return;
       }
 
       short left = term.curs.x;
-      short top = term.virtuallines + (term.sixel_display ? 0: term.curs.y);
-      int width = st->image.width / st->grid_width;
-      int height = st->image.height / st->grid_height;
+      short top = term.sixel_display ? 0: term.curs.y;
+      int width = (st->image.width -1 ) / st->grid_width + 1;
+      int height = (st->image.height -1 ) / st->grid_height + 1;
       int pixelwidth = st->image.width;
       int pixelheight = st->image.height;
+      //printf("w %d/%d %d h %d/%d %d\n", pixelwidth, st->grid_width, width, pixelheight, st->grid_height, height);
 
       imglist * img;
-      if (!winimg_new(&img, 0, pixels, 0, left, top, width, height, pixelwidth, pixelheight, false)) {
+      if (!winimg_new(&img, 0, pixels, 0, left, top, width, height, pixelwidth, pixelheight, false, 0, 0, 0, 0, term.curs.attr.attr & (ATTR_BLINK | ATTR_BLINK2))) {
         free(pixels);
         sixel_parser_deinit(st);
         //printf("free state 4 %p\n", term.imgs.parser_state);
@@ -2917,6 +3768,13 @@ do_dcs(void)
 #ifdef debug_sixel_list
         printf("do_dcs checking imglist\n");
 #endif
+#ifdef replace_images
+#warning do not replace images in the list anymore
+        // with new flicker-reduce strategy of rendering overlapped images,
+        // new images should always be added to the end of the queue;
+        // completely overlayed images should be collected for removal 
+        // during the rendering loop (winimgs_paint),
+        // or latest when they are scrolled out of the scrollback buffer
         for (imglist * cur = term.imgs.first; cur; cur = cur->next) {
           if (cur->pixelwidth == cur->width * st->grid_width &&
               cur->pixelheight == cur->height * st->grid_height)
@@ -2957,7 +3815,9 @@ do_dcs(void)
 #endif
           }
         }
+#endif
         // append image to list
+        img->prev = term.imgs.last;
         term.imgs.last->next = img;
         term.imgs.last = img;
       }
@@ -2979,7 +3839,7 @@ do_dcs(void)
   }
 
   when CPAIR('$', 'q'):
-    switch (term.state) {
+   switch (term.state) {
     when DCS_ESCAPE: {     // DECRQSS
       cattr attr = term.curs.attr;
       if (!strcmp(s, "m")) { // SGR
@@ -3090,24 +3950,75 @@ do_dcs(void)
         child_printf("\eP1$r%u$|\e\\", term.cols);
       } else if (!strcmp(s, "*|")) {  // DECSNLS (lines)
         child_printf("\eP1$r%u*|\e\\", term.rows);
+      } else if (!strcmp(s, "$~")) {  // DECSSDT (status line type)
+        child_printf("\eP1$r%u$~\e\\", term.st_type);
+      } else if (!strcmp(s, "$}")) {  // DECSASD (active status)
+        child_printf("\eP1$r%u$}\e\\", term.st_active);
+      } else if (!strcmp(s, "-p")) {  // DECARR (auto repeat rate)
+        child_printf("\eP1$r%u-p\e\\", term.repeat_rate);
       } else {
-        child_printf("\eP0$r%s\e\\", s);
+        child_printf("\eP0$r\e\\");
       }
     }
     otherwise:
       return;
+   }
+
+  // https://gitlab.com/gnachman/iterm2/-/wikis/synchronized-updates-spec
+  // Begin synchronized update (BSU): ESC P = 1 s Parameters ST
+  // End synchronized update (ESU): ESC P = 2 s Parameters ST
+  when CPAIR('=', 's'): {
+    //printf("DCS =[%u]%u;%us term.state %d <%s>\n", term.csi_argc, term.csi_argv[0], term.csi_argv[1], term.state, s);
+    int susp = -1;
+    if (term.csi_argv[0] == 1) {
+      // calculate default and max timeout
+      //susp = term.rows * term.cols / (10 + cfg.display_speedup);
+      susp = 420;  // limit of user-requested delay
+      // limit timeout if requested
+      if (term.csi_argc > 1 && term.csi_argv[1])
+        susp = min((int)term.csi_argv[1], susp);
+      else
+        susp = 150;  // constant default
     }
+    else if (term.csi_argv[0] == 2)
+      susp = 0;
+    if (susp < 0)
+      return;
+
+    term.suspend_update = susp;
+    if (susp == 0) {
+      do_update();
+      //usleep(1000);  // flush update not needed here...
+    }
+  }
 
   }
+}
+
+static string
+osc_fini(void)
+{
+  return term.state == CMD_ESCAPE ? "\e\\" : "\a";
+}
+
+static void
+print_osc_colour(colour c)
+{
+  child_printf(";rgb:%04x/%04x/%04x",
+               red(c) * 0x101, green(c) * 0x101, blue(c) * 0x101);
 }
 
 static void
 do_colour_osc(bool has_index_arg, uint i, bool reset)
 {
+  int osc_num = term.cmd_num;  // 4, 5, 10..19, 104, 105, 110..119
   char *s = term.cmd_buf;
   int index;
-  if (has_index_arg) {
-    int osc = i;
+
+do_osc_control:
+  //printf("OSC %d <%s>\n", osc_num, s);
+  if (has_index_arg) {  // OSC 4, 5, 104, 105
+    int osc = i;  // 4, 5
     int len = 0;
     sscanf(s, "%u;%n", &index, &len);
     i = index;
@@ -3117,43 +4028,136 @@ do_colour_osc(bool has_index_arg, uint i, bool reset)
     if (osc % 100 == 5) {
       if (i == 0)
         i = BOLD_COLOUR_I;
+      else if (i == 2)
+        i = BLINK_COLOUR_I;
 #ifdef other_color_substitutes
       else if (i == 1)
         i = UNDERLINE_COLOUR_I;
-      else if (i == 2)
-        i = BLINK_COLOUR_I;
       else if (i == 3)
         i = REVERSE_COLOUR_I;
       else if (i == 4)
         i = ITALIC_COLOUR_I;
 #endif
-      else
+      else if (i > 4)
         return;
+      else {
+        // skip unimplemented setting, continue to process multiple controls
+        i = COLOUR_NUM;
+      }
     }
     else if (i >= 256)
       return;
   }
 
+  char * cont = strchr(s, ';');
+  if (cont)
+    *cont = 0;  // enable colour parsing with subsequent multiple values
+
   colour c;
-  if (reset)
+  if (i >= COLOUR_NUM) {
+    // skip this setting
+  }
+  else if (reset)
     win_set_colour(i, (colour)-1);
   else if (!strcmp(s, "?")) {
-    child_printf("\e]%u;", term.cmd_num);
+    child_printf("\e]%u", osc_num);
     if (has_index_arg)
-      child_printf("%u;", index);
-    c = i < COLOUR_NUM ? colours[i] : 0;  // should not be affected by rvideo
-    child_printf("rgb:%04x/%04x/%04x\e\\",
-                 red(c) * 0x101, green(c) * 0x101, blue(c) * 0x101);
+      child_printf(";%u", index);
+    print_osc_colour(colours[i]);
+    child_printf("%s", osc_fini());
   }
   else if (parse_colour(s, &c))
     win_set_colour(i, c);
+
+  if (cont) {  // support multiple osc controls
+    s = cont;  // original ';' position
+    s++;
+    if (osc_num >= 10 && osc_num <= 19) {  // "dynamic colors"
+      int new_num;
+      int len = 0;
+      sscanf(s, "%u;%n", &new_num, &len);
+      if (len) {  // OSC 10;blue;12;red
+        s += len;
+        osc_num = new_num;
+      }
+      else  // OSC 10;blue;pink: auto-increment dynamic color index
+        osc_num++;
+      // adjust i (the extended colour palette index)
+      // to the new dynamic color number;
+      // what a hack! this should have been done in do_cmd
+      switch (osc_num) {
+        when 10:   i = FG_COLOUR_I;
+        when 11:   i = BG_COLOUR_I;
+        when 12:   i = CURSOR_COLOUR_I;
+        when 17:   i = SEL_COLOUR_I;
+        when 19:   i = SEL_TEXT_COLOUR_I;
+        when 15:   i = TEK_FG_COLOUR_I;
+        when 16:   i = TEK_BG_COLOUR_I;
+        when 18:   i = TEK_CURSOR_COLOUR_I;
+        otherwise: i = COLOUR_NUM;
+      }
+    }
+    goto do_osc_control;
+  }
 }
 
 /*
- * OSC52: \e]52;[cp0-6];?|base64-string\07"
+ * OSC 7704: Control foreground and background variants of the 16 ANSI colours
+ * independently of the first 16 slots in the xterm256 palette.
+ */
+static void
+do_ansi_colour_osc(void)
+{
+  char *s = term.cmd_buf;
+  uint i;
+  int len = 0;
+
+  // Parse colour index and check it's in range.
+  sscanf(s, "%u;%n", &i, &len);
+  if (!len || i >= 16)
+    return;
+
+  s += len;
+
+  if (!strcmp(s, "?")) {
+    // Just a question mark: Report colour.
+    // Show background variant only if different.
+    colour fg = colours[ANSI0 + i], bg = colours[BG_ANSI0 + i];
+    child_printf("\e]%u", term.cmd_num);
+    print_osc_colour(fg);
+    if (fg != bg)
+      print_osc_colour(bg);
+    child_printf("%s", osc_fini());
+  }
+  else {
+    char *sep = strchr(s, ';');
+    if (!sep) {
+      // One value: Set foreground and background to the same.
+      // Reset both when empty.
+      colour c = -1;
+      if (!*s || parse_colour(s, &c)) {
+        win_set_colour(ANSI0 + i, c);
+        win_set_colour(BG_ANSI0 + i, c);
+      }
+    }
+    else {
+      // Two values: Set foreground and background separately.
+      // Reset empty values.
+      colour fg = -1, bg = -1;
+      if (s == sep || parse_colour(s, &fg))
+        win_set_colour(ANSI0 + i, fg);
+      if (!sep[1] || parse_colour(&sep[1], &bg))
+        win_set_colour(BG_ANSI0 + i, bg);
+    }
+  }
+}
+
+/*
+ * OSC 52: \e]52;[cp0-6];?|base64-string\07"
  * Only system clipboard is supported now.
  */
-static void do_clipboard(void)
+static void
+do_clipboard(void)
 {
   char *s = term.cmd_buf;
   char *output;
@@ -3198,7 +4202,7 @@ do_cmd(void)
 {
   char *s = term.cmd_buf;
   s[term.cmd_len] = 0;
-  //printf("OSC %d <%s>\n", term.cmd_num, s);
+  //printf("OSC %d <%s> %s\n", term.cmd_num, s, term.state == CMD_ESCAPE ? "ST" : "BEL");
 
   if (*cfg.suppress_osc && contains(cfg.suppress_osc, term.cmd_num))
     // skip suppressed OSC command
@@ -3210,14 +4214,17 @@ do_cmd(void)
     when 5:   do_colour_osc(true, 5, false);
     when 6 or 106: {
       int col, on;
-      if (sscanf(term.cmd_buf, "%u;%u", &col, &on) == 2)
+      if (sscanf(term.cmd_buf, "%u;%u", &col, &on) == 2) {
         if (col == 0)
           term.enable_bold_colour = on;
+        else if (col == 2)
+          term.enable_blink_colour = on;
+      }
     }
     when 104: do_colour_osc(true, 4, true);
     when 105: do_colour_osc(true, 5, true);
     when 10:  do_colour_osc(false, FG_COLOUR_I, false);
-    when 11:  if (strchr("*_%=", *term.cmd_buf)) {
+    when 11:  if (strchr("*_%=+", *term.cmd_buf)) {
                 wchar * bn = cs__mbstowcs(term.cmd_buf);
                 wstrset(&cfg.background, bn);
                 free(bn);
@@ -3230,11 +4237,17 @@ do_cmd(void)
     when 12:  do_colour_osc(false, CURSOR_COLOUR_I, false);
     when 17:  do_colour_osc(false, SEL_COLOUR_I, false);
     when 19:  do_colour_osc(false, SEL_TEXT_COLOUR_I, false);
+    when 15:  do_colour_osc(false, TEK_FG_COLOUR_I, false);
+    when 16:  do_colour_osc(false, TEK_BG_COLOUR_I, false);
+    when 18:  do_colour_osc(false, TEK_CURSOR_COLOUR_I, false);
     when 110: do_colour_osc(false, FG_COLOUR_I, true);
     when 111: do_colour_osc(false, BG_COLOUR_I, true);
     when 112: do_colour_osc(false, CURSOR_COLOUR_I, true);
     when 117: do_colour_osc(false, SEL_COLOUR_I, true);
     when 119: do_colour_osc(false, SEL_TEXT_COLOUR_I, true);
+    when 115: do_colour_osc(false, TEK_FG_COLOUR_I, true);
+    when 116: do_colour_osc(false, TEK_BG_COLOUR_I, true);
+    when 118: do_colour_osc(false, TEK_CURSOR_COLOUR_I, true);
     when 7:  // Set working directory (from Mac Terminal) for Alt+F2
       // extract dirname from file://host/path scheme
       if (!strncmp(s, "file:", 5))
@@ -3243,15 +4256,23 @@ do_cmd(void)
         s += 11;
       else if (!strncmp(s, "///", 3))
         s += 2;
-      if (!*s || *s == '/')
+      if (s[0] == '~' && (!s[1] || s[1] == '/')) {
+        char * dir = asform("%s%s", home, s + 1);
+        child_set_fork_dir(dir);
+        free(dir);
+      }
+      else if (!*s || *s == '/')
         child_set_fork_dir(s);
     when 701:  // Set/get locale (from urxvt).
       if (!strcmp(s, "?"))
-        child_printf("\e]701;%s\e\\", cs_get_locale());
+        child_printf("\e]701;%s%s", cs_get_locale(), osc_fini());
       else
         cs_set_locale(s);
     when 7721:  // Copy window title to clipboard.
-      win_copy_title();
+      if (cfg.allow_set_selection)
+        win_copy_title();
+    when 7704:  // Change ANSI foreground/background colours.
+      do_ansi_colour_osc();
     when 7773: {  // Change icon.
       uint icon_index = 0;
       char *comma = strrchr(s, ',');
@@ -3267,7 +4288,7 @@ do_cmd(void)
     }
     when 7770:  // Change font size.
       if (!strcmp(s, "?"))
-        child_printf("\e]7770;%u\e\\", win_get_font_size());
+        child_printf("\e]7770;%u%s", win_get_font_size(), osc_fini());
       else {
         char *end;
         int i = strtol(s, &end, 10);
@@ -3280,7 +4301,7 @@ do_cmd(void)
       }
     when 7777:  // Change font and window size.
       if (!strcmp(s, "?"))
-        child_printf("\e]7777;%u\e\\", win_get_font_size());
+        child_printf("\e]7777;%u%s", win_get_font_size(), osc_fini());
       else {
         char *end;
         int i = strtol(s, &end, 10);
@@ -3309,7 +4330,7 @@ do_cmd(void)
           s += sprintf(s, "%u", wcs[i]);
       }
       *s = 0;
-      child_printf("\e]7771;!%s\e\\", term.cmd_buf);
+      child_printf("\e]7771;!%s%s", term.cmd_buf, osc_fini());
     }
     when 77119: {  // Indic and Extra characters wide handling
       int what = atoi(s);
@@ -3321,20 +4342,34 @@ do_cmd(void)
         term.wide_extra = true;
     }
     when 52: do_clipboard();
-    when 50: {
-      uint ff = (term.curs.attr.attr & FONTFAM_MASK) >> ATTR_FONTFAM_SHIFT;
-      if (!strcmp(s, "?")) {
-        char * fn = cs__wcstombs(win_get_font(ff) ?: W(""));
-        child_printf("\e]50;%s\e\\", fn);
-        free(fn);
+    when 50:
+      if (tek_mode) {
+        tek_set_font(cs__mbstowcs(s));
+        tek_init(false, cfg.tek_glow);
       }
       else {
-        if (ff < lengthof(cfg.fontfams) - 1) {
-          wstring wfont = cs__mbstowcs(s);  // let this leak...
-          win_change_font(ff, wfont);
+        uint ff = (term.curs.attr.attr & FONTFAM_MASK) >> ATTR_FONTFAM_SHIFT;
+        if (!strcmp(s, "?")) {
+          char * fn = cs__wcstombs(win_get_font(ff) ?: W(""));
+          child_printf("\e]50;%s%s", fn, osc_fini());
+          free(fn);
+        }
+        else {
+          if (ff <= 10) {  // also support changing alternative fonts 1..10
+            wstring wfont = cs__mbstowcs(s);  // let this leak...
+            win_change_font(ff, wfont);
+          }
         }
       }
+    when 22: {  // set mouse pointer style
+      wchar * ps = cs__mbstowcs(s);
+      set_cursor_style(term.mouse_mode || term.locator_1_enabled, ps);
+      free(ps);
     }
+    when 7750:
+      set_arg_option("Emojis", strdup(s));
+      clear_emoji_data();
+      win_invalidate_all(false);
     when 8: {  // hyperlink attribute
       char * link = s;
       char * url = strchr(s, ';');
@@ -3343,6 +4378,74 @@ do_cmd(void)
       }
       else
         term.curs.attr.link = -1;
+    }
+    when 60: {  // xterm XTQALLOWED: query allowed runtime features
+      child_printf("\e]60;%s%s%s%s%s", 
+        // check foreground/background colour setting as an approximation
+        contains(cfg.suppress_osc, 10) || contains(cfg.suppress_osc, 11) 
+          ? "" : ",allowColorOps",
+        contains(cfg.suppress_osc, 50) ? "" : ",allowFontOps",
+        contains(cfg.suppress_osc, 2) ? "" : ",allowTitleOps",
+        *cfg.filter_paste ? "" : ",allowPasteControls",
+        //allowWindowOps
+        osc_fini());
+    }
+    when 61: {  // xterm XTQDISALLOWED: query disallowed runtime subfeatures
+      if (!strcasecmp(s, "allowColorOps"))
+        child_printf("\e]61%s%s",
+          contains(cfg.suppress_osc, 4) ? ";GetAnsiColor,SetAnsiColor" : "",
+          osc_fini());
+      else if (!strcasecmp(s, "allowFontOps"))
+        child_printf("\e]61;GetFont,SetFont%s", osc_fini());
+      else if (!strcasecmp(s, "allowMouseOps"))
+        child_printf("\e]61;VT200Hilite%s%s%s%s%s%s%s%s%s%s%s%s%s%s",
+          strstr(cfg.suppress_wheel, "scrollwin") ? ",Scrollback" : "",
+          strstr(cfg.suppress_wheel, "zoom") ? ",ZoomMouse" : "",
+          strstr(cfg.suppress_wheel, "report") ? ",WheelEvent" : "",
+          //(strstr(cfg.suppress_wheel, "scrollapp") || !term.wheel_reporting_xterm) ? ",AlternateScroll" : "",
+          (strstr(cfg.suppress_wheel, "scrollapp") ||
+           (contains(cfg.suppress_dec, 1007) && !contains(cfg.suppress_dec, 7786))
+          ) ? ",AlternateScroll" : "",
+          contains(cfg.suppress_dec, 9) ? ",X10" : "",
+          contains(cfg.suppress_dec, 1000) ? ",VT200Click" : "",
+          contains(cfg.suppress_dec, 1002) ? ",AnyButton" : "",
+          contains(cfg.suppress_dec, 1003) ? ",AnyEvent" : "",
+          contains(cfg.suppress_dec, 1005) ? ",Extended" : "",
+          contains(cfg.suppress_dec, 1006) ? ",SGR" : "",
+          contains(cfg.suppress_dec, 1015) ? ",URXVT" : "",
+          contains(cfg.suppress_dec, 1016) ? ",PixelPosition" : "",
+          contains(cfg.suppress_dec, 1004) ? ",FocusEvent" : "",
+          osc_fini());
+      else if (!strcasecmp(s, "allowTitleOps"))
+        child_printf("\e]61%s", osc_fini());
+      else if (!strcasecmp(s, "allowWindowOps"))
+        child_printf("\e]61;SetChecksum,SetXprop,GetIconTitle,GetWinTitle%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s",
+          contains(cfg.suppress_osc, 52) ? ",GetSelection" : "",
+          (contains(cfg.suppress_osc, 52) || !cfg.allow_set_selection)
+            ? "SetSelection" : "",
+          contains(cfg.suppress_win, 24) ? ",SetWinLines" : "",
+          contains(cfg.suppress_win, 19) ? ",GetScreenSizeChars" : "",
+          contains(cfg.suppress_win, 13) ? ",GetWinPosition" : "",
+          contains(cfg.suppress_win, 18) ? ",GetWinSizeChars" : "",
+          contains(cfg.suppress_win, 14) ? ",GetWinSizePixels" : "",
+          contains(cfg.suppress_win, 11) ? ",GetWinState" : "",
+          contains(cfg.suppress_win, 6) ? ",LowerWin" : "",
+          contains(cfg.suppress_win, 9) ? ",MaximizeWin" : "",
+          contains(cfg.suppress_win, 10) ? ",FullscreenWin" : "",
+          contains(cfg.suppress_win, 2) ? ",MinimizeWin" : "",
+          contains(cfg.suppress_win, 23) ? ",PopTitle" : "",
+          contains(cfg.suppress_win, 22) ? ",PushTitle" : "",
+          contains(cfg.suppress_win, 5) ? ",RaiseWin" : "",
+          contains(cfg.suppress_win, 7) ? ",RefreshWin" : "",
+          contains(cfg.suppress_win, 1) ? ",RestoreWin" : "",
+          contains(cfg.suppress_win, 3) ? ",SetWinPosition" : "",
+          contains(cfg.suppress_win, 8) ? ",SetWinSizeChars" : "",
+          contains(cfg.suppress_win, 4) ? ",SetWinSizePixels" : "",
+          osc_fini());
+      else if (!strcasecmp(s, "allowTcapOps"))
+        child_printf("\e]61;SetTcap,GetTcap%s", osc_fini());
+      else if (!strcasecmp(s, "allowPasteControls"))
+        child_printf("\e]61;%s%s", cfg.filter_paste, osc_fini());
     }
     when 1337: {  // iTerm2 image protocol
                   // https://www.iterm2.com/documentation-images.html
@@ -3364,6 +4467,10 @@ do_cmd(void)
       int pixelwidth = 0;
       int pixelheight = 0;
       bool pAR = true;
+      int crop_x = 0;
+      int crop_y = 0;
+      int crop_width = 0;
+      int crop_height = 0;
 
       // process parameters
       while (s && *s) {
@@ -3420,6 +4527,36 @@ do_cmd(void)
         else if (0 == strcmp("preserveAspectRatio", s)) {
           pAR = val;
         }
+        else if (0 == strcmp("cropX", s) || 0 == strcmp("cropLeft", s)) {
+          if (pix) {
+            crop_x = val;
+          }
+        }
+        else if (0 == strcmp("cropY", s) || 0 == strcmp("cropTop", s)) {
+          if (pix) {
+            crop_y = val;
+          }
+        }
+        else if (0 == strcmp("cropWidth", s)) {
+          if (pix) {
+            crop_width = val;
+          }
+        }
+        else if (0 == strcmp("cropHeight", s)) {
+          if (pix) {
+            crop_height = val;
+          }
+        }
+        else if (0 == strcmp("cropRight", s)) {
+          if (pix) {
+            crop_width = - val;
+          }
+        }
+        else if (0 == strcmp("cropBottom", s)) {
+          if (pix) {
+            crop_height = - val;
+          }
+        }
 
         s = nxt;
       }
@@ -3448,14 +4585,15 @@ do_cmd(void)
           // OK
           imglist * img;
           short left = term.curs.x;
-          short top = term.virtuallines + term.curs.y;
-          if (winimg_new(&img, name, data, datalen, left, top, width, height, pixelwidth, pixelheight, pAR)) {
+          short top = term.curs.y;
+          if (winimg_new(&img, name, data, datalen, left, top, width, height, pixelwidth, pixelheight, pAR, crop_x, crop_y, crop_width, crop_height, term.curs.attr.attr & (ATTR_BLINK | ATTR_BLINK2))) {
             fill_image_space(img);
 
             if (term.imgs.first == NULL) {
               term.imgs.first = term.imgs.last = img;
             } else {
               // append image to list
+              img->prev = term.imgs.last;
               term.imgs.last->next = img;
               term.imgs.last = img;
             }
@@ -3466,6 +4604,105 @@ do_cmd(void)
         else
           free(data);
       }
+    }
+    when 440: {  // Audio / sound file output
+      // experimental, for a proposal see
+      // https://gitlab.freedesktop.org/terminal-wg/specifications/-/issues/14
+      char * p = s;
+      uint opt = 0;
+      while (p) {
+        char * pn = strchr(p, ':');
+        if (pn)
+          *pn++ = 0;
+        if (p != s) {
+          // handle parameter p
+          //printf("OSC 440 <%s> param <%s>\n", s, p);
+#define SND_ASYNC	0x0001
+#define SND_LOOP	0x0008
+#define SND_NOSTOP	0x0010
+          if (0 == strcmp(p, "async"))
+            opt |= SND_ASYNC;
+          if (0 == strcmp(p, "nostop"))
+            opt |= SND_NOSTOP;
+          if (0 == strcmp(p, "loop"))
+            opt |= SND_LOOP | SND_ASYNC;
+        }
+        // proceed to next or end
+        p = pn;
+      }
+      win_sound(s, opt);
+    }
+    when 9: {
+typedef struct {
+  char * p;
+  int v;
+} paramap;
+      int scanenum(char * s, int * _i, paramap * p, bool donum) {
+        char * sep = strchr(s, ';');
+        int len = sep ? (uint)(sep - s) : strlen(s);
+        while (p->p) {
+          if (0 == strncasecmp(s, p->p, len)) {
+            *_i = p->v;
+            return len;
+          }
+          p++;
+        }
+        if (donum) {
+          // fallback scan for number
+          int numlen = sscanf(s, "%d", _i);
+          if (numlen && numlen == len)
+            return numlen;
+        }
+        // not found
+        return 0;
+      }
+
+      int cmd;
+      int len = scanenum(s, &cmd,
+                         (paramap[]){{"4", 4}, {"progress", 4}, {0, 0}},
+                         false);
+      if (!len || cmd != 4)
+        return;
+      s += len;
+
+      if (!*s)
+        return;
+      s++;
+      int state;
+      len = scanenum(s, &state,
+                     (paramap[]){
+                                 {"off", 0},
+                                 {"default", 10},
+                                 {"", 10},
+                                 {"green", 1},
+                                 {"yellow", 2},
+                                 {"red", 3},
+                                 {"busy", 8},
+                                 {"0", 0},
+                                 {"1", 1},
+                                 {"4", 2},
+                                 {"2", 3},
+                                 {"3", 8},
+                                 {"single", -1},
+                                 {"multiple", -2},
+                                 {0, 0}},
+                     false);
+      if (len < 0) {
+        term.progress_scan = - len;
+        return;
+      }
+
+      if (!len)
+        return;
+      s += len;
+
+      int percent = -1;
+      if (*s) {
+        s++;
+        sscanf(s, "%d", &percent);
+      }
+
+      set_taskbar_progress(state, percent);
     }
   }
 }
@@ -3484,8 +4721,11 @@ term_print_finish(void)
 }
 
 static void
-term_do_write(const char *buf, uint len)
+term_do_write(const char *buf, uint len, bool fix_status)
 {
+  //check e.g. if progress indication is following by CR
+  //printf("[%ld] write %02X...%02X\n", mtime(), *buf, buf[len - 1]);
+
   // Reset cursor blinking.
   term.cblinker = 1;
   term_schedule_cblink();
@@ -3534,7 +4774,7 @@ term_do_write(const char *buf, uint len)
         if (term.curs.oem_acs && !memchr("\e\n\r\b", c, 4)) {
           if (term.curs.oem_acs == 2)
             c |= 0x80;
-          write_char(cs_btowc_glyph(c), 1);
+          write_ucschar(0, cs_btowc_glyph(c), 1);
           continue;
         }
 
@@ -3545,15 +4785,16 @@ term_do_write(const char *buf, uint len)
           cset = term.curs.cset_single;
           term.curs.cset_single = CSET_ASCII;
         }
-        else if (term.decnrc_enabled
-         && term.curs.gr && term.curs.csets[term.curs.gr] != CSET_ASCII
-         && !term.curs.oem_acs && !term.curs.utf
-         && c >= 0x80 && c < 0xFF) {
+        else if (term.curs.gr
+              //&& (term.decnrc_enabled || !term.decnrc_enabled)
+              && term.curs.csets[term.curs.gr] != CSET_ASCII
+              && !term.curs.oem_acs && !term.curs.utf
+              && c >= 0x80 && c < 0xFF
+                )
+        {
           // tune C1 behaviour to mimic xterm
           if (c < 0xA0)
             continue;
-          // TODO: if we'd ever support 96 character sets (other than 'A')
-          // 0xFF should be handled specifically
 
           c &= 0x7F;
           cset = term.curs.csets[term.curs.gr];
@@ -3573,7 +4814,8 @@ term_do_write(const char *buf, uint len)
             if (wc)
               pos--;
           when -1: // Encoding error
-            write_error();
+            if (!tek_mode)
+              write_error();
             if (term.in_mb_char || term.high_surrogate)
               pos--;
             term.high_surrogate = 0;
@@ -3594,7 +4836,8 @@ term_do_write(const char *buf, uint len)
         if (is_low_surrogate(wc)) {
           if (hwc) {
 #if HAS_LOCALES
-            int width = cfg.charwidth ? xcwidth(combine_surrogates(hwc, wc)) :
+            int width = (cfg.charwidth % 10)
+                        ? xcwidth(combine_surrogates(hwc, wc)) :
 # ifdef __midipix__
                         wcwidth(combine_surrogates(hwc, wc));
 # else
@@ -3602,6 +4845,11 @@ term_do_write(const char *buf, uint len)
 # endif
 #else
             int width = xcwidth(combine_surrogates(hwc, wc));
+#endif
+#ifdef support_triple_width
+            // do not handle triple-width here
+            //if (term.curs.width)
+            //  width = term.curs.width % 10;
 #endif
             write_ucschar(hwc, wc, width);
           }
@@ -3624,59 +4872,13 @@ term_do_write(const char *buf, uint len)
           continue;
         }
 
-        // Control characters
-        if (wc < 0x20 || wc == 0x7F) {
-          if (!do_ctrl(wc) && c == wc) {
-            wc = cs_btowc_glyph(c);
-            if (wc != c)
-              write_char(wc, 1);
-          }
-          continue;
-        }
-
         // Non-characters
         if (wc == 0xFFFE || wc == 0xFFFF) {
           write_error();
           continue;
         }
 
-        cattrflags asav = term.curs.attr.attr;
-
         // Everything else
-        int width;
-        if (term.wide_indic && wc >= 0x0900 && indicwide(wc))
-          width = 2;
-        else if (term.wide_extra && wc >= 0x2000 && extrawide(wc)) {
-          width = 2;
-          if (win_char_width(wc, term.curs.attr.attr) < 2)
-            term.curs.attr.attr |= ATTR_EXPAND;
-        }
-        else
-#if HAS_LOCALES
-          if (cfg.charwidth)
-            width = xcwidth(wc);
-          else
-            width = wcwidth(wc);
-# ifdef hide_isolate_marks
-          // force bidi isolate marks to be zero-width;
-          // however, this is inconsistent with locale width
-          if (wc >= 0x2066 && wc <= 0x2069)
-            width = 0;  // bidi isolate marks
-# endif
-#else
-          width = xcwidth(wc);
-#endif
-
-        if (width == 2
-            // && wcschr(W("〈〉《》「」『』【】〒〓〔〕〖〗〘〙〚〛"), wc)
-            && wc >= 0x3008 && wc <= 0x301B && (wc | 1) != 0x3013
-            && win_char_width(wc, term.curs.attr.attr) < 2
-            // ensure symmetric handling of matching brackets
-            && win_char_width(wc ^ 1, term.curs.attr.attr) < 2)
-        {
-          term.curs.attr.attr |= ATTR_EXPAND;
-        }
-
         wchar NRC(wchar * map)
         {
           static char * rpl = "#@[\\]^_`{|}~";
@@ -3686,6 +4888,8 @@ term_do_write(const char *buf, uint len)
           else
             return wc;
         }
+
+        cattrflags asav = term.curs.attr.attr;
 
         switch (cset) {
           when CSET_VT52DRW:  // VT52 "graphics" mode
@@ -3836,7 +5040,7 @@ term_do_write(const char *buf, uint len)
               wc = W(" ¡¢£￿¥￿§¨©ª«￿￿İ￿°±²³￿µ¶·￿¹º»¼½ı¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏĞÑÒÓÔÕÖŒØÙÚÛÜŸŞßàáâãäåæçèéêëìíîïğñòóôõöœøùúûüÿş")
                    [c - ' '];
             }
-          when CSET_NRCS_Cyrillic:
+          when CSET_DEC_Cyrillic:
             if (c >= ' ' && c <= 0x7F) {
               wc = W(" ￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿юабцдефгхийклмнопярстужвьызшэщчъЮАБЦДЕФГХИЙКЛМНОПЯРСТУЖВЬЫЗШЭЩЧЪ")
                    [c - ' '];
@@ -3859,6 +5063,7 @@ term_do_write(const char *buf, uint len)
           otherwise: ;
         }
 
+        // Some more special graphic renderings
         if (wc >= 0x2580 && wc <= 0x259F) {
           // Block Elements (U+2580-U+259F)
           // ▀▁▂▃▄▅▆▇█▉▊▋▌▍▎▏▐░▒▓▔▕▖▗▘▙▚▛▜▝▞▟
@@ -3879,6 +5084,72 @@ term_do_write(const char *buf, uint len)
         }
 #endif
 
+        // Determine width of character to be rendered
+        int width;
+        if (term.wide_indic && wc >= 0x0900 && indicwide(wc))
+          width = 2;
+        else if (term.wide_extra && wc >= 0x2000 && extrawide(wc)) {
+          width = 2;
+          // Note: this check is currently not implemented for
+          // non-BMP characters (see case if is_low_surrogate(wc) above)
+          if (win_char_width(wc, term.curs.attr.attr) < 2)
+            term.curs.attr.attr |= TATTR_EXPAND;
+        }
+        else {
+#if HAS_LOCALES
+          if (cfg.charwidth % 10)
+            width = xcwidth(wc);
+          else
+            width = wcwidth(wc);
+#ifdef support_triple_width
+          // do not handle triple-width here
+          //if (term.curs.width)
+          //  width = term.curs.width % 10;
+#endif
+# ifdef hide_isolate_marks
+          // force bidi isolate marks to be zero-width;
+          // however, this is inconsistent with locale width
+          if (wc >= 0x2066 && wc <= 0x2069)
+            width = 0;  // bidi isolate marks
+# endif
+#else
+          width = xcwidth(wc);
+#endif
+        }
+        if (width < 0 && cfg.printable_controls) {
+          if (wc >= 0x80 && wc < 0xA0)
+            width = 1;
+          else if (wc < ' ' && cfg.printable_controls > 1)
+            width = 1;
+        }
+
+        // Auto-expanded glyphs
+        if (width == 2
+            // && wcschr(W("〈〉《》「」『』【】〒〓〔〕〖〗〘〙〚〛"), wc)
+            && wc >= 0x3008 && wc <= 0x301B && (wc | 1) != 0x3013
+            && win_char_width(wc, term.curs.attr.attr) < 2
+            // ensure symmetric handling of matching brackets
+            && win_char_width(wc ^ 1, term.curs.attr.attr) < 2)
+        {
+          term.curs.attr.attr |= TATTR_EXPAND;
+        }
+
+        // Control characters
+        if (wc < 0x20 || wc == 0x7F) {
+          if (!do_ctrl(wc) && c == wc) {
+            wc = cs_btowc_glyph(c);
+            if (wc != c)
+              write_ucschar(0, wc, 1);
+            else if (cfg.printable_controls > 1)
+              goto goon;
+          }
+          term.curs.attr.attr = asav;
+          continue;
+
+          goon:;
+        }
+
+        // Finally, write it and restore cursor attribute
         write_ucschar(0, wc, width);
         term.curs.attr.attr = asav;
       } // end term_write switch (term.state) when NORMAL
@@ -3897,6 +5168,50 @@ term_do_write(const char *buf, uint len)
 
       when VT52_BG:
         do_vt52_colour(false, c);
+
+      when TEK_ESCAPE:
+        tek_esc(c);
+
+      when TEK_ADDRESS0 or TEK_ADDRESS:
+        if (c == '\a' && tek_mode == TEKMODE_GRAPH0 && term.state == TEK_ADDRESS0) {
+          tek_mode= TEKMODE_GRAPH;
+        }
+        else if (c < ' ')
+          tek_ctrl(c);
+        else if (tek_mode == TEKMODE_SPECIAL_PLOT && term.state == TEK_ADDRESS0) {
+          term.state = TEK_ADDRESS;
+          term.cmd_len = 0;
+          tek_intensity(c & 0x40, c & 0x37);
+        }
+        //else if (term.cmd_len > 5) {
+        // no length checking here, interferes with previous OSC!
+        // let term_push_cmd do it
+        //}
+        //else if (!(c & 0x60)) {
+        // no error checking here, let tek_address catch it
+        //}
+        else {
+          if (term.state == TEK_ADDRESS0) {
+            term.state = TEK_ADDRESS;
+            term.cmd_len = 0;
+          }
+
+          term_push_cmd(c);
+          if ((c & 0x60) == 0x40) {
+            tek_address(term.cmd_buf);
+            term.state = TEK_ADDRESS0;
+            if (tek_mode == TEKMODE_GRAPH0)
+              tek_mode = TEKMODE_GRAPH;
+          }
+        }
+
+      when TEK_INCREMENTAL:
+        if (c < ' ')
+          tek_ctrl(c);
+        else if (c == ' ' || c == 'P')
+          tek_pen(c == 'P');
+        else if (strchr("DEAIHJBF", c))
+          tek_step(c);
 
       when ESCAPE or CMD_ESCAPE:
         if (term.vt52_mode)
@@ -3991,10 +5306,12 @@ term_do_write(const char *buf, uint len)
           when ';':
             term.cmd_num = 0;
             term.state = CMD_STRING;
-          when '\a' or '\n' or '\r':
+          when '\a':
             term.state = NORMAL;
           when '\e':
             term.state = ESCAPE;
+          when '\n' or '\r':
+            term.state = IGNORE_STRING;
           otherwise:
             term.state = IGNORE_STRING;
         }
@@ -4013,7 +5330,7 @@ term_do_write(const char *buf, uint len)
           when '\e':
             term.state = CMD_ESCAPE;
           when '\n' or '\r':
-            term.state = NORMAL;
+            term.state = IGNORE_STRING;
           otherwise:
             term.state = IGNORE_STRING;
         }
@@ -4042,29 +5359,40 @@ term_do_write(const char *buf, uint len)
 
       when CMD_STRING:
         switch (c) {
-          when '\n' or '\r':
-            term.state = NORMAL;
           when '\a':
             do_cmd();
             term.state = NORMAL;
           when '\e':
             term.state = CMD_ESCAPE;
+          when '\n' or '\r':
+            // accept new lines in OSC strings
+            if (term.cmd_num != 1337)
+              term_push_cmd(c);
+            // else ignore new lines in base64-encoded images
           otherwise:
             term_push_cmd(c);
         }
 
       when IGNORE_STRING:
         switch (c) {
-          when '\n' or '\r' or '\a':
+          when '\a':
             term.state = NORMAL;
           when '\e':
             term.state = ESCAPE;
+          when '\n' or '\r':
+            // keep IGNORE_STRING
+            ;
         }
 
       when DCS_START:
         term.cmd_num = -1;
         term.cmd_len = 0;
         term.dcs_cmd = 0;
+        // use csi_arg vars also for DCS parameters
+        term.csi_argc = 0;
+        memset(term.csi_argv, 0, sizeof(term.csi_argv));
+        memset(term.csi_argv_defined, 0, sizeof(term.csi_argv_defined));
+
         switch (c) {
           when '@' ... '~':  /* DCS cmd final byte */
             term.dcs_cmd = c;
@@ -4073,13 +5401,17 @@ term_do_write(const char *buf, uint len)
           when '\e':
             term.state = DCS_ESCAPE;
           when '0' ... '9':  /* DCS parameter */
+            //printf("DCS start %c\n", c);
             term.state = DCS_PARAM;
           when ';':          /* DCS separator */
+            //printf("DCS sep %c\n", c);
             term.state = DCS_PARAM;
           when ':':
+            //printf("DCS sep %c\n", c);
             term.state = DCS_IGNORE;
           when '<' ... '?':
             term.dcs_cmd = c;
+            //printf("DCS sep %c\n", c);
             term.state = DCS_PARAM;
           when ' ' ... '/':  /* DCS intermediate byte */
             term.dcs_cmd = c;
@@ -4092,17 +5424,29 @@ term_do_write(const char *buf, uint len)
         switch (c) {
           when '@' ... '~':  /* DCS cmd final byte */
             term.dcs_cmd = term.dcs_cmd << 8 | c;
+            if (term.csi_argv[term.csi_argc])
+              term.csi_argc ++;
             do_dcs();
             term.state = DCS_PASSTHROUGH;
           when '\e':
             term.state = DCS_ESCAPE;
             term.esc_mod = 0;
-          when '0' ... '9' or ';' or ':':  /* DCS parameter */
-            term.state = DCS_PARAM;
+          when '0' ... '9':  /* DCS parameter */
+            //printf("DCS param %c\n", c);
+            if (term.csi_argc < 2) {
+              uint i = term.csi_argc;
+              term.csi_argv[i] = 10 * term.csi_argv[i] + c - '0';
+            }
+          when ';' or ':':  /* DCS parameter separator */
+            //printf("DCS param sep %c\n", c);
+            if (term.csi_argc + 1 < lengthof(term.csi_argv))
+              term.csi_argc ++;
           when '<' ... '?':
             term.dcs_cmd = term.dcs_cmd << 8 | c;
+            //printf("DCS param %c\n", c);
             term.state = DCS_PARAM;
           when ' ' ... '/':  /* DCS intermediate byte */
+            //printf("DCS param->inter %c\n", c);
             term.dcs_cmd = term.dcs_cmd << 8 | c;
             term.state = DCS_INTERMEDIATE;
           otherwise:
@@ -4119,6 +5463,7 @@ term_do_write(const char *buf, uint len)
             term.state = DCS_ESCAPE;
             term.esc_mod = 0;
           when '0' ... '?':  /* DCS parameter byte */
+            //printf("DCS inter->ignore %c\n", c);
             term.state = DCS_IGNORE;
           when ' ' ... '/':  /* DCS intermediate byte */
             term.dcs_cmd = term.dcs_cmd << 8 | c;
@@ -4163,7 +5508,13 @@ term_do_write(const char *buf, uint len)
           do_esc(c);
         }
     }
+
+    if (fix_status)
+      term_fix_status();
   }
+
+  if (term.ring_enabled && term.curs.y != oldy)
+    term.ring_enabled = false;
 
   if (cfg.ligatures_support > 1) {
     // refresh ligature rendering in old cursor line
@@ -4189,7 +5540,7 @@ void
 term_flush(void)
 {
   if (term.suspbuf) {
-    term_do_write(term.suspbuf, term.suspbuf_pos);
+    term_do_write(term.suspbuf, term.suspbuf_pos, true);
     free(term.suspbuf);
     term.suspbuf = 0;
     term.suspbuf_pos = 0;
@@ -4207,6 +5558,8 @@ term_write(const char *buf, uint len)
     can grow up to a configurable size.
   */
   if (term_selecting() && cfg.suspbuf_max > 0) {
+    // || term.no_scroll ? -> more reliably handled in child_proc
+
     // if buffer size would be exceeded, flush; prevent uint overflow
     if (len > cfg.suspbuf_max - term.suspbuf_pos)
       term_flush();
@@ -4225,6 +5578,6 @@ term_write(const char *buf, uint len)
     // in this case, we've either flushed already or didn't need to
   }
 
-  term_do_write(buf, len);
+  term_do_write(buf, len, true);
 }
 

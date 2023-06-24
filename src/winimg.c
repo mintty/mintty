@@ -75,7 +75,7 @@ static void
 gdiplus_init(void)
 {
   GpStatus s;
-  static GdiplusStartupInput gi = (GdiplusStartupInput){1, NULL, FALSE, FALSE};
+  static GdiplusStartupInput gi = {1, NULL, FALSE, FALSE};
   static ULONG_PTR gis = 0;
   if (!gis) {
     s = GdiplusStartup(&gis, &gi, NULL);
@@ -231,6 +231,8 @@ strage_read(temp_strage_t *strage, unsigned char *p, size_t size)
 
 
 #define dont_debug_img_list
+#define dont_debug_img_disp
+#define dont_debug_img_over
 
 static uint
 winimg_len(imglist *img)
@@ -240,32 +242,38 @@ winimg_len(imglist *img)
 
 bool
 winimg_new(imglist **ppimg, char * id, unsigned char * pixels, uint len,
-           int left, int top, int width, int height,
-           int pixelwidth, int pixelheight, bool preserveAR)
+           int left, int scrtop, int width, int height,
+           int pixelwidth, int pixelheight, bool preserveAR,
+           int crop_x, int crop_y, int crop_width, int crop_height,
+           int attr)
 {
   imglist *img = (imglist *)malloc(sizeof(imglist));
-  //printf("winimg alloc %d -> %p\n", (int)sizeof(imglist), img);
+  //printf("winimg alloc %d -> [%d]\n", (int)sizeof(imglist), img->imgi);
   if (!img)
     return false;
 #ifdef debug_img_list
-  printf("winimg_new %p->%p l %d t %d w %d h %d\n", img, pixels, left, top, width, height);
+  printf("winimg_new [%d]->%p l %d t %d w %d h %d\n", img->imgi, pixels, left, top, width, height);
 #endif
 
   static int _imgi = 0;
-  //printf("winimg_new %d @%d\n", _imgi, top);
-  img->imgi = _imgi++;
+#ifdef debug_img_disp
+  printf("winimg_new %d @%d:%d\n", _imgi, left, top);
+#endif
+  img->imgi = ++_imgi;
 
   img->pixels = pixels;
   img->hdc = NULL;
   img->hbmp = NULL;
   img->left = left;
-  img->top = top;
+  img->top = term.virtuallines + scrtop;
   img->width = width;
   img->height = height;
   img->pixelwidth = pixelwidth;
   img->pixelheight = pixelheight;
   img->next = NULL;
+  img->prev = NULL;
   img->strage = NULL;
+  img->attr = attr;
 
   img->len = len;
   if (len) {  // image format, not sixel
@@ -304,6 +312,38 @@ winimg_new(imglist **ppimg, char * id, unsigned char * pixels, uint len,
       if (s != Ok)
         return false;
 
+      // cropping pre-adjustment
+      if (crop_width > 0)
+        pw = crop_width;
+      else if (crop_width < 0) {
+        crop_width = - crop_width;
+        pw -= crop_width;
+      }
+      if (crop_height > 0)
+        ph = crop_height;
+      else if (crop_height < 0) {
+        crop_height = - crop_height;
+        ph -= crop_height;
+      }
+      if (crop_x)
+        pw -= crop_x;
+      if (crop_y)
+        ph -= crop_y;
+      if (crop_x || crop_y || crop_width || crop_height) {
+        if (!crop_width)
+          crop_width = pw - crop_x;
+        if (!crop_height)
+          crop_height = ph - crop_y;
+      }
+
+      if (pw <= 0 || ph <= 0)
+        return false;
+
+      img->crop_x = crop_x;
+      img->crop_y = crop_y;
+      img->crop_width = crop_width;
+      img->crop_height = crop_height;
+
       /*
 	case	given			effective
 		w=	h=	pAR=	width	height
@@ -340,6 +380,7 @@ winimg_new(imglist **ppimg, char * id, unsigned char * pixels, uint len,
     }
 #else
     (void)preserveAR;
+    (void)crop_x, (void)crop_y, (void)crop_width, (void)crop_height;
 #endif
   }
   else
@@ -392,14 +433,14 @@ winimg_lazyinit(imglist *img)
       uint size = winimg_len(img);
       if (img->pixels) {
         CopyMemory(pixels, img->pixels, size);
-        //printf("winimg_lazyinit free pixels %p->%p\n", img, img->pixels);
+        //printf("winimg_lazyinit free pixels [%d]->%p\n", img->imgi, img->pixels);
         free(img->pixels);
       } else {
         // resume from hibernation
         assert(img->strage);
         strage_read(img->strage, pixels, size);
       }
-      //printf("winimg_lazyinit img->pixels = pixels %p->%p\n", img, pixels);
+      //printf("winimg_lazyinit img->pixels = pixels [%d]->%p\n", img->imgi, pixels);
       img->pixels = pixels;
     }
   }
@@ -419,7 +460,7 @@ winimg_hibernate(imglist *img)
     return;
 
   temp_strage_t *strage = strage_create();
-  //printf("winimg_hibernate %p->%p to %p\n", img, img->pixels, strage);
+  //printf("winimg_hibernate [%d]->%p to %p\n", img->imgi, img->pixels, strage);
   if (!strage)
     return;
 
@@ -511,16 +552,13 @@ draw_img(HDC dc, imglist * img)
       gpcheck("load stream", s);
     }
 
-    // cropping not yet supported
-    int crop_left = 0, crop_top = 0, crop_width = 0, crop_height = 0;
-
     // position
     int left = img->left * cell_width;
     int top = (img->top - term.virtuallines - term.disptop) * cell_height;
     int width = img->pixelwidth;
     int height = img->pixelheight;
     left += PADDING;
-    top += PADDING;
+    top += OFFSET + PADDING;
 
     int coord_transformed = 0;
     XFORM old_xform;
@@ -567,14 +605,17 @@ draw_img(HDC dc, imglist * img)
     gpcheck("brush delete", s);
 #endif
 
-    // can we fill transparent background with this mechanism somehow?
-    //GpImageAttributes * iattr;
+    GpImageAttributes * iattr = 0;
     //GdipCreateImageAttributes(&iattr);
-    if (crop_left || crop_top || crop_width || crop_height)
+#ifdef debug_cropping
+    printf("draw %3d %3d %3d %3d crop %3d %3d %3d %3d\n", left, top, width, height, img->crop_x, img->crop_y, img->crop_width, img->crop_height);
+#endif
+    if (img->crop_x || img->crop_y || img->crop_width || img->crop_height)
       s = GdipDrawImageRectRectI(gr, gimg,
                                  left, top, width, height,
-                                 crop_left, crop_top, crop_width, crop_height,
-                                 UnitPixel, (GpImageAttributes *)0, 0, 0);
+                                 img->crop_x, img->crop_y,
+                                 img->crop_width, img->crop_height,
+                                 UnitPixel, iattr, 0, 0);
     else
       s = GdipDrawImageRectI(gr, gimg, left, top, width, height);
     gpcheck("draw", s);
@@ -606,27 +647,56 @@ winimgs_paint(void)
   while (tempfile_num > TEMPFILE_MAX_NUM && term.imgs.first) {
     img = term.imgs.first;
     term.imgs.first = term.imgs.first->next;
+    term.imgs.first->prev = NULL;
     winimg_destroy(img);
   }
 
   HDC dc = GetDC(wnd);
 
+  // clip off padding area, avoiding image artefacts when scrolling
   RECT rc;
   GetClientRect(wnd, &rc);
-  IntersectClipRect(dc, rc.left + PADDING, rc.top + PADDING,
+  IntersectClipRect(dc, rc.left + PADDING, rc.top + OFFSET + PADDING,
                     rc.left + PADDING + term.cols * cell_width,
-                    rc.top + PADDING + term.rows * cell_height);
+                    rc.top + OFFSET + PADDING + term.rows * cell_height);
 
-  imglist * prev = 0;
-  for (img = term.imgs.first; img;) {
+  // prepare detection of overwritten images for garbage collection
+  bool drawn[term.rows * term.cols];
+  memset(drawn, 0, sizeof drawn);
+
+  // tame the flickering by backward traversal together with global clipping
+  bool backward_img_traversal = true;
+  img = backward_img_traversal ? term.imgs.last : term.imgs.first;
+  imglist * next;
+#ifdef debug_img_over
+  printf("--------------- imglist loop\n");
+#endif
+  for (; img; img = next) {
+    next = backward_img_traversal ? img->prev : img->next;
+
+    // blink attribute
+    if (term.blink_is_real && term.has_focus) {
+      if (img->attr & ATTR_BLINK2) {
+        if (term.tblinker2)
+          continue;
+      }
+      else if (img->attr & ATTR_BLINK) {
+        if (term.tblinker)
+          continue;
+      }
+    }
+
     imglist * destrimg = 0;
 
     if (img->top + img->height - term.virtuallines < - term.sblines) {
       // if the image is out of scrollback, collect it
+      destrimg = img;
 #ifdef debug_img_list
       printf("paint: destroy @%d h %d virt %lld sb %d\n", img->top, img->height, term.virtuallines, term.sblines);
 #endif
-      destrimg = img;
+#ifdef debug_img_over
+      printf("@%d:%d destroy out [%d]\n", img->top - term.virtuallines - term.disptop, img->left, img->imgi);
+#endif
     } else {
       int left = img->left;
       int top = img->top - term.virtuallines - term.disptop;
@@ -634,14 +704,17 @@ winimgs_paint(void)
         // if the image is scrolled out, serialize it into a temp file
 #ifdef debug_img_list
         if (img->hdc)
-          printf("paint: hibernate img %p v@%d s@%d\n", img, img->top, top);
+          printf("paint: hibernate img [%d] v@%d s@%d\n", img->imgi, img->top, top);
 #endif
         winimg_hibernate(img);
+#ifdef debug_img_over
+        printf("@%d:%d hiber [%d]\n", top, left, img->imgi);
+#endif
       } else {
 #ifdef debug_img_list
-        printf("paint: check img %p v@%d s@%d\n", img, img->top, top);
+        printf("paint: check img [%d] v@%d s@%d\n", img->imgi, img->top, top);
 #endif
-        // create DC handle if it is not initialized, or resume from hibernate
+        // create img DC handle if not initialized, or resume from hibernate
         winimg_lazyinit(img);
 
         // check all cells of image area;
@@ -657,16 +730,22 @@ winimgs_paint(void)
             // if sixel image is overwritten by characters,
             // exclude the area from the clipping rect.
             bool clip_flag = false;
-            if (dchar->chr != SIXELCH)
+            if (dchar->chr != SIXELCH) {
               clip_flag = true;
-            else if (img->imgi - dchar->attr.imgi >= 0)
-              // need to keep newer image, as sync may take a while
+              drawn[y * term.cols + x] = true;
+            }
+            else if (!drawn[y * term.cols + x]) {
               disp_flag = true;
-            // if cell is overlaid by selection or cursor, exclude
+              drawn[y * term.cols + x] = true;
+#ifdef debug_img_disp
+              printf("paint: dirty (%d) %d:%d %d >= %d\n", disp_flag, y, x, img->imgi, dchar->attr.imgi);
+#endif
+            }
+            // if cell is overlaid by selection or cursor, exclude it.
             if (dchar->attr.attr & (TATTR_RESULT | TATTR_CURRESULT | TATTR_MARKED | TATTR_CURMARKED))
               clip_flag = true;
             if (term.selected && !clip_flag) {
-              pos scrpos = {y + term.disptop, x, false};
+              pos scrpos = {y + term.disptop, x, 0, 0, false};
               clip_flag = term.sel_rect
                   ? posPle(term.sel_start, scrpos) && posPlt(scrpos, term.sel_end)
                   : posle(term.sel_start, scrpos) && poslt(scrpos, term.sel_end);
@@ -674,23 +753,40 @@ winimgs_paint(void)
             if (clip_flag)
               ExcludeClipRect(dc,
                               x * wide_factor * cell_width + PADDING,
-                              y * cell_height + PADDING,
+                              y * cell_height + OFFSET + PADDING,
                               (x + 1) * wide_factor * cell_width + PADDING,
-                              (y + 1) * cell_height + PADDING);
+                              (y + 1) * cell_height + OFFSET + PADDING);
           }
         }
+#ifdef debug_img_over
+        printf("@%d:%d disp [%sm%d[m [%d]\n", top, left, disp_flag ? "" : "41", disp_flag, img->imgi);
+#endif
+
+#ifdef scale_graphics_in_double_width_lines
+#warning no working implementation yet; not done in xterm either
+        termline * line = fetch_line(top);
+        ushort lattr = line->lattr;
+        release_line(line);
+        if ((lattr & LATTR_MODE) != LATTR_NORM) {
+          // fix position in double-width line:
+          // adjust below: left, xlft, ...width, xrgt, iwidth, iheight
+        }
+#endif
 
         // fill image area background (in case it's smaller or transparent)
         // calculate area for padding
-        int ytop = max(0, top) * cell_height + PADDING;
-        int ybot = min(top + img->height, term.rows) * cell_height + PADDING;
+        int ytop = max(0, top) * cell_height + OFFSET + PADDING;
+        int ybot = min(top + img->height, term.rows) * cell_height + OFFSET + PADDING;
         int xlft = left * cell_width + PADDING;
         int xrgt = min(left + img->width, term.cols) * cell_width + PADDING;
         if (img->len) {
           // better background handling implemented below; this version 
           // would expose artefacts if a transparent image is scrolled
         }
-        else {
+        else if (disp_flag) {
+#ifdef debug_img_disp
+          printf("paint: clear background\n");
+#endif
           // determine image size for padding
           int iwidth;
           int iheight;
@@ -704,7 +800,7 @@ winimgs_paint(void)
             iwidth = img->cwidth * cell_width * img->width / img->pixelwidth;
             iheight = img->cheight * cell_height * img->height / img->pixelheight;
           }
-          int ibot = max(0, top * cell_height + iheight) + PADDING;
+          int ibot = max(0, top * cell_height + iheight) + OFFSET + PADDING;
           // fill either background image or colour
           if (*cfg.background) {
             fill_background(dc, &(RECT){xlft + iwidth, ytop, xrgt, ibot});
@@ -744,19 +840,32 @@ winimgs_paint(void)
               //bg = RGB(90, 150, 222);  // test background filling
               HBRUSH br = CreateSolidBrush(bg);
               FillRect(hdc, &(RECT){0, 0, xrgt, ybot}, br);
+              DeleteObject(br);
             }
             draw_img(hdc, img);
             BitBlt(dc, xlft, ytop, xrgt - xlft, ybot - ytop,
                        hdc, xlft, ytop, SRCCOPY);
             DeleteObject(hbm);
             DeleteDC(hdc);
+            ExcludeClipRect(dc, xlft, ytop, xrgt, ybot);
           }
-          else
+          else {
             StretchBlt(dc,
-                       left * cell_width + PADDING, top * cell_height + PADDING,
+                       left * cell_width + PADDING, top * cell_height + OFFSET + PADDING,
                        img->width * cell_width, img->height * cell_height,
                        img->hdc,
                        0, 0, img->pixelwidth, img->pixelheight, SRCCOPY);
+            ExcludeClipRect(dc,
+                       left * cell_width + PADDING, top * cell_height + OFFSET + PADDING,
+                       left * cell_width + PADDING + img->width * cell_width,
+                       top * cell_height + OFFSET + PADDING + img->height * cell_height
+                       );
+          }
+          if (!backward_img_traversal) {
+            // restore clipping region
+            ReleaseDC(wnd, dc);
+            dc = GetDC(wnd);
+          }
         }
         else if (top < 0 || top + img->height > term.rows) {
           // we did not check the scrolled-out image part, 
@@ -764,29 +873,29 @@ winimgs_paint(void)
         }
         else {
           //destroy and remove
+          destrimg = img;
 #ifdef debug_img_list
           printf("paint: destroy @%d h %d virt %lld sb %d\n", img->top, img->height, term.virtuallines, term.sblines);
 #endif
-          destrimg = img;
+#ifdef debug_img_over
+          printf("@%d:%d destroy over [%d]\n", top, left, img->imgi);
+#endif
         }
       }
     }
 
     // proceed to next image in list; destroy current if requested
     if (destrimg) {
-      if (img == term.imgs.first)
+      if (img->next)
+        img->next->prev = img->prev;
+      else
+        term.imgs.last = img->prev;
+      if (img->prev)
+        img->prev->next = img->next;
+      else
         term.imgs.first = img->next;
-      if (prev)
-        prev->next = img->next;
-      if (img == term.imgs.last)
-        term.imgs.last = prev;
 
-      img = img->next;
       winimg_destroy(destrimg);
-    }
-    else {
-      prev = img;
-      img = img->next;
     }
   }
 
@@ -800,7 +909,7 @@ winimgs_paint(void)
 #include "charset.h"  // path_win_w_to_posix
 
 void
-win_emoji_show(int x, int y, wchar * efn, void * * bufpoi, int * buflen, int elen, ushort lattr)
+win_emoji_show(int x, int y, wchar * efn, void * * bufpoi, int * buflen, int elen, ushort lattr, bool italic)
 {
   gdiplus_init();
 
@@ -853,15 +962,19 @@ win_emoji_show(int x, int y, wchar * efn, void * * bufpoi, int * buflen, int ele
   }
 
   int col = PADDING + x * cell_width;
-  int row = PADDING + y * cell_height;
+  int row = OFFSET + PADDING + y * cell_height;
   if ((lattr & LATTR_MODE) >= LATTR_BOT)
     row -= cell_height;
   int w = elen * cell_width;
-  if ((lattr & LATTR_MODE) != LATTR_NORM)
+  if ((lattr & LATTR_MODE) != LATTR_NORM) {
     w *= 2;
+    // fix position in double-width line
+    col += x * cell_width;
+  }
   int h = cell_height;
   if ((lattr & LATTR_MODE) >= LATTR_TOP)
     h *= 2;
+  // glitch: missing clipping for inconsistent double-height lines
 
   if (cfg.emoji_placement) {
     uint iw, ih;
@@ -893,6 +1006,26 @@ win_emoji_show(int x, int y, wchar * efn, void * * bufpoi, int * buflen, int ele
   }
 
   HDC dc = GetDC(wnd);
+
+  int coord_transformed = 0;
+  XFORM old_xform;
+  coord_transformed = italic && SetGraphicsMode(dc, GM_ADVANCED);
+  if (coord_transformed && GetWorldTransform(dc, &old_xform)) {
+    //XFORM xform = (XFORM){1.0, 0.0, 1.1, 1.0, -1.1, 0.0};
+    /* {eM11, eM12, eM21, eM22, eDx, eDy}
+       y' = x * eM12 + y * eM22 + eDy
+       x' = x * eM11 + y * eM21 + eDx
+       x' = x + ( (r+h-1-y) / h) * w/4 - bottom-line_x-undent(w/8)
+     */
+    XFORM xform = (XFORM){1.0, 0.0, 0.0, 1.0, 0.0, 0.0};
+    xform.eM21 = ((float)cell_width) * -0.25 / ((float)cell_height);
+    //xform.eDx = ((float)cell_width) * 0.25 * ((float)(row - 1) / ((float)cell_height) + 1.0)
+    //          - ((float)cell_width) * 0.125;
+    xform.eDx = ((float)cell_width) * 
+             (0.25 * ((float)(row - 1) / ((float)cell_height) + 1.0) - 0.125);
+    coord_transformed = SetWorldTransform(dc, &xform);
+  }
+
   GpGraphics * gr;
   s = GdipCreateFromHDC(dc, &gr);
   gpcheck("hdc", s);
@@ -907,6 +1040,9 @@ win_emoji_show(int x, int y, wchar * efn, void * * bufpoi, int * buflen, int ele
   s = GdipDisposeImage(img);
   gpcheck("dispose img", s);
 
+  if (coord_transformed)
+    SetWorldTransform(dc, &old_xform);
+
   ReleaseDC(wnd, dc);
 
   if (fs) {
@@ -915,14 +1051,63 @@ win_emoji_show(int x, int y, wchar * efn, void * * bufpoi, int * buflen, int ele
   }
 }
 
+void
+save_img(HDC dc, int x, int y, int w, int h, wstring fn)
+{
+  gdiplus_init();
+  GpStatus s;
+
+  if (!w || !h) {
+    // determine size
+    BITMAP bitmap;
+    HGDIOBJ hbitmap = GetCurrentObject(dc, OBJ_BITMAP);
+    GetObject(hbitmap, sizeof(BITMAP), &bitmap);
+    //printf("%d %d\n", bitmap.bmHeight, bitmap.bmWidth);
+    if (!w)
+      w = bitmap.bmWidth - x;
+    if (!h)
+      h = bitmap.bmHeight - y;
+  }
+
+  // provide paintable bitmap of matching size
+  HBITMAP copbm = CreateCompatibleBitmap(dc, w, h);
+  HDC copdc = CreateCompatibleDC(dc);
+
+  // copy contents into GDI+ bitmap
+  (void)SelectObject(copdc, copbm);
+  BitBlt(copdc, 0, 0, w, h, dc, x, y, SRCCOPY);
+  GpImage* gimg;
+  s = GdipCreateBitmapFromHBITMAP(copbm, 0, &gimg);
+  gpcheck("create", s);
+  DeleteDC(copdc);
+  DeleteObject(copbm);
+
+  // save as png
+  CLSID png;
+  CLSIDFromString(W("{557CF406-1A04-11D3-9A73-0000F81EF32E}"), &png);
+  s = GdipSaveImageToFile(gimg, fn, &png, 0);
+  gpcheck("save", s);
+
+  s = GdipDisposeImage(gimg);
+  gpcheck("dispose image", s);
+}
+
 #else
 
 void
-win_emoji_show(int x, int y, wchar * efn, void * * bufpoi, int * buflen, int elen, ushort lattr)
+win_emoji_show(int x, int y, wchar * efn, void * * bufpoi, int * buflen, int elen, ushort lattr, bool italic)
 {
   (void)x; (void)y;
   (void)efn; (void)bufpoi; (void)buflen;
-  (void)elen; (void)lattr;
+  (void)elen; (void)lattr; (void)italic;
+}
+
+void
+save_img(HDC dc, int x, int y, int w, int h, wstring fn)
+{
+  (void)dc;
+  (void)x; (void)y; (void)w; (void)h;
+  (void)fn;
 }
 
 #endif

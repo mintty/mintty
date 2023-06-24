@@ -7,7 +7,7 @@
  * ------------
  * Description:
  * ------------
- * This is an implemention of Unicode's Bidirectional Algorithm
+ * This is an implementation of Unicode's Bidirectional Algorithm
  * (known as UAX #9).
  *
  *   http://www.unicode.org/reports/tr9/
@@ -597,9 +597,12 @@ do_bidi(bool autodir, int paragraphLevel, bool explicitRTL, bool box_mirror,
   if (!hasRTL && !paragraphLevel)
     return 0;
 
+
  /* Initialize types, levels */
   uchar types[count];
   uchar levels[count];
+  // workaround for gcc 11 warning anomaly
+  types[0] = 0;
 
 #define dont_debug_bidi
 

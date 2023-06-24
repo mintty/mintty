@@ -49,7 +49,17 @@ See [section Modifier key encodings](Keycodes#modifier-key-encodings) below.
 
 ## AltGr ##
 
-The right Alt key, which is labelled [AltGr](http://en.wikipedia.org/wiki/AltGr_key) on most non-US keyboards, allows to type additional characters on many keyboard layouts. When the keyboard layout does not have a keycode for an AltGr combination, the AltGr key is treated as Alt instead. The _Ctrl+LeftAlt is AltGr_ setting allows combinations of either Ctrl key with the left Alt key to also be treated as AltGr.
+The right Alt key, which is labelled [AltGr](http://en.wikipedia.org/wiki/AltGr_key) on most non-US keyboards, 
+allows to type additional characters on many keyboard layouts. 
+When the keyboard layout does not have a keycode for an AltGr combination, 
+the AltGr key is treated as Alt instead.
+
+The `CtrlAltIsAltGr` setting (_Ctrl+LeftAlt is AltGr_ in the Options dialog) 
+allows combinations of either Ctrl key with the left Alt key to also be treated as AltGr.
+
+The `AltGrIsAlsoAlt` setting enables fallback of the AltGr key to the 
+function of the Alt modifier for those keys that do not have an AltGr 
+mapping in the keyboard layout.
 
 
 ## Ctrl ##
@@ -62,38 +72,56 @@ If Shift is held in addition to a control character combination, the correspondi
 
 The C1 control characters are shown as Unicode codepoints in the table below. How exactly C1 control characters are sent depends on the selected character encoding. In [ISO-8859](http://en.wikipedia.org/wiki/ISO/IEC_8859) encodings, they are encoded as single bytes, e.g. `\x81` for _U+0081_. With [UTF-8](http://en.wikipedia.org/wiki/UTF-8), they are encoded as two-byte sequences, which effectively means that the character code is prefixed with a `\xC2` byte, so for example _U+0081_ becomes `\xC2\x81`. C1 codepoints that are not supported by the selected character encoding are sent by prefixing the corresponding ASCII control character with an _ESC_ character, so _U+0081_ would be sent as `^[^A`.
 
-The Ctrl+Shift combinations are overridden by the CtrlShiftShortcuts setting (Ctrl+Shift+letter shortcuts in Options menu, Keys section).
+The Ctrl+Shift combinations are overridden by the `CtrlShiftShortcuts` setting (Ctrl+Shift+letter shortcuts in Options menu, Keys section).
 
-| **Char** | **Ctrl** | **Ctrl+Shift** |
-|:---------|:---------|:---------------|
-| **@**    | `^@`     | _U+0080_       |
-| **a**    | `^A`     | _U+0081_       |
-| **b**    | `^B`     | _U+0082_       |
+Note that Ctrl+Shift+letter assignments can also be redefined with option `KeyFunctions`.
+
+| **Char** | **Ctrl** | **Ctrl+Shift[+Shift]** |
+|:---------|:---------|:-----------------------|
+| **@**    | `^@`     | _U+0080_               |
+| **a**    | `^A`     | _U+0081_               |
+| **b**    | `^B`     | _U+0082_               |
 | ...      |
-| **y**    | `^Y`     | _U+0099_       |
-| **z**    | `^Z`     | _U+009A_       |
-| **[**    | `^[`     | _U+009B_       |
-| **\**    | `^\`     | _U+009C_       |
-| **]**    | `^]`     | _U+009D_       |
-| **^**    | `^^`     | _U+009E_       |
-| **`_`**  | `^_`     | _U+009F_       |
-| **/**    | `^_`     | _U+009F_       |
-| **?**    | `^?`     |                |
+| **y**    | `^Y`     | _U+0099_               |
+| **z**    | `^Z`     | _U+009A_               |
+| **[**    | `^[`     | _U+009B_               |
+| **\\**   | `^\`     | _U+009C_               |
+| **]**    | `^]`     | _U+009D_               |
+| **^**    | `^^`     | _U+009E_               |
+| **\_**   | `^_`     | _U+009F_               |
+| **/**    | `^_`     | _U+009F_               |
+| **?**    | `^?`     |                        |
 
 
 ## Special keys ##
 
 The keys here send the usual control characters, but there are a few mintty-specific additions that make combinations with modifier keys available as separate keycodes.
 
-| **Key**    | **plain** | **Shift**  | **Ctrl**    | **Ctrl+Shift** |
-|:-----------|:----------|:-----------|:------------|:---------------|
-| **Tab**    | `^I`      | `^[[Z`     | `^[[1;5I`   | `^[[1;6I`      |
-| **Space**  | _SP_      | _SP_       | `^@`        | _U+0080_       |
-| **Enter**  | `^M`      | `^J`       | `^^`        | _U+009E_       |
-| **Back**   | `^?`      | `^?`       | `^_`        | _U+009F_       |
-| **Escape** | `^[`      | _U+009B_   |
-| **Break**  | `^\`      | _U+009C_   |
-| **Pause**  | `^]`      | _U+009D_   |
+The Ctrl+Tab assignments are overridden by the `SwitchShortcuts` setting (Switch window in Options menu, Keys section).
+
+The former Ctrl assignments for the Enter key are dropped with mintty 3.2.1.
+
+The special assignments for Escape, Break and Pause are deprecated.
+
+Note that key assignments can also be redefined with option `KeyFunctions`.
+
+| **Key**        | **plain** | **Shift** | **Ctrl** | **Ctrl+Shift** |
+|:---------------|:----------|:----------|:---------|:---------------|
+| **Tab**        | `^I`      | `^[[Z`    | `^[[1;5I`| `^[[1;6I`      |
+| **Space**      | _SP_      | _SP_      | `^@`     | _U+0080_       |
+| **Back** (*)   | `^?`      | `^?`      | `^H`     | `^H`           |
+| **Enter**      | `^M`      | `^J`      |
+| **Escape**     | `^[`      | _U+009B_  |
+| **Break**      | `^\`      | _U+009C_  |
+| **Pause**      | `^]`      | _U+009D_  |
+| **Back** (**)  |           |           | `^_`     |
+| **Enter** (**) |           |           | `^^`     |
+
+(*) Note: With setting BackspaceSendsBS=yes, `^?` and `^H` mappings are reversed.
+
+(**) Note: To restore special key assignments of previous mintty versions, use either of these settings:
+  * `OldModifyKeys=33`
+  * `KeyFunctions=C+Back:^_;C+Enter:^^`
 
 [Pause and Break](http://en.wikipedia.org/wiki/Pause_key) usually share a key, whereby Ctrl has to be pressed to get the Break function.
 
@@ -123,7 +151,7 @@ add the numbers for each pressed modifier to 1:
 
 For example, Shift+Ctrl would be encoded as the number 6 (1 plus 1 for Shift plus 4 for Ctrl). Modifiers are not double-counted if, for example, both Shift keys are pressed. In the following sections, modifier codes are shown as _m_.
 
-Super and Hyper modifiers can be configured with option _KeyFunctions_, e.g.:
+Super and Hyper modifiers can be configured with option `KeyFunctions`, e.g.:
   * `KeyFunctions=*CapsLock:super`
 
 
@@ -131,21 +159,21 @@ Super and Hyper modifiers can be configured with option _KeyFunctions_, e.g.:
 
 Number and symbol key combinations that are not handled either by the Windows keyboard layout or by the Ctrl key processing described above, are assigned the keycodes shown here.
 
-| **Key** | **modified**    | ** appl keypad modified** |
-|:--------|:----------------|:--------------------------|
-| **/**   | `^[[1;`_m_`o`   | `^[O`_m_`o`               |
-| **`*`** | `^[[1;`_m_`j`   | `^[O`_m_`j`               |
-| **-**   | `^[[1;`_m_`m`   | `^[O`_m_`m`               |
-| **+**   | `^[[1;`_m_`k`   | `^[O`_m_`k`               |
-| **Enter** |               | `^[O`_m_`M`               |
+| **Key** | **modified**    | **appl keypad modified**       |
+|:--------|:----------------|:-------------------------------|
+| **/**   | `^[[1;`_m_`o`   | `^[O`_m_`o`                    |
+| **`*`** | `^[[1;`_m_`j`   | `^[O`_m_`j`                    |
+| **-**   | `^[[1;`_m_`m`   | `^[O`_m_`m`                    |
+| **+**   | `^[[1;`_m_`k`   | `^[O`_m_`k`                    |
+| **Enter** |               | `^[O`_m_`M`                    |
 | **,**   | `^[[1;`_m_`l`   |
-|         |                 | ** VT220 appl keypad modified** |
-| **.**   | `^[[1;`_m_`n`   | `^[O`_m_`n`               |
-| **0**   | `^[[1;`_m_`p`   | `^[O`_m_`p`               |
-| **1**   | `^[[1;`_m_`q`   | `^[O`_m_`q`               |
+|         |                 | **VT220 appl keypad modified** |
+| **.**   | `^[[1;`_m_`n`   | `^[O`_m_`n`                    |
+| **0**   | `^[[1;`_m_`p`   | `^[O`_m_`p`                    |
+| **1**   | `^[[1;`_m_`q`   | `^[O`_m_`q`                    |
 | ...     |
-| **8**   | `^[[1;`_m_`x`   | `^[O`_m_`x`               |
-| **9**   | `^[[1;`_m_`y`   | `^[O`_m_`y`               |
+| **8**   | `^[[1;`_m_`x`   | `^[O`_m_`x`                    |
+| **9**   | `^[[1;`_m_`y`   | `^[O`_m_`y`                    |
 
 (These are VT220 application keypad codes with added modifier.)
 
@@ -227,6 +255,34 @@ the modifiers like for other function keys.
 | **Scroll Here** | `^[[`_pos_`#d`  | _pos_ between 1 and virtual size |
 | **Top**         | `^[[0#d`        |                                  |
 | **Bottom**      | `^[[`_size_`#d` | configured virtual _size_        |
+
+See the screenshots for an illustration of the meaning of _pos_ vs _size_ values.
+
+<img align=left src=https://github.com/mintty/mintty/wiki/application-scrollbar-middle.png>
+
+The position of the _viewport_ (the marked area of the scrollbar) is 
+measured at its top. So when setting up position 50 in size 100 (`^[[50;100;20#t`),
+the viewport is not centered but begins in the middle of the scrollbar.
+<br clear=all>
+
+<img align=left src=https://github.com/mintty/mintty/wiki/application-scrollbar-bottom.png>
+
+Also, when the viewport is dragged to the bottom, it ends at the total size 
+but the reported position is its beginning (81 in the example, mouse button 
+still held). So the maximum position reported after pulling or dragging the 
+viewport is _size_ − _height_ + 1, but the position reported when placing it 
+directly to the bottom (from the scrollbar menu) will yet be full _size_.
+(Likewise the minimum position reported when dragging is 1 but the position 
+reported for placing to the top is 0.)
+<br clear=all>
+
+Note also that after dragging and releasing the mouse button, the viewport 
+position flips back to its previous place until the application interprets 
+the report and sets the position. (This is to prevent looping interference 
+with updated positions triggering additional system events.)
+
+For the sequences to set up application scrollbar mode and change its parameters see 
+[Control Sequences – Application scrollbar](https://github.com/mintty/mintty/wiki/CtrlSeqs#application-scrollbar).
 
 
 ## Mousewheel ##
