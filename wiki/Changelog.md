@@ -14,6 +14,10 @@ Configuration
   * New option setting ComposeKey=capslock (#1211).
   * New option ConfirmReset to guard confirm dialog on interactive reset (#1173).
 
+### 3.6.X (XX Xxx 20XX) ###
+
+  * New option setting in Keys page: \<Escape>, \<Enter> key restore alphabet input keyboard.
+
 ### 3.6.4 (25 Mar 2023) ###
 
 Terminal features

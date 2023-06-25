@@ -102,6 +102,7 @@ const config default_cfg = {
   .ctrl_alt_is_altgr = false,
   .altgr_is_alt = false,
   .ctrl_alt_delay_altgr = 0,
+  .key_alpha_mode = true,
   .old_altgr_detection = false,
   .old_modify_keys = 0,
   .format_other_keys = 1,
@@ -414,6 +415,7 @@ options[] = {
   {"CtrlAltIsAltGr", OPT_BOOL, offcfg(ctrl_alt_is_altgr)},
   {"AltGrIsAlsoAlt", OPT_BOOL, offcfg(altgr_is_alt)},
   {"CtrlAltDelayAltGr", OPT_INT, offcfg(ctrl_alt_delay_altgr)},
+  {"KeyAlphaMode", OPT_BOOL, offcfg(key_alpha_mode)},
   {"OldAltGrDetection", OPT_BOOL, offcfg(old_altgr_detection)},
   {"OldModifyKeys", OPT_INT, offcfg(old_modify_keys)},
   {"FormatOtherKeys", OPT_INT, offcfg(format_other_keys)},
@@ -3979,6 +3981,11 @@ setup_config_box(controlbox * b)
     //__ Options - Keys:
     s, _("AltGr is also Alt"),
     dlg_stdcheckbox_handler, &new_cfg.altgr_is_alt
+  );
+  ctrl_checkbox(
+    //__ Options - Keys:
+    s, _("&Esc/Enter restore alphabet kbd"),
+    dlg_stdcheckbox_handler, &new_cfg.key_alpha_mode
   );
 
   s = ctrl_new_set(b, _("Keys"), null, 
