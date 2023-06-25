@@ -536,14 +536,14 @@ sync_level(void)
 static bool
 manage_tab_hiding(void)
 {
-  /* The mechanism of hiding non-foreground tabs in order to support 
-     transparency for tabbed windows is disabled because it does not 
-     work properly and causes inconsistent and buggy behaviour in various 
-     window management situations, e.g. switching the tab on maximising 
+  /* Trigger the mechanism of hiding non-foreground tabs in order to support
+     transparency for tabbed windows.
+     It was previously disabled because it did not work properly 
+     and caused inconsistent and buggy behaviour in various
+     window management situations, e.g. switching the tab on maximising
      or even looping tab switching when restoring from fullscreen.
    */
-  return false;
-  //return sync_level() > 1;
+  return sync_level() > 1;
 }
 
 /*
@@ -1971,12 +1971,45 @@ win_dark_mode(HWND w)
   }
 }
 
+
+#define dont_debug_win_status
+
+#ifdef debug_win_status
+
+static void
+show_win_status(char * tag, HWND wnd)
+{
+  WINDOWPLACEMENT pl;
+  pl.length = sizeof(WINDOWPLACEMENT);
+  GetWindowPlacement(wnd, &pl);
+  RECT fr = pl.rcNormalPosition;
+  LONG style = GetWindowLong(wnd, GWL_STYLE);
+  printf("%s[%d:%p] show %d y %d..%d x %d..%d max %d zoom %d\n", 
+         tag, getpid(), wnd, 
+         pl.showCmd, 
+         fr.top, fr.bottom, fr.left, fr.right,
+         style & WS_MAXIMIZE,
+         IsZoomed(wnd)
+        );
+  bool layered = GetWindowLong(wnd, GWL_EXSTYLE) & WS_EX_LAYERED;
+  BYTE b;
+  GetLayeredWindowAttributes(wnd, 0, &b, 0);
+  bool hidden = layered && !b;
+  bool tooled = GetWindowLong(wnd, GWL_EXSTYLE) & WS_EX_TOOLWINDOW;
+  printf("%s[%d:%p] tooled %d layered %d attr %d hidden %d\n", tag, getpid(), wnd, tooled, layered, b, hidden);
+}
+
+#else
+#define show_win_status(tag, wnd)	
+#endif
+
 /*
  * Go full-screen. This should only be called when we are already maximised.
  */
 static void
 make_fullscreen(void)
 {
+  show_win_status("make_full", wnd);
   win_is_fullscreen = true;
 
  /* Remove the window furniture. */
@@ -2003,6 +2036,7 @@ make_fullscreen(void)
 static void
 clear_fullscreen(void)
 {
+  show_win_status("clear_full", wnd);
   win_is_fullscreen = false;
   win_update_glass(cfg.opaque_when_focused);
 
@@ -2844,33 +2878,6 @@ win_fix_taskbar_max(int show_cmd)
   return show_cmd;
 }
 
-#ifdef debug_win_status
-
-static void
-show_win_status(char * tag, HWND wnd)
-{
-  WINDOWPLACEMENT pl;
-  pl.length = sizeof(WINDOWPLACEMENT);
-  GetWindowPlacement(wnd, &pl);
-  RECT fr = pl.rcNormalPosition;
-  LONG style = GetWindowLong(wnd, GWL_STYLE);
-  printf("%s[%d:%p] show %d y %d..%d x %d..%d max %d zoom %d\n", 
-         tag, getpid(), wnd, 
-         pl.showCmd, 
-         fr.top, fr.bottom, fr.left, fr.right,
-         style & WS_MAXIMIZE,
-         IsZoomed(wnd)
-        );
-  bool layered = GetWindowLong(wnd, GWL_EXSTYLE) & WS_EX_LAYERED;
-  BYTE b;
-  GetLayeredWindowAttributes(wnd, 0, &b, 0);
-  bool hidden = layered && !b;
-  bool tooled = GetWindowLong(wnd, GWL_EXSTYLE) & WS_EX_TOOLWINDOW;
-  printf("%s[%d:%p] tooled %d layered %d attr %d hidden %d\n", tag, getpid(), wnd, tooled, layered, b, hidden);
-}
-
-#endif
-
 /*
  * Maximise or restore the window in response to a server-side request.
  * Argument value of 2 means go fullscreen.
@@ -2879,9 +2886,20 @@ void
 win_maximise(int max)
 {
   //printf("win_max %d is_full %d IsZoomed %d\n", max, win_is_fullscreen, IsZoomed(wnd));
+  show_win_status("win_max", wnd);
 
   if (max == -2) // toggle full screen
     max = win_is_fullscreen ? 0 : 2;
+
+  /* for some weird reason, changes to avoid ShowWindow in commit 113286
+     make initial interactive fullscreen or win-max toggle fail;
+     mysteriously, requesting the WindowPlacement apparently fixes this
+   */
+  if (max) {
+    WINDOWPLACEMENT pl;
+    pl.length = sizeof(WINDOWPLACEMENT);
+    GetWindowPlacement(wnd, &pl);
+  }
 
   /* avoid ShowWindow (or SetWindowPlacement) esp. with SW_MAXIMIZE
      so we can prevent the window from also being activated
