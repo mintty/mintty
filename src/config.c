@@ -3984,7 +3984,7 @@ setup_config_box(controlbox * b)
   );
   ctrl_checkbox(
     //__ Options - Keys:
-    s, _("&Esc/Enter restore alphabet kbd"),
+    s, _("&Esc/Enter restore IME to alphanumeric keyboard"),
     dlg_stdcheckbox_handler, &new_cfg.key_alpha_mode
   );
 

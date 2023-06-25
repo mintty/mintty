@@ -541,7 +541,7 @@ msgstr ""
 
 #. __ Options - Keys:
 #: config.c:3990
-msgid "&Esc/Enter restore alphabet kbd"
+msgid "&Esc/Enter restore IME to alphanumeric keyboard"
 msgstr ""
 
 #. __ Options - Keys: section title

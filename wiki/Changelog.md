@@ -16,7 +16,7 @@ Configuration
 
 ### 3.6.X (XX Xxx 20XX) ###
 
-  * New option setting in Keys page: \<Escape>, \<Enter> key restore alphabet input keyboard.
+  * New option setting in Keys page: \<Escape\>, \<Enter\> key restore alphabet input keyboard.
 
 ### 3.6.4 (25 Mar 2023) ###
 
