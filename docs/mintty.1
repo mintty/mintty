@@ -707,6 +707,11 @@ Distinct sets of sessions can be set up with the setting \fB-o Class=...\fP.
 Virtual Tabs can be switched quickly with user-defined key assignments, 
 using user-definable functions switch-[visible-](prev|next).
 
+Mintty manages tabs in order to hide background tabs from appearing 
+while moving the window, and (since 3.6.5) to support transparency 
+(avoiding cumulation of opaqueness), and keep the tabbar consistent 
+in case a tab gets terminated irregularly.
+
 .TQ
 \fBTabbar	\fP
 With setting \fBTabBar\fP, an interactive tabbar complements the 
@@ -1265,8 +1270,8 @@ backward compatibility reasons.)
 The Options dialog also offers a numeric input option with slider buttons. 
 Use Shift or Control to adjust their step width.
 
-Note that opaqueness (non-transparency) cumulates in SessionGeomSync modes
-like with tabbar.
+Since 3.6.5, when overlaying multiple tabs (SessionGeomSync modes), 
+mintty manages tab window transparency to avoid cumulation of opaqueness.
 
 .TQ
 \fBOpaque when focused\fP (OpaqueWhenFocused=no)

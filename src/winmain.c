@@ -553,9 +553,15 @@ static void
 win_set_tab_focus(char tag)
 {
   (void)tag;
+  //printf("win_set_tab_focus %d %d\n", is_init, manage_tab_hiding());
 
   // guard by is_init to avoid hiding background tabs by early WM_ACTIVATE
   if (is_init && manage_tab_hiding()) {
+    // hide background tabs; rather here than below?
+    if (cfg.window)  // not hidden explicitly
+      // attempt to suppresses initial Ctrl+TAB
+      win_hide_other_tabs(wnd);
+
     //printf("[%p] set_tab_focus %c focus %d\n", wnd, tag, GetFocus() == wnd);
     // don't need to unhide as we don't hide above
     //ShowWindow(wnd, SW_SHOW);  // in case it was a hidden tab
@@ -567,10 +573,6 @@ win_set_tab_focus(char tag)
     LONG style = GetWindowLong(wnd, GWL_EXSTYLE);
     style &= ~WS_EX_TOOLWINDOW;
     SetWindowLong(wnd, GWL_EXSTYLE, style);
-
-    // hide background tabs
-    if (cfg.window)  // not hidden explicitly
-      win_hide_other_tabs(wnd);
   }
 }
 
@@ -1075,6 +1077,7 @@ win_switch(bool back, bool alternate)
   }
 #else
   refresh_tab_titles(false);
+
   win_to_top(back ? get_prev_tab(alternate) : get_next_tab(alternate));
   // support tabbar
   if (sync_level())
@@ -3009,15 +3012,26 @@ win_update_transparency(int trans, bool opaque)
   //printf("win_update_transparency %d opaque %d\n", trans, opaque);
   if (trans == TR_GLASS)
     trans = 0;
+
   LONG style = GetWindowLong(wnd, GWL_EXSTYLE);
-  style = trans ? style | WS_EX_LAYERED : style & ~WS_EX_LAYERED;
-  SetWindowLong(wnd, GWL_EXSTYLE, style);
-  if (trans) {
-    if (opaque && term.has_focus)
-      trans = 0;
-    if (force_opaque)
-      trans = 0;
-    SetLayeredWindowAttributes(wnd, 0, 255 - (uchar)trans, LWA_ALPHA);
+
+  // check whether this is actually a background tab that should be hidden
+  if (style & WS_EX_TOOLWINDOW) {
+    // for virtual hiding, set max transparency
+    SetWindowLong(wnd, GWL_EXSTYLE, style | WS_EX_LAYERED);
+    SetLayeredWindowAttributes(wnd, 0, 0, LWA_ALPHA);
+  }
+  else {
+    // otherwise, set actual transparency
+    style = trans ? style | WS_EX_LAYERED : style & ~WS_EX_LAYERED;
+    SetWindowLong(wnd, GWL_EXSTYLE, style);
+    if (trans) {
+      if (opaque && term.has_focus)
+        trans = 0;
+      if (force_opaque)
+        trans = 0;
+      SetLayeredWindowAttributes(wnd, 0, 255 - (uchar)trans, LWA_ALPHA);
+    }
   }
 
   win_update_blur(opaque);
@@ -4234,6 +4248,7 @@ static struct {
       } else {
         term_set_focus(false, true);
       }
+
       win_update_transparency(cfg.transparency, cfg.opaque_when_focused);
       win_key_reset();
 #ifdef adapt_term_size_on_activate
@@ -7170,6 +7185,7 @@ static int dynfonts = 0;
         GetLayeredWindowAttributes(curr_wnd, 0, &b, 0);
         bool hidden = layered && !b;
         //printf("[%p] layered %d attr %d hidden %d\n", wnd, layered, b, hidden);
+
         if (!hidden) {
           all_hidden = false;
           // don't break; continue to check for vanished
@@ -7186,8 +7202,12 @@ static int dynfonts = 0;
 #endif
 
     //printf("check all_hidden %d vanished %d\n", all_hidden, vanished);
-    if (manage_tab_hiding() && all_hidden)
+    if (manage_tab_hiding() && all_hidden) {
+      // unhide myself, hide other tabs:
+      win_set_tab_focus('U');
+      // maybe not necessary to repeat this:
       win_update_transparency(cfg.transparency, cfg.opaque_when_focused);
+    }
     if (vanished)
       update_tab_titles();
   }
