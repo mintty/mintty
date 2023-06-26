@@ -2567,13 +2567,13 @@ static LONG last_key_time = 0;
   if ((key == VK_RETURN || key == VK_ESCAPE) && !mods && !child_is_alive())
     exit_mintty();
 
-  // On <Escape> or <Enter> key, restore keyboard IME state to alphanumeric mode.
-  if ( cfg.key_alpha_mode && (key == VK_RETURN || key == VK_ESCAPE) && !mods) {
-    HIMC hImc = ImmGetContext(wnd);
-    if (ImmGetOpenStatus(hImc)) {
-      ImmSetConversionStatus(hImc, IME_CMODE_ALPHANUMERIC, IME_SMODE_NONE);
+  // On ESC or Enter key, restore keyboard IME state to alphanumeric mode.
+  if (cfg.key_alpha_mode && (key == VK_RETURN || key == VK_ESCAPE) && !mods) {
+    HIMC imc = ImmGetContext(wnd);
+    if (ImmGetOpenStatus(imc)) {
+      ImmSetConversionStatus(imc, IME_CMODE_ALPHANUMERIC, IME_SMODE_NONE);
     }
-    ImmReleaseContext(wnd, hImc);
+    ImmReleaseContext(wnd, imc);
   }
 
   // Handling special shifted key functions
