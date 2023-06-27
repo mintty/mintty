@@ -95,6 +95,7 @@ typedef struct {
   bool ctrl_alt_is_altgr;
   bool altgr_is_alt;
   int ctrl_alt_delay_altgr;
+  bool key_alpha_mode;
   bool old_altgr_detection;
   int old_modify_keys;
   int format_other_keys;

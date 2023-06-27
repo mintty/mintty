@@ -539,6 +539,11 @@ msgstr ""
 msgid "AltGr is also Alt"
 msgstr ""
 
+#. __ Options - Keys:
+#: config.c:3990
+msgid "&Esc/Enter restore IME to alphanumeric keyboard"
+msgstr ""
+
 #. __ Options - Keys: section title
 #: config.c:3983
 msgid "Shortcuts"
