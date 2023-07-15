@@ -495,6 +495,11 @@ dewsl(wchar * wpath)
   return wpath;
 }
 
+#if CYGWIN_VERSION_API_MINOR < 206
+#define wcsncasecmp wcsncmp
+#define wmemcpy(t, s, n)	memcpy(t, s, 2 * n)
+#endif
+
 void
 win_open(wstring wpath, bool adjust_dir)
 // frees wpath
