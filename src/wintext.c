@@ -124,6 +124,7 @@ struct fontfam {
   char no_rtl;  // 1: no R/Hebrew, 2: no AL/Arabic, 4: either
   HFONT fonts[FONT_MAXNO];
   bool fontflag[FONT_MAXNO];
+  bool fontok;
   bool font_dualwidth;
   struct charpropcache * cpcache[FONT_BOLDITAL + 1];
   uint cpcachelen[FONT_BOLDITAL + 1];
@@ -532,6 +533,30 @@ adjust_font_weights(struct fontfam * ff, int findex)
   trace_font((" -> %d/%d\n", ff->fw_norm, ff->fw_bold));
 }
 
+static int fonts_found;
+
+static int CALLBACK
+enum_fonts_check_font(const LOGFONTW * lfp, const TEXTMETRICW * tmp, DWORD fontType, LPARAM lParam)
+{
+  (void)lfp, (void)tmp, (void)fontType, (void)lParam;
+  fonts_found ++;
+  return 1;  // continue
+}
+
+static int
+check_font(HDC dc, struct fontfam * ff)
+{
+  LOGFONTW lf;
+  wcscpy(lf.lfFaceName, W(""));
+  wcsncat(lf.lfFaceName, ff->name, lengthof(lf.lfFaceName) - 1);
+  lf.lfPitchAndFamily = 0;
+  lf.lfCharSet = DEFAULT_CHARSET;  // report all supported char ranges
+
+  fonts_found = 0;
+  EnumFontFamiliesExW(dc, &lf, enum_fonts_check_font, 0, 0);
+  return fonts_found;
+}
+
 /*
  * Initialise all the fonts of a font family we will need initially:
    Normal (the ordinary font), and optionally bold and underline;
@@ -596,6 +621,8 @@ win_init_fontfamily(HDC dc, int findex)
   }
 
   ff->fonts[FONT_NORMAL] = create_font(ff->name, ff->fw_norm, false);
+  // as this does not report error and font fallback, check explicitly:
+  ff->fontok = check_font(dc, ff);
 
   LOGFONT logfont;
   GetObject(ff->fonts[FONT_NORMAL], sizeof(LOGFONT), &logfont);
@@ -985,7 +1012,21 @@ wstring
 win_get_font(uint fi)
 {
   if (fi < lengthof(fontfamilies))
-    return fontfamilies[fi].name;
+    if (fontfamilies[fi].fontok) {
+#ifdef filter_controls_from_fontname
+      wstring fn = fontfamilies[fi].name;
+      while (*fn) {
+        if (*fn < ' ' || *fn == '\177') {
+          // most unlikely to happen if fontok is true
+          return W("??");
+        }
+        fn++;
+      }
+#endif
+      return fontfamilies[fi].name;
+    }
+    else
+      return W("?");
   else
     return null;
 }
