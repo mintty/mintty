@@ -6,6 +6,7 @@ Terminal features
   * Fix setup of initial status line if monitor DPI is 96.
   * ESC/Enter restore alphanumeric keyboard input mode while IME is active (#1223).
   * OSC 50 query response is "?" after font setting failed.
+  * Fix DECRQCRA Rectangular Checksum attribute handling.
 
 Window handling
   * Revamp window operations, esp max/fullscreen, to not raise to foreground.

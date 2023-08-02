@@ -646,11 +646,11 @@ sum_rect(short y0, short x0, short y1, short x1)
         cattrflags attr = line->chars[x].attr.attr;
         if (attr & ATTR_UNDER)
           sum += 0x10;
-        else if (attr & ATTR_REVERSE)
+        if (attr & ATTR_REVERSE)
           sum += 0x20;
-        else if (attr & ATTR_BLINK)
+        if (attr & ATTR_BLINK)
           sum += 0x40;
-        else if (attr & ATTR_BOLD)
+        if (attr & ATTR_BOLD)
           sum += 0x80;
         int xc = x;
         while (line->chars[xc].cc_next) {
