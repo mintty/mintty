@@ -7,6 +7,7 @@ Terminal features
   * ESC/Enter restore alphanumeric keyboard input mode while IME is active (#1223).
   * OSC 50 query response is "?" after font setting failed.
   * Fix DECRQCRA Rectangular Checksum attribute handling.
+  * Added DECSACE to DECRQSS (xterm 383).
 
 Window handling
   * Revamp window operations, esp max/fullscreen, to not raise to foreground.
