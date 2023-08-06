@@ -87,7 +87,7 @@ childerror(char * action, bool from_fork, int errno_code, int code)
 
   char s[33];
   bool colour_code = code && !errno_code;
-  sprintf(s, "\033[30;%dm\033[K", from_fork ? 41 : colour_code ? code : 43);
+  sprintf(s, "\r\n\033[30;%dm\033[K", from_fork ? 41 : colour_code ? code : 43);
   term_write(s, strlen(s));
   term_write(action, strlen(action));
   if (errno_code) {
@@ -501,6 +501,19 @@ child_tty(void)
 
 #define patch_319
 
+#ifdef debug_pty
+static void
+trace_line(char * tag, int n, const char * s, int len)
+{
+  printf("%s %d", tag, n);
+  for (int i = 0; i < len; i++)
+    printf(" %02X", (uint)s[i]);
+  printf("\n");
+}
+#else
+#define trace_line(tag, n, s, len)	
+#endif
+
 void
 child_proc(void)
 {
@@ -634,6 +647,7 @@ child_proc(void)
 #endif
         do {
           int ret = read(pty_fd, buf + len, sizeof buf - len);
+          trace_line("read", ret, buf + len, ret);
           //if (kb_trace) printf("[%lu] read %d\n", mtime(), ret);
           if (ret > 0)
             len += ret;
@@ -643,6 +657,8 @@ child_proc(void)
 
         if (len > 0) {
           term_write(buf, len);
+          trace_line("twrt", len, buf, len);
+
           // accelerate keyboard echo if (unechoed) keyboard input is pending
           if (kb_input) {
             kb_input = false;
@@ -840,8 +856,13 @@ grandchild_process_list(void)
 void
 child_write(const char *buf, uint len)
 {
-  if (pty_fd >= 0)
+  if (pty_fd >= 0) {
+#ifdef debug_pty
+    int n =
+#endif
     write(pty_fd, buf, len);
+    trace_line("cwrt", n, buf, len);
+  }
 }
 
 /*
@@ -869,8 +890,13 @@ child_printf(const char *fmt, ...)
     char *s;
     int len = vasprintf(&s, fmt, va);
     va_end(va);
-    if (len >= 0)
+    if (len >= 0) {
+#ifdef debug_pty
+      int n =
       write(pty_fd, s, len);
+#endif
+      trace_line("tprt", n, s, len);
+    }
     free(s);
   }
 }
