@@ -253,6 +253,7 @@ Report requested information.
 With values "s" or "o", mintty reports the position and size of the window 
 when it exits. This can be used to manage last window positions and reopen 
 mintty windows accordingly.
+.br
 Reporting mode is "s" or "o" to choose short or long option syntax for the 
 restored (i.e. neither maximized nor minimized) geometry; 
 min/max/fullscreen information is added.
@@ -268,9 +269,13 @@ With value "W", mintty lists installed WSL distributions and properties,
 and exits.
 
 With value "t", mintty reports the tty name of the child process / shell.
+.br
 With value "p", mintty reports the PID of the child process (e.g. the shell).
+.br
 With value "P", mintty reports the cygwin PID and the Windows PID 
 of the mintty process (i.e. running the terminal).
+.br
+With value "w", mintty reports its Windows window id.
 
 Note also the invocation \fIMINTTY_DEBUG=C mintty ...\fP; it will list 
 all config files loaded by mintty and whether they are also considered 

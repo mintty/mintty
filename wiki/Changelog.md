@@ -19,6 +19,7 @@ Configuration
   * New option setting ComposeKey=capslock (#1211).
   * New option ConfirmReset to guard confirm dialog on interactive reset (#1173).
   * New option KeyAlphaMode (#1223).
+  * New option -Rw to report the Windows window id.
 
 ### 3.6.4 (25 Mar 2023) ###
 

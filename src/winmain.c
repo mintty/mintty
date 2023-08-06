@@ -113,6 +113,7 @@ bool report_config = false;
 bool report_child_pid = false;
 bool report_child_tty = false;
 static bool report_winpid = false;
+static bool report_winid = false;
 static int monitor = 0;
 static bool center = false;
 static bool right = false;
@@ -6007,6 +6008,8 @@ main(int argc, char *argv[])
             report_child_pid = true;
           when 'P':
             report_winpid = true;
+          when 'w':
+            report_winid = true;
           when 't':
             report_child_tty = true;
           otherwise:
@@ -7128,6 +7131,11 @@ static int dynfonts = 0;
     DWORD parent = GetWindowThreadProcessId(wnd, &wpid);
     (void)parent;
     printf("%d %d\n", getpid(), (int)wpid);
+    fflush(stdout);
+  }
+  if (report_winid) {
+    printf("%p\n", wnd);
+    printf("%08lX\n", (ulong)wnd);
     fflush(stdout);
   }
 
