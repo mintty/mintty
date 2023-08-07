@@ -159,6 +159,11 @@ window border relative to the monitor.
 .br
 \(en Otherwise, coordinates are absolute and address the common multi-monitor 
 address space as provided by Windows.
+.br
+\(en Combination of this option with options \fBX\fP or \fBY\fP is not 
+supported; to place a window for example at the left or right screen border 
+with a certain top offset, use 
+\fBmintty -p left -p 0,50\fP or \fBmintty -p right -p 0,50\fP.
 
 \fINote:\fP For another option to select the monitor for a new mintty window, 
 see the description of Alt+F2.
@@ -2561,6 +2566,7 @@ initial coordinates of the top left corner of the terminal window.
 By default, these are unset, which means that the position suggested by the
 window manager is used.
 Setting only one of X, Y is not supported.
+See command-line option \fB-p\fP for further positioning options.
 
 .TQ
 \fBWindow class name\fP (Class=mintty)
