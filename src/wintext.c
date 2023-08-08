@@ -1311,7 +1311,12 @@ show_status_line()
     term_update_cs();
   }
   wchar wstbuf[term.cols + 1];
-  swprintf(wstbuf, term.cols + 1, W("%s%s%s%s%s %s%s@%02d:%03d%s%s%s%s%s %ls %s"), 
+  wchar kblayout[KL_NAMELENGTH];
+  GetKeyboardLayoutNameW(kblayout);
+  wchar * kbl = kblayout;
+  while (*kbl == '0')
+    kbl++;
+  swprintf(wstbuf, term.cols + 1, W("%s%s%s%s%s[%ls] %s%s@%02d:%03d%s%s%s%s%s %ls%s"), 
                  term.st_kb_flag ?
                      (term.st_kb_flag == 16 ? "Hex "
                       : term.st_kb_flag == 10 ? "Dec "
@@ -1325,6 +1330,7 @@ show_status_line()
                  term.app_cursor_keys ? "↕" : "",
                  term.app_keypad ? "±" : "",
                  child_tty(),
+                 kbl,
                  term.printing ? "⎙" : "",
                  term.bracketed_paste ? "⁅⁆" : "",
                  curs.y, curs.x,
@@ -1335,7 +1341,7 @@ show_status_line()
                  || term.marg_top || term.marg_bot != term.rows - 1
                    ? "⬚" : "",
                  term.curs.origin ? "⊡" : "",
-                 status_bell ? W("🔔") : W(""),   // bell indicator 🔔 or 🛎️ 
+                 status_bell ? W("🔔 ") : W(""),   // bell indicator 🔔 or 🛎️ 
                  get_char_info(dispchar, true) ?: ""
                  );
   int n = 0;

@@ -8,6 +8,7 @@ Terminal features
   * OSC 50 query response is "?" after font setting failed.
   * Fix DECRQCRA Rectangular Checksum attribute handling.
   * Added DECSACE to DECRQSS (xterm 383).
+  * Indicate keyboard layout code in status line.
 
 Window handling
   * Revamp window operations, esp max/fullscreen, to not raise to foreground.
