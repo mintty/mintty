@@ -255,6 +255,7 @@ const config default_cfg = {
   .progress_scan = 1,
   .dim_margins = false,
   .status_line = false,
+  .status_debug = 0,
   .old_bold = false,
   .ime_cursor_colour = DEFAULT_COLOUR,
   .ansi_colours = {
@@ -592,6 +593,7 @@ options[] = {
   {"Bloom", OPT_INT, offcfg(bloom)},
   {"DimMargins", OPT_BOOL, offcfg(dim_margins)},
   {"StatusLine", OPT_BOOL, offcfg(status_line)},
+  {"StatusDebug", OPT_INT, offcfg(status_debug)},
   {"OldXButtons", OPT_BOOL, offcfg(old_xbuttons)},
   {"OptionsFont", OPT_WSTRING, offcfg(options_font)},
   {"OptionsFontSize", OPT_INT | OPT_LEGACY, offcfg(options_fontsize)},

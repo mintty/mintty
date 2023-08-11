@@ -22,6 +22,7 @@ Configuration
   * Support changed Drag-and-drop format for some theme file downloads.
   * New option KeyAlphaMode (#1223).
   * New option -Rw to report the Windows window id.
+  * New option StatusDebug to include debug information in the status line.
 
 ### 3.6.4 (25 Mar 2023) ###
 

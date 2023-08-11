@@ -255,6 +255,7 @@ typedef struct {
   string old_options;
   bool dim_margins;
   bool status_line;
+  int status_debug;
   bool old_xbuttons;
   // Legacy
   bool use_system_colours;

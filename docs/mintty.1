@@ -2290,6 +2290,16 @@ Note that an active host-writable status line overrides the setting
 and disables the context menu function.
 
 .TQ
+\fBDisplay debug information\fP (StatusDebug=0)
+This setting includes certain debug information in the status line display (if enabled). 
+The value is bitmask composed of the following values (subject to change):
+.RS
+\fB1\fP : Keyboard layout code.
+.br
+\fB2\fP : Keyboard modifiers (hex bitmap).
+.RE
+
+.TQ
 \fBAllow control sequence to set selection\fP (AllowSetSelection=false)
 If enabled, the terminal control sequence OSC 52 is allowed to set the 
 clipboard selection for pasting (using base64-encoded contents, like xterm).

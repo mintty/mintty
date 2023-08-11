@@ -37,6 +37,7 @@ static int transparency_pending = 0;
 static bool selection_pending = false;
 bool kb_input = false;
 uint kb_trace = 0;
+uint mods_debug;
 
 struct function_def {
   string name;
@@ -2542,6 +2543,15 @@ static LONG last_key_time = 0;
   bool super = super_key && is_key_down(super_key);
   bool hyper = hyper_key && is_key_down(hyper_key);
   mods |= super * MDK_SUPER | hyper * MDK_HYPER;
+  mods_debug = mods
+       | !!is_key_down(VK_LWIN) << 23
+       | !!is_key_down(VK_RWIN) << 22
+       | !!is_key_down(VK_LCONTROL) << 21
+       | !!is_key_down(VK_RCONTROL) << 20
+       | !!is_key_down(VK_LMENU) << 19
+       | !!is_key_down(VK_RMENU) << 18
+       | (uint)!!is_key_down(VK_LSHIFT) << 17
+       | (uint)!!is_key_down(VK_RSHIFT) << 16;
 
   update_mouse(mods);
 
