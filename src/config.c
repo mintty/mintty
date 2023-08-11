@@ -2770,7 +2770,65 @@ download_scheme(char * url)
     }
   }
   else {
+    int l = 0;
+    char linebuf[22222];  // in case of json, pull in the whole stuff
     while (fgets(linebuf, sizeof(linebuf) - 1, sf)) {
+#if defined(debug_scheme) && debug_scheme > 1
+      printf("linebuf <%s>\n", linebuf);
+#endif
+
+      if (!l++ && *linebuf == '{') {
+        // handle drag-and-drop json formats that contain colour specs like 
+        // "Red=190,70,120" (https://github.com/mskyaxl/wsl-terminal) or
+        // "Red=220,50,47\r" (https://github.com/oumu/mintty-color-schemes)
+        void schapp(char * name)
+        {
+          char specbuf[30];
+          sprintf(specbuf, "\"%s=", name);
+          char * colspec = strstr(linebuf, specbuf);
+          if (!colspec)
+            return;
+          colspec++;
+          char * cpoi = colspec + strlen(name) + 1;
+          while (isdigit((uchar)*cpoi) || *cpoi == ',')
+            cpoi++;
+          int collen = cpoi - colspec;
+          int len = sch ? strlen(sch) : 0;
+          sch = renewn(sch, len + collen + 2);
+          snprintf(&sch[len], collen + 1, "%s", colspec);
+          sprintf(&sch[len + collen], ";");
+#if defined(debug_scheme) && debug_scheme > 1
+          printf("%s\n", &sch[len]);
+#endif
+        }
+        schapp("ForegroundColour");
+        schapp("BackgroundColour");
+        schapp("BoldColour");
+        schapp("BlinkColour");
+        schapp("CursorColour");
+        schapp("UnderlineColour");
+        schapp("HoverColour");
+        schapp("HighlightBackgroundColour");
+        schapp("HighlightForegroundColour");
+        schapp("Black");
+        schapp("Red");
+        schapp("Green");
+        schapp("Yellow");
+        schapp("Blue");
+        schapp("Magenta");
+        schapp("Cyan");
+        schapp("White");
+        schapp("BoldBlack");
+        schapp("BoldRed");
+        schapp("BoldGreen");
+        schapp("BoldYellow");
+        schapp("BoldBlue");
+        schapp("BoldMagenta");
+        schapp("BoldCyan");
+        schapp("BoldWhite");
+        goto scheme_return;
+      }
+
       char * eq = linebuf;
       while ((eq = strchr(++eq, '='))) {
         int dum;
@@ -2812,6 +2870,9 @@ download_scheme(char * url)
       }
     }
   }
+
+scheme_return:
+
 #ifdef use_curl
   pclose(sf);
 #else

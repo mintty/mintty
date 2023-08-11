@@ -19,6 +19,7 @@ Configuration
   * New user-definable function compose (#1211).
   * New option setting ComposeKey=capslock (#1211).
   * New option ConfirmReset to guard confirm dialog on interactive reset (#1173).
+  * Support changed Drag-and-drop format for some theme file downloads.
   * New option KeyAlphaMode (#1223).
   * New option -Rw to report the Windows window id.
 
