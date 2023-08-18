@@ -2697,8 +2697,8 @@ win_adjust_borders(int t_width, int t_height)
   norm_extra_height = extra_height;
 }
 
-void
-win_adapt_term_size(bool sync_size_with_font, bool scale_font_with_size)
+static void
+do_win_adapt_term_size(bool sync_size_with_font, bool scale_font_with_size, bool quick_reflow)
 {
   trace_resize(("--- win_adapt_term_size sync_size %d scale_font %d (full %d Zoomed %d)\n", sync_size_with_font, scale_font_with_size, win_is_fullscreen, IsZoomed(wnd)));
   if (IsIconic(wnd))
@@ -2804,7 +2804,7 @@ win_adapt_term_size(bool sync_size_with_font, bool scale_font_with_size)
   int rows = max(1, term_height / cell_height - term.st_rows);
   int save_st_rows = term.st_rows;
   if (rows != term.rows || cols != term.cols) {
-    term_resize(rows, cols);
+    term_resize(rows, cols, quick_reflow);
     if (save_st_rows) {
       // handle potentially resized status area;
       // better, rows would be calculated already considering 
@@ -2855,6 +2855,12 @@ win_adapt_term_size(bool sync_size_with_font, bool scale_font_with_size)
           win_fix_position(false);
     }
   }
+}
+
+void
+win_adapt_term_size(bool sync_size_with_font, bool scale_font_with_size)
+{
+  do_win_adapt_term_size(sync_size_with_font, scale_font_with_size, false);
 }
 
 static int
@@ -4406,6 +4412,12 @@ static int olddelta;
         if (zoom_token > 0)
           zoom_token = zoom_token >> 1;
         default_size_token = false;
+      }
+      else if (cfg.rewrap_on_resize == 2) {
+        // support continuous reflow while resizing;
+        // for this to work at acceptable speed (esp. with long scrollback) 
+        // a partial/lazy version of the reflow procedure is required
+        do_win_adapt_term_size(false, false, true);
       }
 
       return 0;
@@ -6986,7 +6998,7 @@ static int dynfonts = 0;
   // So we'll have to call term_reset after term_resize:
   //term_reset(true);
   term.show_scrollbar = !!cfg.scrollbar;
-  term_resize(term_rows, term_cols);
+  term_resize(term_rows, term_cols, false);
   term_reset(true);
 
   // Initialise the scroll bar.

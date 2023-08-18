@@ -1199,12 +1199,18 @@ printsc(char * tag, char * ltag, termline **lines, int rows)
 #define printsc(tag, ltag, lines, rows)	
 #endif
 
+#define dont_debug_reflow
+
 /*
  * Line rebreaking for screen and scrollback lines
  */
 static void
-term_reflow(int newrows, int newcols)
+term_reflow(int newrows, int newcols, bool quick_reflow)
 {
+  trace_resize(("----- term_reflow %d %d quick %d\n", newrows, newcols, quick_reflow));
+#ifdef debug_reflow
+  ulong t0 = mtime();
+#endif
   // First, mark the current cursor position;
   // also clear old marks elsewhere;
   // to be sure to catch the cursor position, use the new height 
@@ -1247,6 +1253,9 @@ term_reflow(int newrows, int newcols)
       }
     cursor_scrolled ++;
   }
+#ifdef debug_reflow
+  ulong t1 = mtime();
+#endif
 
   // Reflow scrollback buffer
   int i = 0;
@@ -1267,6 +1276,23 @@ term_reflow(int newrows, int newcols)
     // determine actual non-empty columns
     while (actcols && attr_clear(inbuf->chars[actcols - 1].attr.attr))
       actcols --;
+
+    // Quick reflow: for continuous reflow while resizing, 
+    // reflow must be quicker; we only reflow the bottommost lines
+    if (quick_reflow) {
+      // TODO: do not split handling for wrapped lines
+      // TODO: check rewrap artefacts
+      if (i < sblines - 2 * max(term.rows, newrows)) {
+        // skip reflow for all but the bottommost lines
+        scrollback_push(cline, newrows);
+
+        cursor_scroll(inbuf);
+        freeline(inbuf);
+
+        i ++;
+        continue;
+      }
+    }
 
     if ((!(inbuf->lattr & LATTR_WRAPPED) && actcols <= newcols)
         || !(inbuf->lattr & LATTR_REWRAP)
@@ -1329,6 +1355,13 @@ term_reflow(int newrows, int newcols)
       return true;
     }
 #else
+#ifdef skip_rewrap
+    // ignore rewrap and clear out input wrap buffer, for testing
+    scrollback_push(compressline(inbuf), newrows);
+    freeline(inbuf);
+    goto wrapped;
+#endif
+
     bool advance_inbuf()
     {
       if ((inbuf->lattr & LATTR_WRAPPED) && i + j + 1 < sblines) {
@@ -1441,6 +1474,9 @@ term_reflow(int newrows, int newcols)
   }
   free(scrollback);
   printsb(">rewrap");
+#ifdef debug_reflow
+  ulong t2 = mtime();
+#endif
 
   // Rebase graphics positions.
   // Make sure the anchor position (top-left cell of image) is registered 
@@ -1482,6 +1518,9 @@ term_reflow(int newrows, int newcols)
     freeline(line);
   }
   term.virtuallines = term.sblines - newrows;
+#ifdef debug_reflow
+  ulong t3 = mtime();
+#endif
 
   // Pop all screen lines back from scrollback buffer;
   // we need to handle the case that, after reflow, there are fewer lines 
@@ -1533,9 +1572,16 @@ term_reflow(int newrows, int newcols)
         i = 0;
         break;
       }
+#ifdef debug_reflow
+  ulong t4 = mtime();
+#endif
 
   // Trim scrollback buffer to max config size
   scrollback_trim();
+#ifdef debug_reflow
+  ulong t5 = mtime();
+  printf("pre %ld reflow %ld graph %ld post %ld trim %ld\n", t1 - t0, t2 - t1, t3 - t2, t4 - t3, t5 - t4);
+#endif
 
   if (cursor_scrolled > newrows) {
     // scroll back to display previous cursor position
@@ -1549,9 +1595,9 @@ term_reflow(int newrows, int newcols)
  * Set up the terminal for a given size.
  */
 void
-term_resize(int newrows, int newcols)
+term_resize(int newrows, int newcols, bool quick_reflow)
 {
-  trace_resize(("--- term_resize %d %d\n", newrows, newcols));
+  trace_resize(("--- term_resize %d %d quick %d\n", newrows, newcols, quick_reflow));
 
   bool on_alt_screen = term.on_alt_screen;
   term_switch_screen(0, false);
@@ -1678,7 +1724,7 @@ term_resize(int newrows, int newcols)
 
   // Reflow screen and scrollback buffer to new width
   if (cfg.rewrap_on_resize && newcols != term.cols)
-    term_reflow(newrows, newcols);
+    term_reflow(newrows, newcols, quick_reflow);
 
   // Make a new displayed text buffer.
   if (term.displines) {

@@ -691,8 +691,8 @@ extern struct term term;
 
 extern void scroll_rect(int topline, int botline, int lines);
 
-extern void term_resize(int, int);
-extern void term_scroll(int, int);
+extern void term_resize(int rows, int cols, bool quick_reflow);
+extern void term_scroll(int relative_to, int where);
 extern void term_reset(bool full);
 extern void term_clear_scrollback(void);
 extern bool term_mouse_click(mouse_button, mod_keys, pos, int count);
