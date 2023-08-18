@@ -7040,7 +7040,7 @@ static int dynfonts = 0;
     scale_to_image_ratio();
 
   // Adjust ConPTY support if requested
-  if (cfg.conpty_support != (uchar)-1) {
+  if (cfg.conpty_support != -1) {
     char * env = 0;
 #ifdef __MSYS__
     env = "MSYS";

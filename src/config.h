@@ -147,7 +147,7 @@ typedef struct {
   int selection_show_size;
   // Window
   int cols, rows;
-  bool rewrap_on_resize;
+  char rewrap_on_resize;
   int scrollback_lines;
   int max_scrollback_lines;
   char scrollbar;
@@ -219,7 +219,7 @@ typedef struct {
   wstring user_commands_path;
   wstring session_commands;
   wstring task_commands;
-  int conpty_support;
+  char conpty_support;
   bool login_from_shortcut;
   string menu_mouse;
   string menu_ctrlmouse;
@@ -229,7 +229,7 @@ typedef struct {
   string menu_title_ctrl_l;
   string menu_title_ctrl_r;
   int geom_sync;
-  int tabbar;
+  char tabbar;
   int new_tabs;
   int col_spacing, row_spacing;
   int auto_leading;
