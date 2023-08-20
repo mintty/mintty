@@ -14,6 +14,7 @@ Window handling
   * Revamp window operations, esp max/fullscreen, to not raise to foreground.
   * Group taskbar icons by setting -o Class (#1207).
   * Handling transparency in tab sets (#1152, #1069, ~#1128).
+  * Workaround against dropping fullscreen on DPI change (#1226).
 
 Configuration
   * New user-definable function compose (#1211).

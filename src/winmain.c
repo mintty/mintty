@@ -2060,6 +2060,10 @@ clear_fullscreen(void)
                SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
 }
 
+#ifdef debug_clear_fullscreen
+#define clear_fullscreen() printf("calling cl_fs %s:%d\n", __FUNCTION__, __LINE__), clear_fullscreen()
+#endif
+
 void
 win_set_geom(int y, int x, int height, int width)
 {
@@ -2120,6 +2124,17 @@ win_set_chars_zoom(int rows, int cols)
   trace_winsize("win_set_chars > win_fix_position");
 }
 
+static void
+win_set_chars_keep_fullscreen(int rows, int cols)
+{
+  // workaround against dropping fullscreen on DPI change (#1226);
+  // suppressing clear_fullscreen in win_set_chars does not suffice
+  bool was_fullscreen = win_is_fullscreen;
+  win_set_chars(rows, cols);
+  if (was_fullscreen)
+    make_fullscreen();
+}
+
 void
 win_set_pixels(int height, int width)
 {
@@ -2139,6 +2154,11 @@ win_set_chars(int rows, int cols)
 // allow font zooming if called below
 #define win_set_pixels(height, width) win_set_pixels_zoom(height, width)
 #define win_set_chars(rows, cols) win_set_chars_zoom(rows, cols)
+
+#ifdef debug_win_set_chars
+#undef win_set_chars
+#define win_set_chars(rows, cols) printf("calling wsc %s:%d\n", __FUNCTION__, __LINE__), win_set_chars_zoom(rows, cols)
+#endif
 
 
 void
@@ -4576,7 +4596,7 @@ static int olddelta;
           printf("term w/h %d/%d -> %d/%d, fixing\n", x, y, term.cols, term.rows);
 #endif
           // win_fix_position also clips the window to desktop size
-          win_set_chars(y, x);
+          win_set_chars_keep_fullscreen(y, x);
         }
 
         is_in_dpi_change = false;
@@ -4623,7 +4643,7 @@ static int olddelta;
           // try to stabilize terminal size roundtrip
           if (term.rows != y || term.cols != x) {
             // win_fix_position also clips the window to desktop size
-            win_set_chars(y, x);
+            win_set_chars_keep_fullscreen(y, x);
           }
 #ifdef debug_dpi
           printf("SM_CXVSCROLL %d\n", GetSystemMetrics(SM_CXVSCROLL));
