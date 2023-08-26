@@ -677,12 +677,21 @@ below the image (like xterm). The mintty private sequence 7730 chooses
 between the latter two options and is overridden by the xterm 
 control sequence 8452.
 
-| **sequence**  | **exit position**    |
-|:--------------|:---------------------|
-| `^[[?7730h`   | line beginning below |
-| `^[[?7730l`   | below left bottom    |
-| `^[[?8452h`   | next to right bottom |
-| `^[[?8452l`   | below image          |
+Image output near the bottom margin may scroll the terminal contents 
+if the image would otherwise extend below the margin. 
+This may be undesirable, so the new mode 7780 can prevent scrolling 
+(but start at the current cursor position, unlike "Sixel display mode");
+the image will be cropped instead at the bottom margin. This affects 
+both sixel and iTerm2 image output.
+
+| **sequence**  | **exit position or scrolling behaviour **  |
+|:--------------|:-------------------------------------------|
+| `^[[?7730h`   | line beginning below                       |
+| `^[[?7730l`   | below left bottom                          |
+| `^[[?8452h`   | next to right bottom                       |
+| `^[[?8452l`   | below image                                |
+| `^[[?7780h`   | do not scroll, crop image at bottom margin |
+| `^[[?7780l`   | scroll as needed to fit image (default)    |
 
 
 ## Audio support ##

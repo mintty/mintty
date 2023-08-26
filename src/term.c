@@ -365,6 +365,7 @@ term_reset(bool full)
   term.imgs.last = NULL;
   term.imgs.altfirst = NULL;
   term.imgs.altlast = NULL;
+  term.image_display = 0;
   term.sixel_display = 0;
   term.sixel_scrolls_right = 0;
   term.sixel_scrolls_left = 0;

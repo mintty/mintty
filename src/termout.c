@@ -2301,6 +2301,8 @@ set_modes(bool state)
           }
         when 7767:       /* 'C': Changed font reporting */
           term.report_font_changed = state;
+        when 7780:       /* ~ 80 (DECSDM) */
+          term.image_display = state;
         when 7783:       /* 'S': Shortcut override */
           term.shortcut_override = state;
         when 1007:       /* Alternate Scroll Mode, xterm */
@@ -2483,6 +2485,8 @@ get_mode(bool privatemode, int arg)
         return 2 - term.show_scrollbar;
       when 7767:       /* 'C': Changed font reporting */
         return 2 - term.report_font_changed;
+      when 7780:       /* ~ 80 (DECSDM) */
+        return 2 - term.image_display;
       when 7783:       /* 'S': Shortcut override */
         return 2 - term.shortcut_override;
       when 1007:       /* Alternate Scroll Mode, xterm */
@@ -3654,6 +3658,9 @@ fill_image_space(imglist * img)
       //printf("SIXELCH @%d imgi %d\n", term.curs.y, term.curs.attr.imgi);
       for (int x = x0; x < x0 + img->width && x < term.cols; ++x)
         write_char(SIXELCH, 1);
+      // image display mode (7780): do not scroll
+      if (term.image_display && term.curs.y >= term.marg_bot)
+        break;
       if (i == img->height - 1) {  // in the last line
         if (!term.sixel_scrolls_right) {
           write_linefeed();

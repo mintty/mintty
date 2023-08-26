@@ -567,6 +567,7 @@ struct term {
   bool readline_mouse_3;
 
   bool sixel_display;        // true if sixel scrolling mode is off
+  bool image_display;        // true if image scrolling is disabled
   bool sixel_scrolls_right;  // on: sixel scrolling leaves cursor to right of graphic
                              // off(default): the position after sixel depends on sixel_scrolls_left
   bool sixel_scrolls_left;   // on: sixel scrolling moves cursor to beginning of the line
