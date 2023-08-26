@@ -9,6 +9,7 @@ Terminal features
   * Fix DECRQCRA Rectangular Checksum attribute handling.
   * Added DECSACE to DECRQSS (xterm 383).
   * Indicate keyboard layout code in status line.
+  * Fix image display (iTerm2 protocol) in "Sixel display mode".
 
 Window handling
   * Revamp window operations, esp max/fullscreen, to not raise to foreground.

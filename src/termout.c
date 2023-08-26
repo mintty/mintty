@@ -4590,6 +4590,10 @@ do_cmd(void)
           imglist * img;
           short left = term.curs.x;
           short top = term.curs.y;
+          if (term.sixel_display) {  // sixel display mode
+            left = 0;
+            top = 0;
+          }
           if (winimg_new(&img, name, data, datalen, left, top, width, height, pixelwidth, pixelheight, pAR, crop_x, crop_y, crop_width, crop_height, term.curs.attr.attr & (ATTR_BLINK | ATTR_BLINK2))) {
             fill_image_space(img);
 
