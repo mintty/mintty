@@ -893,8 +893,8 @@ child_printf(const char *fmt, ...)
     if (len >= 0) {
 #ifdef debug_pty
       int n =
-      write(pty_fd, s, len);
 #endif
+      write(pty_fd, s, len);
       trace_line("tprt", n, s, len);
     }
     free(s);
