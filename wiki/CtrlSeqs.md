@@ -645,6 +645,7 @@ via iTerm2 controls:
 | **width=**               | size (*)           | cell/pixel/percentage     |
 | **height=**              | size (*)           | cell/pixel/percentage     |
 | **preserveAspectRatio=** | 1 _(default) or_ 0 | only used if **width** and **height** are given |
+| **doNotMoveCursor**      | 0 _(default) or_ 1 | no-scroll, no-move        |
 | _image_                  |                    | base64-encoded image data |
 
 The width or height size arguments use cell units by default. Optionally, 
@@ -657,6 +658,11 @@ select whether to fit the image in the denoted area or stretch it to fill it.
 If only one of width or height are given, the other dimension is scaled so 
 that the aspect ratio is preserved.
 If none of width or height are given, the image pixel size is used.
+
+Parameter **doNotMoveCursor** prevents scrolling if the image output would 
+extend below the bottom margin, and also keeps the cursor at its beginning 
+position after image output. Its effect is the same as DECSET 7780 mode 
+but can be controlled case-by-case on a per-image base.
 
 Image formats supported comprise PNG, JPEG, GIF, TIFF, BMP, Exif.
 
@@ -684,6 +690,8 @@ This may be undesirable, so the new mode 7780 can prevent scrolling
 the image will be cropped instead at the bottom margin. It also keeps 
 the cursor at its beginning position after image output. This affects 
 both sixel and iTerm2 image output.
+For iTerm2-style image output, see also image parameter **doNotMoveCursor** 
+to achieve the same effect case-by-case per image.
 
 | **sequence**  | **exit position or scrolling behaviour **  |
 |:--------------|:-------------------------------------------|

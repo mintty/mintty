@@ -10,7 +10,8 @@ Terminal features
   * Added DECSACE to DECRQSS (xterm 383).
   * Indicate keyboard layout code in status line.
   * Fix image display (iTerm2 protocol) in "Sixel display mode".
-  * New DECSET 7780 "Image display mode" to disable scrolling on image output (#1228).
+  * New DECSET 7780 "Image display mode" to keep cursor position on image output (#1228).
+  * New parameter doNotMoveCursor for iTerm2-style image output (#1228).
 
 Window handling
   * Revamp window operations, esp max/fullscreen, to not raise to foreground.
