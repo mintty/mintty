@@ -3653,6 +3653,7 @@ fill_image_space(imglist * img)
     term.curs.y = y0;
     term.curs.x = x0;
   } else {  // sixel scrolling mode
+    short y0 = term.curs.y;
     for (int i = 0; i < img->height; ++i) {
       term.curs.x = x0;
       //printf("SIXELCH @%d imgi %d\n", term.curs.y, term.curs.attr.imgi);
@@ -3669,6 +3670,10 @@ fill_image_space(imglist * img)
       } else {
         write_linefeed();
       }
+    }
+    if (term.image_display) {
+      term.curs.y = y0;
+      term.curs.x = x0;
     }
   }
 
