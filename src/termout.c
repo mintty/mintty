@@ -2666,7 +2666,7 @@ pop_colours(uint ix)
 }
 
 /*
- * dtterm window operations and xterm extensions.
+ * XTWINOPS: dtterm window operations and xterm extensions.
    CSI Ps ; Ps ; Ps t
  */
 static void
