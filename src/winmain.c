@@ -1988,10 +1988,13 @@ show_win_status(char * tag, HWND wnd)
   GetWindowPlacement(wnd, &pl);
   RECT fr = pl.rcNormalPosition;
   LONG style = GetWindowLong(wnd, GWL_STYLE);
-  printf("%s[%d:%p] show %d y %d..%d x %d..%d max %d zoom %d\n", 
+  int h, w;
+  win_get_pixels(&h, &w, false);
+  printf("%s[%d:%p] show %d y normal %dx%d (%dx%d @%d:%d) max %d zoom %d\n", 
          tag, getpid(), wnd, 
          pl.showCmd, 
-         fr.top, fr.bottom, fr.left, fr.right,
+         h / cell_height, w / cell_width,
+         fr.bottom - fr.top, fr.right - fr.left, fr.top, fr.left,
          style & WS_MAXIMIZE,
          IsZoomed(wnd)
         );
@@ -2915,11 +2918,22 @@ win_fix_taskbar_max(int show_cmd)
 void
 win_maximise(int max)
 {
-  //printf("win_max %d is_full %d IsZoomed %d\n", max, win_is_fullscreen, IsZoomed(wnd));
+  //printf("win_max %d is_full %d IsZoomed %d dpi %d\n", max, win_is_fullscreen, IsZoomed(wnd), dpi);
   show_win_status("win_max", wnd);
 
   if (max == -2) // toggle full screen
     max = win_is_fullscreen ? 0 : 2;
+
+static short normal_rows = 0;
+static short normal_cols = 0;
+static int normal_y, normal_x;
+static uint normal_dpi;
+  void save_win_pos(void) {
+    normal_rows = term.rows;
+    normal_cols = term.cols;
+    win_get_scrpos(&normal_x, &normal_y, false);
+    normal_dpi = dpi;
+  }
 
   /* for some weird reason, changes to avoid ShowWindow in commit 113286
      make initial interactive fullscreen or win-max toggle fail;
@@ -2942,7 +2956,8 @@ win_maximise(int max)
         2. restore the window title, or the reference for the 
            subsequent SetWindowPos resizing will be wrong 
            (and even window size and terminal size inconsistent)
-        3. finally perform the actual resizing to "normal position"
+        3. perform the actual resizing to "normal position"
+        4. correct the position to locally saved normal position
       */
      /* Retrieve the previous unmaximised "normal" size */
       WINDOWPLACEMENT pl;
@@ -2967,6 +2982,16 @@ win_maximise(int max)
       SetWindowPos(wnd, null, fr.left, fr.top,
                    fr.right - fr.left, fr.bottom - fr.top,
                    SWP_FRAMECHANGED | SWP_NOACTIVATE | SWP_NOZORDER);
+      // after screen size changes or DPI changes, the previous size 
+      // is no longer remembered in rcNormalPosition 
+      // (maybe it got cleared after multiple induced window operations),
+      // so we keep our own "normal position" to be restored
+      if (normal_rows && normal_cols) {
+        win_set_chars(normal_rows, normal_cols);
+        win_set_pos(normal_x * normal_dpi / dpi, normal_y * normal_dpi / dpi);
+        (void)normal_dpi;
+        win_fix_position(false);
+      }
 
       win_is_fullscreen = false;
     }
@@ -2976,6 +3001,8 @@ win_maximise(int max)
       clear_fullscreen();
   }
   else if (max == 2) {  // normal -> fullscreen
+    save_win_pos();
+
 #if 0
     LONG style = GetWindowLong(wnd, GWL_STYLE);
     style |= WS_MAXIMIZE;
@@ -3007,6 +3034,8 @@ win_maximise(int max)
 #endif
   }
   else if (max == 1) {  // normal -> max
+    save_win_pos();
+
     LONG style = GetWindowLong(wnd, GWL_STYLE);
     style |= WS_MAXIMIZE;
     //style &= ~WS_MINIMIZE;  // ??
@@ -7282,6 +7311,8 @@ static int dynfonts = 0;
   if (manage_tab_hiding())
     win_set_timer(check_hidden_tabs, 999);
 #endif
+
+  show_win_status("init", wnd);
 
   is_init = true;
   // tab management: secure transparency appearance by hiding other tabs

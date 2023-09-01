@@ -18,6 +18,7 @@ Window handling
   * Group taskbar icons by setting -o Class (#1207).
   * Handling transparency in tab sets (#1152, #1069, ~#1128).
   * Workaround against dropping fullscreen on DPI change (#1226).
+  * Preserve "normal position" (unzoomed) during screen changes (~#1226).
 
 Configuration
   * New user-definable function compose (#1211).
