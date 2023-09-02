@@ -1,3 +1,5 @@
+### 3.6.5 (3 September 2023) ###
+
 Pathname handling
   * Fix file link detection (#1208), tweak URL detection (#1209).
   * Restore opening of Windows path names (#1219; broken since 2.8.1).
