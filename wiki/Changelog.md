@@ -10,14 +10,14 @@ Terminal features
   * OSC 50 query response is "?" after font setting failed.
   * Fix DECRQCRA Rectangular Checksum attribute handling.
   * Added DECSACE to DECRQSS (xterm 383).
-  * Indicate keyboard layout code in status line.
+  * Optionally indicate keyboard layout code in status line.
   * Fix image display (iTerm2 protocol) in "Sixel display mode".
   * New DECSET 7780 "Image display mode" to keep cursor position on image output (#1228).
   * New parameter doNotMoveCursor for iTerm2-style image output (#1228).
 
 Window handling
   * Revamp window operations, esp max/fullscreen, to not raise to foreground.
-  * Group taskbar icons by setting -o Class (#1207).
+  * Sanitize Alt+TAB behaviour: Group taskbar icons by setting -o Class (#1207).
   * Handling transparency in tab sets (#1152, #1069, ~#1128).
   * Workaround against dropping fullscreen on DPI change (#1226).
   * Preserve "normal position" (unzoomed) during screen changes (~#1226).
