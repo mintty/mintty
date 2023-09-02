@@ -4047,7 +4047,7 @@ setup_config_box(controlbox * b)
   );
   ctrl_checkbox(
     //__ Options - Keys:
-    s, _("&Esc/Enter restore IME to alphanumeric keyboard"),
+    s, _("&Esc/Enter reset IME to alphanumeric"),
     dlg_stdcheckbox_handler, &new_cfg.key_alpha_mode
   );
 
