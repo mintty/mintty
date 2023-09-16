@@ -1,5 +1,5 @@
 // winmain.c (part of mintty)
-// Copyright 2008-13 Andy Koppe, 2015-2022 Thomas Wolff
+// Copyright 2008-13 Andy Koppe, 2015-2023 Thomas Wolff
 // Based on code from PuTTY-0.60 by Simon Tatham and team.
 // Licensed under the terms of the GNU General Public License v3 or later.
 
@@ -7332,9 +7332,13 @@ static int dynfonts = 0;
 
       if (msg.message == WM_QUIT)
         return msg.wParam;
-      if (!IsDialogMessage(config_wnd, &msg))
+      if (!IsDialogMessage(config_wnd, &msg)) {
+#ifdef monitor_memory_leak
+        printf("[main] data segment break %p\n", sbrk(0));
+#endif
         // msg has not been processed by IsDialogMessage
         DispatchMessage(&msg);
+      }
     }
     child_proc();
   }

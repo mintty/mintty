@@ -1,3 +1,5 @@
+  * Fix memory leak (mintty/wsltty#340) caused by dynamic emoji checking.
+
 ### 3.6.5 (3 September 2023) ###
 
 Pathname handling

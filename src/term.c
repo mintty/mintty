@@ -2888,6 +2888,7 @@ match_emoji(termchar * d, int maxlen)
             curlowsurr += curlowsurr->cc_next;  // low surrogate of current char
           }
         }
+
         if (emoji.len) {  // add sequence to dynamic list
           emoji_dyns = renewn(emoji_dyns, nemoji_dyns + 1);
 
@@ -2918,6 +2919,8 @@ match_emoji(termchar * d, int maxlen)
             emoji.len = 0;
           }
         }
+        else
+          free(chs);
       }
     }
 
