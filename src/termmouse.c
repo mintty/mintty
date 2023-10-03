@@ -37,8 +37,22 @@ static char scheme = 0;
   }
   //printf("sel_ %d: forward %d level %d\n", p.x, forward, level);
 
+  wchar prevc1 = 0;
+  wchar prevc2 = 0;
   for (;;) {
     wchar c = get_char(line, p.x);
+
+    // special colon and double-colon handling
+    if (forward && prevc1 == ':' && prevc2 != ':' && !strchr(":/", c)) {
+      // handle previous match of : if not matching :: or :/
+      return ret_p;
+    }
+    else if (forward && prevc1 == ':' && strchr(":/", c)) {
+      // handle match of :: or :/
+      ret_p = p;
+    }
+    prevc2 = prevc1;
+    prevc1 = c;
 
     // scheme detection state machine
     if (!forward) {
@@ -102,7 +116,17 @@ static char scheme = 0;
     // what about #$%&*\^`|~ at the end?
     else if (c == ' ' && p.x > 0 && get_char(line, p.x - 1) == '\\')
       ret_p = p;
-    else if (!(strchr("&,;?!:", c) || c == (forward ? '=' : ':'))) {
+    else if (c == (forward ? '=' : ':')) {
+    }
+    else if (strchr("&,;?!", c)) {
+    }
+    else if (forward && c == ':') {
+      // could set marker in case we match : but not :: or :/
+      // but this is better handled at the beginning of the for loop alone;
+      // note: this could be handled more easily here with some look-ahead 
+      // but that is not possible as the URL may wrap into the next line
+    }
+    else {
       //printf("%d: %c forward %d level %d BREAK\n", p.x, c, forward, level);
       break;
     }
