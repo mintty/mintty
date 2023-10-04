@@ -1361,6 +1361,9 @@ can be configured which would then be selectable via ECMA-48 SGR character attri
 (see Tips wiki page \fIhttps://github.com/mintty/mintty/wiki/Tips#text-attributes-and-rendering\fP).
 .br
 They can also be used as secondary fonts with option \fBFontChoice\fP.
+To support size alignment of secondary fonts with the main font size, 
+alternative font specifications can be preceded with "+" which increases 
+their font size slightly.
 .br
 \fINote:\fP Font10 has a special preference property; if it is not configured, 
 mintty will try to activate it anyway, looking for an installed 
@@ -1408,6 +1411,9 @@ often used for additional icon symbols (e.g. by "Nerd Fonts" or "Powerline" font
 In addition to Unicode scripts, also Unicode blocks can be used 
 to specify a secondary font, by a "|" prefix to the block name, with block 
 specifications preceding over the more general script specifications.
+.br
+To align secondary font size with the main font size visually, the 
+respective alternative font specification can be preceded with "+".
 
 .br
 Examples:
@@ -1418,7 +1424,7 @@ Examples:
 .br
   \fBFont7=Simplified Arabic Fixed\fP
 .br
-  \fBFont5=Malgun Gothic\fP
+  \fBFont5=+SimSun Regular\fP
 .br
   \fBFont8=FangSong\fP
 .br

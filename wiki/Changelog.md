@@ -7,6 +7,12 @@ Terminal features
   * New DECSET 7765 to exchange normal and Alt-modified mouse wheel scrolling (#1234).
   * Tweak double-click filename/URL selection with colon (#1236).
 
+Font rendering
+  * Support size adjustment of alternative fonts, for use as secondary fonts (mintty/wsltty#341).
+
+Configuration
+  * Alternative font specification supports initial + for size increase (mintty/wsltty#341).
+
 ### 3.6.5 (3 September 2023) ###
 
 Pathname handling

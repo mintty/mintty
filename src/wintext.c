@@ -270,11 +270,19 @@ static HFONT
 create_font(wstring name, int weight, bool underline)
 {
 #ifdef debug_create_font
-  printf("font [??]: %d (size %d) 0 w%4d i0 u%d s0\n", font_height, font_size, weight, underline);
+  printf("create_font [??]: %d (size %d) 0 w%4d i0 u%d s0\n", font_height, font_size, weight, underline);
 #endif
+  int height = font_height;
+  if (*name == '+') {
+    name ++;
+    height = height * 16 / 10;
+#ifdef debug_create_font
+    printf("create_font [??]: %d->%d\n", font_height, height);
+#endif
+  }
   return
     CreateFontW(
-      font_height, 0, 0, 0, weight, false, underline, false,
+      height, 0, 0, 0, weight, false, underline, false,
       DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
       get_font_quality(), FIXED_PITCH | FF_DONTCARE,
       name
@@ -721,7 +729,7 @@ win_init_fontfamily(HDC dc, int findex)
   }
 
 #ifdef debug_create_font
-  printf("size %d -> height %d -> height %d\n", font_size, font_height, cell_height);
+  printf("init_font_family: size %d -> height %d -> height %d\n", font_size, font_height, cell_height);
 #endif
 
   //ff->font_dualwidth = (tm.tmMaxCharWidth >= tm.tmAveCharWidth * 3 / 2);
@@ -869,7 +877,7 @@ win_init_fontfamily(HDC dc, int findex)
 
   if (ff->bold_mode == BOLD_FONT) {
     int diffsize = abs(fontsize[FONT_BOLD] - fontsize[FONT_NORMAL]);
-#if defined(debug_create_font) || defined(debug_bold)
+#if defined(debug_create_font) || defined(debug_bold) || defined(debug_size)
     if (*ff->name)
       printf("bold_mode %d font_size %d size %d bold %d diff %d %s %ls\n",
              ff->bold_mode, font_size,
@@ -1674,7 +1682,7 @@ another_font(struct fontfam * ff, int fontno)
   }
 
 #ifdef debug_create_font
-  printf("font [%02X]: %d (size %d%s%s%s%s) %d w%4d i%d u%d s%d\n", 
+  printf("another_font: font [%02X]: %d (size %d%s%s%s%s) %d w%4d i%d u%d s%d\n", 
 	fontno, font_height * (1 + !!(fontno & FONT_HIGH)), font_size, 
 	fontno & FONT_HIGH     ? " hi" : "",
 	fontno & FONT_WIDE     ? " wd" : "",
