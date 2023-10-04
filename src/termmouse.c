@@ -1001,9 +1001,10 @@ term_mouse_wheel(bool horizontal, int delta, int lines_per_notch, mod_keys mods,
                                  : (up ? "\e[5~" : "\e[6~"));
           }
           else {
-            send_keys(count, alt ? (up ? "\e[1;3A" : "\e[1;3B") :
-                             term.app_cursor_keys ? (up ? "\eOA" : "\eOB")
-                                                  : (up ? "\e[A" : "\e[B"));
+            send_keys(count,
+              alt ^ term.alt_wheel ? (up ? "\e[1;3A" : "\e[1;3B") :
+              term.app_cursor_keys ? (up ? "\eOA" : "\eOB")
+                                   : (up ? "\e[A" : "\e[B"));
           }
         }
       }

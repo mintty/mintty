@@ -1,5 +1,5 @@
 // termout.c (part of mintty)
-// Copyright 2008-22 Andy Koppe, 2017-22 Thomas Wolff
+// Copyright 2008-23 Andy Koppe, 2017-22 Thomas Wolff
 // Adapted from code from PuTTY-0.60 by Simon Tatham and team.
 // Licensed under the terms of the GNU General Public License v3 or later.
 
@@ -2311,6 +2311,8 @@ set_modes(bool state)
           term.wheel_reporting = state;
         when 7787:       /* 'W': Application mousewheel mode */
           term.app_wheel = state;
+        when 7765:       /* 'A': Alt-Modified mousewheel mode */
+          term.alt_wheel = state;
         when 7796:       /* Bidi disable in current line */
           if (state)
             term.lines[term.curs.y]->lattr |= LATTR_NOBIDI;
@@ -2495,6 +2497,8 @@ get_mode(bool privatemode, int arg)
         return 2 - term.wheel_reporting;
       when 7787:       /* 'W': Application mousewheel mode */
         return 2 - term.app_wheel;
+      when 7765:       /* 'A': Alt-Modified mousewheel mode */
+        return 2 - term.alt_wheel;
       when 7796:       /* Bidi disable in current line */
         return 2 - !!(term.lines[term.curs.y]->lattr & LATTR_NOBIDI);
       when 77096:      /* Bidi disable */

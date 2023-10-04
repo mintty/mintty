@@ -548,7 +548,8 @@ struct term {
   bool bell_popup;   // xterm: popOnBell;    switchable with CSI ? 1043 h/l
   bool wheel_reporting_xterm; // xterm: alternateScroll
   bool wheel_reporting;       // similar, but default true
-  bool app_wheel;             // format for wheel_reporting
+  bool app_wheel;             // dedicated wheel codes instead of cursor codes
+  bool alt_wheel;             // add Alt modifier to wheel cursor codes
   int  modify_other_keys;
   bool newline_mode;
   bool report_focus;
