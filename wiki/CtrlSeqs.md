@@ -329,7 +329,8 @@ modifier applied, to distinguish them from plain Up/Down key presses.
 For example, in the nano editor, Alt+Up/Down scrolls the window immediately,
 whereas plain Up/Down moves the cursor.
 
-_Alt-modified mousewheel mode_ is controlled by these sequences:
+_Alt-modified mousewheel mode_ exchanges plain mousewheel events with 
+Alt-modified mousewheel events; it is controlled by these sequences:
 
 | **sequence**  | **mode**      |
 |:--------------|:--------------|
