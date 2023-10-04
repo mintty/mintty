@@ -1,5 +1,5 @@
 // termmouse.c (part of mintty)
-// Copyright 2008-12 Andy Koppe, 2017-20 Thomas Wolff
+// Copyright 2008-23 Andy Koppe, 2017-20 Thomas Wolff
 // Based on code from PuTTY-0.60 by Simon Tatham and team.
 // Licensed under the terms of the GNU General Public License v3 or later.
 
@@ -467,14 +467,14 @@ get_selpoint(const pos p)
 }
 
 static void
-send_keys(char *code, uint len, uint count)
+send_keys(uint count, string code)
 {
   if (count) {
-    uint size = len * count;
-    char buf[size];
+    uint len = strlen(code);
+    char buf[len * count];
     char *p = buf;
     while (count--) { memcpy(p, code, len); p += len; }
-    child_write(buf, size);
+    child_write(buf, sizeof buf);
   }
 }
 
@@ -704,16 +704,13 @@ term_mouse_release(mouse_button b, mod_keys mods, pos p)
 
     //printf(forward ? "keys +%d\n" : "keys -%d\n", count);
     if (mode == 2003) {
-      //char erase = cfg.backspace_sends_bs ? CTRL('H') : CDEL;
       struct termios attr;
       tcgetattr(0, &attr);
-      char erase = attr.c_cc[VERASE];
-      send_keys(&erase, 1, count);
+      send_keys(count, (char[]){attr.c_cc[VERASE], 0});
     }
     else {
-      char code[3] =
-        {'\e', term.app_cursor_keys ? 'O' : '[', forward ? 'C' : 'D'};
-      send_keys(code, 3, count);
+      send_keys(count, term.app_cursor_keys ? (forward ? "\eOC" : "\eOD")
+                                            : (forward ? "\e[C" : "\e[D"));
     }
 
     moved_previously = true;
@@ -939,45 +936,56 @@ term_mouse_wheel(bool horizontal, int delta, int lines_per_notch, mod_keys mods,
     }
   }
   else if (!(mods & ~(MDK_SHIFT | MDK_CTRL | MDK_ALT))) {
-    if (mods & MDK_CTRL)
+    // Determine number of lines per wheel notch. -1 means page-wise scrolling.
+    if (mods & MDK_SHIFT)
+      lines_per_notch = -1;
+    else if (mods & MDK_CTRL)
       lines_per_notch = 1;
     else if (cfg.lines_per_notch > 0)
       lines_per_notch = min(cfg.lines_per_notch, term.rows - 1);
 
-    // Scroll, taking the lines_per_notch setting into account.
-    // Scroll by a page per notch if setting is -1 or Shift is pressed.
-    int lines_per_page = max(1, term.rows);
-    if (lines_per_notch == -1 || mods & MDK_SHIFT)
-      lines_per_notch = lines_per_page;
-    int lines = lines_per_notch * accu / NOTCH_DELTA;
-    //printf("mouse lines %d per notch %d accu %d\n", lines, lines_per_notch, accu);
-    if (lines) {
-      accu -= lines * NOTCH_DELTA / lines_per_notch;
+    bool pages = lines_per_notch == -1;
+    int count_per_notch = pages ? 1 : lines_per_notch;
+
+    int count = count_per_notch * accu / NOTCH_DELTA;
+
+    if (count) {
+      accu -= count * NOTCH_DELTA / count_per_notch;
+
       if ((!term.on_alt_screen || term.show_other_screen) && !(mods & MDK_ALT)) {
+        // Scrollback buffer scrolling.
         if (strstr(cfg.suppress_wheel, "scrollwin"))
           return;
-        term_scroll(0, -lines);
+        // For page-wise scrolling, scroll by one line less than window height.
+        if (pages)
+          count *= max(1, term.rows - 1);
+        term_scroll(0, -count);
       }
       else if (term.wheel_reporting || term.wheel_reporting_xterm) {
+        // Application scrolling.
         if (strstr(cfg.suppress_wheel, "scrollapp") && !term.wheel_reporting_xterm)
           return;
-        // Send scroll distance as CSI a/b events
-        bool up = lines > 0;
-        lines = abs(lines);
-        int pages = lines / lines_per_page;
-        lines -= pages * lines_per_page;
+        bool up = count > 0;
+        count = abs(count);
+
         if (term.app_wheel && !term.wheel_reporting_xterm) {
-          send_keys(up ? "\e[1;2a" : "\e[1;2b", 6, pages);
-          send_keys(up ? "\eOa" : "\eOb", 3, lines);
+          // Application wheel mode: send wheel events as CSI a/b codes rather
+          // than cursor key codes so they can be distinguished from key presses
+          // without enabling full application mouse mode.
+          // Pages are distinguished with the Shift modifier code.
+          send_keys(count, pages ? (up ? "\e[1;2a" : "\e[1;2b")
+                                 : (up ? "\eOa" : "\eOb"));
         }
         else if (term.vt52_mode) {
-          send_keys(up ? "\eA" : "\eB", 2, lines);
+          // No PgUp/Dn keycodes in VT52 mode, so only send cursor up/down.
+          if (!pages)
+            send_keys(count, up ? "\eA" : "\eB");
         }
         else {
-          send_keys(up ? "\e[5~" : "\e[6~", 4, pages);
-          char code[3] =
-            {'\e', term.app_cursor_keys ? 'O' : '[', up ? 'A' : 'B'};
-          send_keys(code, 3, lines);
+          // Send PgUp/Dn or cursor up down codes.
+          send_keys(count, pages ? (up ? "\e[5~" : "\e[6~") :
+                           term.app_cursor_keys ? (up ? "\eOA" : "\eOB")
+                                                : (up ? "\e[A" : "\e[B"));
         }
       }
     }
