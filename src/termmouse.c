@@ -952,8 +952,15 @@ term_mouse_wheel(bool horizontal, int delta, int lines_per_notch, mod_keys mods,
     if (count) {
       accu -= count * NOTCH_DELTA / count_per_notch;
 
-      if ((!term.on_alt_screen || term.show_other_screen) && !(mods & MDK_ALT)) {
-        // Scrollback buffer scrolling.
+      bool alt = mods & MDK_ALT;
+      bool scrollback = !term.on_alt_screen || term.show_other_screen;
+
+      // If Alt is pressed while looking at the primary screen, consume the Alt
+      // modifier and send events to the application instead.
+      if (scrollback && alt)
+        scrollback = alt = false;
+
+      if (scrollback) {
         if (strstr(cfg.suppress_wheel, "scrollwin"))
           return;
         // For page-wise scrolling, scroll by one line less than window height.
@@ -973,8 +980,14 @@ term_mouse_wheel(bool horizontal, int delta, int lines_per_notch, mod_keys mods,
           // than cursor key codes so they can be distinguished from key presses
           // without enabling full application mouse mode.
           // Pages are distinguished with the Shift modifier code.
-          send_keys(count, pages ? (up ? "\e[1;2a" : "\e[1;2b")
+          if (pages) {
+            send_keys(count, alt ? (up ? "\e[1;4a" : "\e[1;4b")
+                                 : (up ? "\e[1;2a" : "\e[1;2b"));
+          }
+          else {
+            send_keys(count, alt ? (up ? "\e[1;3a" : "\e[1;3b")
                                  : (up ? "\eOa" : "\eOb"));
+          }
         }
         else if (term.vt52_mode) {
           // No PgUp/Dn keycodes in VT52 mode, so only send cursor up/down.
@@ -982,10 +995,16 @@ term_mouse_wheel(bool horizontal, int delta, int lines_per_notch, mod_keys mods,
             send_keys(count, up ? "\eA" : "\eB");
         }
         else {
-          // Send PgUp/Dn or cursor up down codes.
-          send_keys(count, pages ? (up ? "\e[5~" : "\e[6~") :
-                           term.app_cursor_keys ? (up ? "\eOA" : "\eOB")
-                                                : (up ? "\e[A" : "\e[B"));
+          // Send PgUp/Dn or cursor up/down codes.
+          if (pages) {
+            send_keys(count, alt ? (up ? "\e[5;3~" : "\e[6;3~")
+                                 : (up ? "\e[5~" : "\e[6~"));
+          }
+          else {
+            send_keys(count, alt ? (up ? "\e[1;3A" : "\e[1;3B") :
+                             term.app_cursor_keys ? (up ? "\eOA" : "\eOB")
+                                                  : (up ? "\e[A" : "\e[B"));
+          }
         }
       }
     }
