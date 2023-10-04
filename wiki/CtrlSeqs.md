@@ -709,7 +709,7 @@ both sixel and iTerm2 image output.
 For iTerm2-style image output, see also image parameter **doNotMoveCursor** 
 to achieve the same effect case-by-case per image.
 
-| **sequence**  | **exit position or scrolling behaviour **  |
+| **sequence**  | **exit position or scrolling behaviour**   |
 |:--------------|:-------------------------------------------|
 | `^[[?7730h`   | line beginning below                       |
 | `^[[?7730l`   | below left bottom                          |
@@ -819,7 +819,7 @@ can be used to set the mouse pointer shape of the current mouse mode
 (mintty maintains two different mouse pointer shapes, to distinguish 
 application mouse reporting modes).
 Valid values are Windows predefined cursor names 
-(appstarting, arrow, cross, hand, help, ibeam, icon, no, size, sizeall, sizenesw, sizens, sizenwse, sizewe, uparrow, wait).
+(appstarting, arrow, cross, hand, help, ibeam, icon, no, size, sizeall, sizenesw, sizens, sizenwse, sizewe, uparrow, wait) 
 or cursor file names which are looked up in subdirectory `pointers` of 
 a mintty resource directory; supported file types are .cur, .ico, .ani.
 
@@ -833,7 +833,7 @@ a mintty resource directory; supported file types are .cur, .ico, .ani.
 The following _OSC_ sequences can be used to set or query the foreground and
 background variants of the ANSI colours.
 
-| **sequence**                        | ** effect **                         |
+| **sequence**                        | **effect**                           |
 |:------------------------------------|:-------------------------------------|
 | `^[]7704;`_index_`;`_colour_`^G`    | set fg and bg variants to same value |
 | `^[]7704;`_index_`;`_fg_`;`_bg_`^G` | set fg and bg to separate values     |
