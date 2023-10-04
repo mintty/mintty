@@ -320,7 +320,23 @@ to private sequences (see below). To support these subtle differences,
 both can be switched independently.
 
 By default, mousewheel events are reported as cursor key presses, which enables
-mousewheel scrolling in applications such as **[less](http://www.greenwoodsoftware.com/less)** without requiring any configuration. Alternatively, mousewheel reporting can be switched to _application mousewheel mode_, where the mousewheel sends its own separate keycodes that allow an application to treat the mousewheel differently from cursor keys:
+mousewheel scrolling in applications such as
+**[less](http://www.greenwoodsoftware.com/less)** without requiring any
+configuration.
+
+The cursor keycodes sent for mousewheel events can optionally have the Alt
+modifier applied, to distinguish them from plain Up/Down key presses.
+For example, in the nano editor, Alt+Up/Down scrolls the window immediately,
+whereas plain Up/Down moves the cursor.
+
+_Alt-modified mousewheel mode_ is controlled by these sequences:
+
+| **sequence**  | **mode**      |
+|:--------------|:--------------|
+| `^[[?7765l`   | unmodified    |
+| `^[[?7765h`   | Alt-modified  |
+
+Alternatively, mousewheel reporting can be switched to _application mousewheel mode_, where the mousewheel sends its own separate keycodes that allow an application to treat the mousewheel differently from cursor keys:
 
 | **event**   | **code**    |
 |:------------|:------------|

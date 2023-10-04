@@ -1,5 +1,5 @@
 // term.c (part of mintty)
-// Copyright 2008-12 Andy Koppe, 2016-2020 Thomas Wolff
+// Copyright 2008-23 Andy Koppe, 2016-2020 Thomas Wolff
 // Adapted from code from PuTTY-0.60 by Simon Tatham and team.
 // Licensed under the terms of the GNU General Public License v3 or later.
 
@@ -346,6 +346,7 @@ term_reset(bool full)
     term.wheel_reporting_xterm = false;
     term.wheel_reporting = true;
     term.app_wheel = false;
+    term.alt_wheel = false;
     term.echoing = false;
     term.bracketed_paste = false;
     term.wide_indic = false;
