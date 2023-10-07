@@ -1,5 +1,8 @@
   * Fix memory leak (mintty/wsltty#340) caused by dynamic emoji checking.
 
+Unicode and Emoji data
+  * Unicode 15.1 update.
+
 Terminal features
   * Tweak mousewheel scrolling: do not mix line and page events (#1234).
   * Tweak mousewheel scrolling: page scrolling one line less, consistent with keyboard paging (#1234).

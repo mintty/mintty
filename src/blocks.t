@@ -318,6 +318,7 @@
 	{0x2B740, 0x2B81F, 0, "CJK Unified Ideographs Extension D"},
 	{0x2B820, 0x2CEAF, 0, "CJK Unified Ideographs Extension E"},
 	{0x2CEB0, 0x2EBEF, 0, "CJK Unified Ideographs Extension F"},
+	{0x2EBF0, 0x2EE5F, 0, "CJK Unified Ideographs Extension I"},
 	{0x2F800, 0x2FA1F, 0, "CJK Compatibility Ideographs Supplement"},
 	{0x30000, 0x3134F, 0, "CJK Unified Ideographs Extension G"},
 	{0x31350, 0x323AF, 0, "CJK Unified Ideographs Extension H"},

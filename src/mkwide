@@ -20,8 +20,8 @@ else	echo Could not acquire Unicode data file UnicodeData.txt >&2
 	exit 1
 fi
 
-sed -e "s,^\([^;]*\);[NAH],\1," -e t -e d EastAsianWidth.txt > wide.na
-sed -e "s,^\([^;]*\);[WF],\1," -e t -e d EastAsianWidth.txt > wide.fw
+sed -e "s,^\([^;]*\) *; *[NAH],\1," -e t -e d EastAsianWidth.txt > wide.na
+sed -e "s,^\([^;]*\) *; *[WF],\1," -e t -e d EastAsianWidth.txt > wide.fw
 
 nrfw=`uniset +wide.fw nr | sed -e 's,.*:,,'`
 echo FW $nrfw
@@ -35,7 +35,7 @@ includes () {
 	nr=`uniset +wide.$2 -$1 nr | sed -e 's,.*:,,'`
 	test $nr != $3
 }
-echo "adding compact closure of wide ranges, this may take ~10min"
+echo "adding compact closure of wide ranges, this may take a few minutes"
 for b in $extrablocks `sed -e 's,^\([0-9A-F]*\)\.\.\([0-9A-F]*\).*,\1-\2,' -e t -e d Blocks.txt`
 do	range=$b
 	echo checking $range $* >&2
