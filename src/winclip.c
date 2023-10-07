@@ -69,7 +69,8 @@ shell_exec_thread(void *data)
   cygwin_internal(CW_SYNC_WINENV);
 #endif
 
-  if ((INT_PTR)ShellExecuteW(wnd, 0, wpath, 0, 0, SW_SHOWNORMAL) <= 32) {
+  SetLastError(ERROR_PATH_NOT_FOUND);  // in case !*wpath
+  if (!*wpath || (INT_PTR)ShellExecuteW(wnd, 0, wpath, 0, 0, SW_SHOWNORMAL) <= 32) {
     uint error = GetLastError();
     if (error != ERROR_CANCELLED) {
       int msglen = 1024;
