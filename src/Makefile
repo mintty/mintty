@@ -114,7 +114,7 @@ downldlib=
 ifneq ($(platform), msys)
   emojilib=-lgdiplus
 endif
-extralibs=$(scriptlib) $(downldlib) $(emojilib)
+extralibs=$(scriptlib) $(downldlib) $(emojilib) -lshlwapi
 LDFLAGS := -L$(shell $(CC) -print-file-name=w32api) -static-libgcc
 LDLIBS := -mwindows $(extralibs) -lcomctl32 -limm32 -lwinmm -lwinspool -lole32 -luuid -lmpr
 #override LDFLAGS += -L$(shell $(CC) -print-file-name=w32api) -static-libgcc

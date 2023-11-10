@@ -735,7 +735,7 @@ static struct procinfo {
 } * ttyprocs = 0;
 static uint nttyprocs = 0;
 
-static char *
+char *
 procres(int pid, char * res)
 {
   char fbuf[99];
@@ -931,7 +931,11 @@ child_resize(struct winsize *winp)
 static int
 foreground_pid()
 {
-  return (pty_fd >= 0) ? tcgetpgrp(pty_fd) : 0;
+  int fg_pid = (pty_fd >= 0) ? tcgetpgrp(pty_fd) : 0;
+  if (fg_pid <= 0)
+    // fallback to child process
+    fg_pid = pid;
+  return fg_pid;
 }
 
 static char *
@@ -960,9 +964,13 @@ get_foreground_cwd()
 char *
 foreground_cwd()
 {
+#ifdef consider_osc7
   // if working dir is communicated interactively, use it
+  // - drop this generic handling here as it would also affect 
+  //   relative pathname resolution outside OSC 7 usage
   if (child_dir && *child_dir)
     return strdup(child_dir);
+#endif
   return get_foreground_cwd();
 }
 
@@ -1053,6 +1061,8 @@ user_command(wstring commands, int n)
   }
 }
 
+#ifdef pathname_conversion_here
+#warning now unused
 /*
    used by win_open
 */
@@ -1136,6 +1146,7 @@ child_conv_path(wstring wpath, bool adjust_dir)
 
   return win_wpath;
 }
+#endif
 
 void
 child_set_fork_dir(char * dir)
@@ -1222,8 +1233,14 @@ do_child_fork(int argc, char *argv[], int moni, bool launch, bool config_size, b
 
   if (clone == 0) {  // prepare child process to spawn new terminal
     string set_dir = 0;
-    if (in_cwd)
-      set_dir = get_foreground_cwd(false);  // do this before close(pty_fd)!
+    if (in_cwd) {
+      if (support_wsl) {
+        if (child_dir && *child_dir)
+          set_dir = strdup(child_dir);
+      }
+      else
+        set_dir = get_foreground_cwd();  // do this before close(pty_fd)!
+    }
 
     if (pty_fd >= 0)
       close(pty_fd);
@@ -1235,6 +1252,8 @@ do_child_fork(int argc, char *argv[], int moni, bool launch, bool config_size, b
       if (set_dir) {
         // use cwd of foreground process if requested via in_cwd
       }
+#ifdef pathname_conversion_here
+#warning now deprecated; handled via guardpath
       else if (support_wsl) {
         wchar * wcd = cs__utftowcs(child_dir);
 #ifdef debug_wsl
@@ -1247,8 +1266,14 @@ do_child_fork(int argc, char *argv[], int moni, bool launch, bool config_size, b
         set_dir = (string)cs__wcstombs(wcd);
         delete(wcd);
       }
-      else
-        set_dir = strdup(child_dir);
+#endif
+      else {
+        //set_dir = strdup(child_dir);
+        set_dir = guardpath(child_dir, 2);
+        if (!set_dir)
+          sleep(1);  // let beep be audible before execv below
+          // also skip chdir below (guarded)
+      }
 
       if (set_dir) {
         chdir(set_dir);

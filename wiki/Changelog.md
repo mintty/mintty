@@ -1,4 +1,6 @@
   * Fix memory leak (mintty/wsltty#340) caused by dynamic emoji checking.
+  * Revise and unify handling of dynamic pathnames for terminal control.
+  * Guard network access via dynamic pathnames.
 
 Unicode and Emoji data
   * Unicode 15.1 update.
@@ -18,6 +20,7 @@ Font rendering
 
 Configuration
   * Alternative font specification supports initial + for size increase (mintty/wsltty#341).
+  * New option GuardNetworkPaths.
 
 ### 3.6.5 (3 September 2023) ###
 

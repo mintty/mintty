@@ -113,6 +113,7 @@ extern void win_update_transparency(int transparency, bool opaque);
 extern void win_prefix_title(const wstring);
 extern void win_unprefix_title(const wstring);
 extern void win_set_icon(char * s, int icon_index);
+extern char * guardpath(string path, int level);
 
 extern void win_show_tip(int x, int y, int cols, int rows);
 extern void win_destroy_tip(void);

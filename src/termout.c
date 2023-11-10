@@ -4244,13 +4244,22 @@ do_cmd(void)
     when 104: do_colour_osc(true, 4, true);
     when 105: do_colour_osc(true, 5, true);
     when 10:  do_colour_osc(false, FG_COLOUR_I, false);
-    when 11:  if (strchr("*_%=+", *term.cmd_buf)) {
-                wchar * bn = cs__mbstowcs(term.cmd_buf);
-                wstrset(&cfg.background, bn);
-                free(bn);
-                if (*term.cmd_buf == '%')
-                  scale_to_image_ratio();
-                win_invalidate_all(true);
+    when 11:  if (term.cmd_len && strchr("*_%=+", *term.cmd_buf)) {
+                char * bf = guardpath(term.cmd_buf + 1, 1);
+                if (bf) {
+                  string bf1 = asform("%c%s", *term.cmd_buf, bf);
+                  wchar * bn = cs__mbstowcs(bf1);
+                  if (!bn) {
+                    delete(bf);
+                    break;
+                  }
+                  wstrset(&cfg.background, bn);
+                  if (*term.cmd_buf == '%')
+                    scale_to_image_ratio();
+                  win_invalidate_all(true);
+                  free(bn);
+                }
+                free(bf);
               }
               else
                 do_colour_osc(false, BG_COLOUR_I, false);
@@ -4276,6 +4285,9 @@ do_cmd(void)
         s += 11;
       else if (!strncmp(s, "///", 3))
         s += 2;
+
+      // do not check guardpath() here or it might beep on every prompt...
+
       if (s[0] == '~' && (!s[1] || s[1] == '/')) {
         char * dir = asform("%s%s", home, s + 1);
         child_set_fork_dir(dir);
@@ -4283,6 +4295,8 @@ do_cmd(void)
       }
       else if (!*s || *s == '/')
         child_set_fork_dir(s);
+      else
+        {}  // do not accept relative pathnames
     when 701:  // Set/get locale (from urxvt).
       if (!strcmp(s, "?"))
         child_printf("\e]701;%s%s", cs_get_locale(), osc_fini());
@@ -4393,7 +4407,7 @@ do_cmd(void)
     when 8: {  // hyperlink attribute
       char * link = s;
       char * url = strchr(s, ';');
-      if (url++ && *url) {
+      if (url && url[1]) {
         term.curs.attr.link = putlink(link);
       }
       else

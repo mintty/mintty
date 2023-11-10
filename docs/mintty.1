@@ -3554,6 +3554,18 @@ update available whenever the Options dialog is opened and this was
 not checked within the last given number of seconds.
 
 .TQ
+\fBGuard against usage of dynamic network pathnames\fP (GuardNetworkPaths=7)
+Dynamic pathnames as used in escape sequences can access arbitrary files.
+These settings guard the respective functions against network file access.
+The value is a bitmask, adding the following values:
+.br
+\(en \fB1\fP guard background image (OSC 11), sound (OSC 440), icon (OSC I)
+.br
+\(en \fB2\fP guard set directory (OCS 7) for window cloning (Alt+F2)
+.br
+\(en \fB4\fP guard open file via link (OSC 8) or hovering
+
+.TQ
 \fBSixel image clipboard substitution\fP (SixelClipChars=\fIspace\fP)
 Characters to copy to clipboard as a substitute for Sixel image graphics,
 to indicate their positions. With an empty value, U+FFFC will be used.

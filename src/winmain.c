@@ -38,6 +38,7 @@ typedef UINT_PTR uintptr_t;
 #include <mmsystem.h>  // PlaySound for MSys
 #include <shellapi.h>
 #include <windowsx.h>  // GET_X_LPARAM, GET_Y_LPARAM
+#include <shlwapi.h>  // PathIsNetworkPathW
 
 #ifdef __CYGWIN__
 #include <sys/cygwin.h>  // cygwin_internal
@@ -211,6 +212,233 @@ static HRESULT (WINAPI * pSetWindowTheme)(HWND, const wchar_t *, const wchar_t *
 static COLORREF (WINAPI * pGetThemeSysColor)(HTHEME hth, int colid) = 0;
 static HTHEME (WINAPI * pOpenThemeData)(HWND, LPCWSTR pszClassList) = 0;
 static HRESULT (WINAPI * pCloseThemeData)(HTHEME) = 0;
+
+
+#define dont_debug_guardpath
+
+#ifdef debug_guardpath
+#define trace_guard(p)	printf p
+#else
+#define trace_guard(p)	
+#endif
+
+
+// WSL path conversion, using wsl.exe
+static char *
+wslwinpath(string path)
+{
+  char * wslpath(char * path)
+  {
+    char * wslcmd;
+    // do the actual conversion with WSL wslpath -m
+    // wslpath -w fails in some cases during pathname postprocessing
+    // ~ needs to be unquoted to be expanded by sh
+    // other paths should be quoted; pathnames with quotes are not handled
+    if (*path == '~')
+      wslcmd = asform("wsl -d %ls sh -c 'wslpath -m ~ 2>/dev/null'", wslname);
+    else
+      wslcmd = asform("wsl -d %ls sh -c 'wslpath -m \"%s\" 2>/dev/null'", wslname, path);
+    FILE * wslpopen = popen(wslcmd, "r");
+    char line[MAX_PATH + 1];
+    char * got = fgets(line, sizeof line, wslpopen);
+    pclose(wslpopen);
+    free(wslcmd);
+    if (!got)
+      return 0;
+    // adjust buffer
+    int len = strlen(line);
+    if (line[len - 1] == '\n')
+      line[len - 1] = 0;
+    // return path string
+    if (*line)
+      return strdup(line);
+    else  // file does not exist
+      return 0;
+  }
+
+  if (0 == strcmp("~", path))
+    return wslpath("~");
+  else if (0 == strncmp("~/", path, 2)) {
+    char * wslhome = wslpath("~");
+    char * ret = asform("%s/%s", wslhome, path + 2);
+    free(wslhome);
+    return ret;
+  }
+  else {
+    char * abspath;
+    if (*path != '/') {
+      // if we have a relative pathname, let's prefix it with 
+      // the current working directory if possible (and check again);
+      // we cannot determine it via foreground_cwd through wslbridge, 
+      // so let's check OSC 7 in this case
+      if (child_dir && *child_dir)
+        abspath = asform("%s/%s", child_dir, path);
+      else
+        abspath = strdup(path);
+      if (*abspath != '/') {
+        // failed to determine an absolute path
+        free(abspath);
+        return 0;
+      }
+    }
+    else
+      abspath = strdup(path);
+    char * winpath = wslpath(abspath);
+    free(abspath);
+    return winpath;
+  }
+}
+
+// Safeguard checking path to guard against unexpected network access
+char *
+guardpath(string path, int level)
+{
+  if (!path)
+    return 0;
+
+  // path transformations
+  char * expath;
+  if (support_wsl) {
+    expath = wslwinpath(path);
+    if (!expath)
+      return 0;
+  }
+  else if (0 == strcmp("~", path))
+    expath = strdup(home);
+  else if (0 == strncmp("~/", path, 2))
+    expath = asform("%s/%s", home, path + 2);
+  else if (*path != '/' && !(*path && path[1] == ':')) {
+    char * fgd = foreground_cwd();
+    if (fgd) {
+      expath = asform("%s/%s", fgd, path);
+    }
+    else
+      return 0;
+  }
+  else
+    expath = strdup(path);
+
+  if (!(level & cfg.guard_path))
+    // use case level is not in configured guarding bitmask
+    return expath;
+
+  wstring wpath = path_posix_to_win_w(expath);  // implies realpath()
+  trace_guard(("guardpath <%s>\n       ex <%s>\n        w <%ls>\n", path, expath ?: "(null)", wpath ?: W("(null)")));
+  if (!wpath) {
+    free(expath);
+    return 0;
+  }
+
+  bool guard = false;
+
+  // guard access if its target is a network path ...
+  if (PathIsNetworkPathW(wpath))
+    guard = true;
+  else {
+    char drive[] = "@:\\";
+    *drive = *wpath;
+    if (GetDriveTypeA(drive) == DRIVE_REMOTE)
+      guard = true;
+  }
+  trace_guard(("   guard %d <%ls>\n", guard, wpath));
+  int plen = wcslen(wpath);
+
+  // ... but do not guard if it is in $HOME or $APPDATA
+  if (guard) {
+    void unguard(char * env) {
+      if (env) {
+        wchar * prepath = path_posix_to_win_w(env);
+        if (prepath && *prepath) {
+          int envlen = wcslen(prepath);
+          if (0 == wcsncmp(prepath, wpath, envlen))
+            if (prepath[envlen - 1] == '\\' || 
+                plen <= envlen || wpath[envlen] == '\\'
+               )
+              guard = false;
+        }
+        trace_guard(("         %d <%s>\n        -> <%ls>\n", guard, env, prepath ?: W("(null)")));
+        if (prepath)
+          free(prepath);
+      }
+      else {
+        trace_guard(("         null\n"));
+      }
+    }
+    unguard(getenv("APPDATA"));
+    if (support_wsl) {
+      //char * rootdir = path_win_w_to_posix(wsl_basepath);
+      char * rootdir = wslwinpath("/");
+      unguard(rootdir);
+      free(rootdir);
+      // in case WSL ~ is outside WSL /
+      char * homedir = wslwinpath("~");
+      if (homedir) {
+        unguard(homedir);
+        free(homedir);
+      }
+      if (child_dir && *child_dir) {
+        char * cwd = wslwinpath(child_dir);
+        if (cwd) {
+          unguard(cwd);
+          free(cwd);
+        }
+      }
+    }
+    else {
+      unguard(getenv("HOME"));
+      char * fg_cwd = foreground_cwd();
+      if (fg_cwd) {
+        unguard(fg_cwd);
+        free(fg_cwd);
+      }
+      else {
+        // if tcgetpgrp / foreground_pid() / foreground_cwd() fails,
+        // check for processes $p where /proc/$p/ctty is child_tty()
+        // whether the checked filename is below their /proc/$p/cwd
+#include <dirent.h>
+        DIR * d = opendir("/proc");
+        if (d) {
+          char * tty = child_tty();
+          struct dirent * e;
+          while (guard && (e = readdir(d))) {
+            char * pn = e->d_name;
+            int thispid = atoi(pn);
+            if (thispid) {
+              char * ctty = procres(thispid, "ctty");
+              if (ctty) {
+                if (0 == strcmp(ctty, tty)) {
+                  // check cwd
+                  char * fn = asform("/proc/%d/%s", thispid, "cwd");
+                  char target [MAX_PATH + 1];
+                  int ret = readlink (fn, target, sizeof (target) - 1);
+                  free(fn);
+                  if (ret >= 0) {
+                    target [ret] = '\0';
+                    unguard(target);
+                  }
+                }
+                free(ctty);
+              }
+            }
+          }
+          closedir(d);
+        }
+      }
+    }
+  }
+  delete(wpath);
+
+  trace_guard(("   -> %d -> <%s>\n", guard, expath));
+  if (guard) {
+    free(expath);
+    if (level & 0xF)  // could choose to beep or not to beep in future...
+      win_bell(&cfg);
+    return 0;
+  }
+  else
+    return expath;
+}
+
 
 // Helper for loading a system library. Using LoadLibrary() directly is insecure
 // because Windows might be searching the current working directory first.
@@ -782,18 +1010,27 @@ win_set_scrollview(int pos, int len, int height)
    Window title functions.
  */
 
+// set window icon;
+// this is only used for OSC I / OSC 7773
 void
 win_set_icon(char * s, int icon_index)
 {
   HICON large_icon = 0, small_icon = 0;
-  wstring icon_file = path_posix_to_win_w(s);
-  //printf("win_set_icon <%ls>,%d\n", icon_file, icon_index);
-  ExtractIconExW(icon_file, icon_index, &large_icon, &small_icon, 1);
-  delete(icon_file);
-  SetClassLongPtr(wnd, GCLP_HICONSM, (LONG_PTR)small_icon);
-  SetClassLongPtr(wnd, GCLP_HICON, (LONG_PTR)large_icon);
-  //SendMessage(wnd, WM_SETICON, ICON_SMALL, (LPARAM)small_icon);
-  //SendMessage(wnd, WM_SETICON, ICON_BIG, (LPARAM)large_icon);
+
+  char * iconpath = guardpath(s, 1);
+  if (iconpath) {
+    wstring icon_file = path_posix_to_win_w(iconpath);
+    //printf("win_set_icon <%ls>,%d\n", icon_file, icon_index);
+    if (icon_file) {
+      ExtractIconExW(icon_file, icon_index, &large_icon, &small_icon, 1);
+      delete(icon_file);
+      SetClassLongPtr(wnd, GCLP_HICONSM, (LONG_PTR)small_icon);
+      SetClassLongPtr(wnd, GCLP_HICON, (LONG_PTR)large_icon);
+      //SendMessage(wnd, WM_SETICON, ICON_SMALL, (LPARAM)small_icon);
+      //SendMessage(wnd, WM_SETICON, ICON_BIG, (LPARAM)large_icon);
+    }
+    free(iconpath);
+  }
 }
 
 void
@@ -2287,7 +2524,11 @@ static struct {
 
   wchar * sound_file = 0;
   if (strchr(sound_name, '/') || strchr(sound_name, '\\')) {
-    sound_file = path_posix_to_win_w(sound_name);
+    char * soundfn = guardpath(sound_name, 1);
+    if (!soundfn)
+      return;
+    sound_file = path_posix_to_win_w(soundfn);
+    free(soundfn);
   }
   else {
     wchar * sound_name_w = cs__mbstowcs(sound_name);
@@ -2304,9 +2545,11 @@ static struct {
     }
   }
 
-  if (sound_file && PlaySoundW(sound_file, NULL, options)) {
-    free(sound_file);
-  }
+  if (!sound_file)
+    return;
+
+  PlaySoundW(sound_file, NULL, options);
+  free(sound_file);
 }
 
 /*

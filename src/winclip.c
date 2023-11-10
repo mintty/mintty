@@ -532,13 +532,23 @@ win_open(wstring wpath, bool adjust_dir)
   wbuf[wl] = 0;
   delete(wpath);
 
+  // guard file opening against foreign network access
+  char * buf = cs__wcstoutf(wbuf);
+  char * gbuf = guardpath(buf, 4);
+  free(buf);
+  if (!gbuf)
+    return;
+
   wchar *p = wbuf;
   while (iswalpha(*p)) p++;
   if (*p == ':' || *wbuf == '\\' || !wcsncasecmp(W("www."), wbuf, 4)) {
     // Looks like it's a Windows path or URI
+    free(gbuf);
     shell_exec(wbuf); // frees wbuf
   }
   else {
+#ifdef pathname_conversion_here
+#warning now deprecated; handled via guardpath
     // Need to convert POSIX path to Windows first
     if (support_wsl) {
       // First, we need to replicate some of the handling of relative paths
@@ -561,6 +571,11 @@ win_open(wstring wpath, bool adjust_dir)
       wbuf = dewsl(wbuf);
     }
     wstring conv_wpath = child_conv_path(wbuf, adjust_dir);
+#else
+    (void)adjust_dir;
+    wchar *conv_wpath = path_posix_to_win_w(gbuf);
+    free(gbuf);
+#endif
 #ifdef debug_wslpath
     printf("win_open <%ls> <%ls>\n", wbuf, conv_wpath);
 #endif
