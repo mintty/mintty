@@ -2849,7 +2849,7 @@ programming languages.
 This string can list characters that are to be excluded from word selection.
 
 .TQ
-\fBFiltering pasted text\fP (FilterPasteControls=)
+\fBFiltering pasted text\fP (FilterPasteControls=STTY)
 With this setting, pasted text can be filtered for selected control 
 characters which are then replaced by space. Filtering is not applied 
 when Control is held while pasting. The option is a comma-separated list 
@@ -2872,6 +2872,8 @@ of character tags:
 \(en \fBC0\fP other control characters < \(aq \(aq
 .br
 \(en \fBC1\fP control characters 0x80...0x9F
+.br
+\(en \fBSTTY\fP characters that are configured to cause INT, QUIT, TSTP signals, according to the current stty settings
 .br
 (Corresponds to the xterm resource \fBdisallowedPasteControls\fP.)
 

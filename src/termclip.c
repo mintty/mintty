@@ -279,34 +279,82 @@ term_open(void)
     free(selstr);
 }
 
-static bool
-contains(string s, wchar c)
+static bool filter_NUL;
+static char filter[69];
+
+static void
+set_filter(string s)
 {
-  string tag;
-  switch (c) {
-    when '\b': tag = "BS";
-    when '\t': tag = "HT";
-    when '\n': tag = "NL";
-    when '\r': tag = "CR";
-    when '\f': tag = "FF";
-    when '\e': tag = "ESC";
-    when '\177': tag = "DEL";
-    otherwise:
-      if (c < ' ')
-        tag = "C0";
-      else if (c >= 0x80 && c < 0xA0)
-        tag = "C1";
-      else
-        return false;
+  bool do_filter(string tag)
+  {
+#if CYGWIN_VERSION_API_MINOR >= 171
+    char * match = strcasestr(s, tag);
+#else
+    char * match = strstr(s, tag);
+#endif
+    //return match;  // a bit simplistic, we should probably properly parse...
+    if (!match)
+      return false;
+    return (match == s || *(match - 1) < '@')
+           && match[strlen(tag)] < '@';
   }
-  return strstr(s, tag);
-  // a bit simplistic, we should probably properly parse...
+
+  filter_NUL = false;
+  *filter = 0;
+  if (do_filter("C0")) {
+    filter_NUL = true;
+    strcat(filter, "\t\n\r");
+  }
+  else {
+    if (do_filter("BS")) strcat(filter, "\b");
+    if (do_filter("HT")) strcat(filter, "\t");
+    if (do_filter("NL")) strcat(filter, "\n");
+    if (do_filter("CR")) strcat(filter, "\r");
+    if (do_filter("FF")) strcat(filter, "\f");
+    if (do_filter("ESC")) strcat(filter, "\e");
+  }
+  if (do_filter("DEL"))
+    strcat(filter, "\177");
+  if (do_filter("C1")) {
+    filter_NUL = true;
+    strcat(filter, "€‚ƒ„\205†‡ˆ‰Š‹ŒŽ‘’“”•–—˜™š›œžŸ");
+  }
+  if (do_filter("STTY")) {
+    int i = strlen(filter);
+    void addchar(wchar c)
+    {
+      if (c)
+        filter[i++] = c;
+      else
+        filter_NUL = true;
+    }
+    uchar * c_cc = child_termios_chars();
+    addchar(c_cc[VINTR]);
+    addchar(c_cc[VQUIT]);
+    addchar(c_cc[VSUSP]);
+    addchar(c_cc[VSWTC]);
+    filter[i] = 0;
+  }
+}
+
+static bool
+isin_filter(wchar c)
+{
+  if (c & 0xFFFFFF00)
+    return false;
+  if (!c)
+    return filter_NUL;
+  return strchr(filter, c);
 }
 
 void
 term_paste(wchar *data, uint len, bool all)
 {
   term_cancel_paste();
+
+  // set/refresh list of characters to be filtered;
+  // stty settings may have changed
+  set_filter(cfg.filter_paste);
 
   uint size = len;
   term.paste_buffer = newn(wchar, len);
@@ -331,7 +379,7 @@ term_paste(wchar *data, uint len, bool all)
     wchar wc = data[i];
     if (wc == '\n')
       wc = '\r';
-    if (!all && *cfg.filter_paste && contains(cfg.filter_paste, wc))
+    if (!all && *cfg.filter_paste && isin_filter(wc))
       wc = ' ';
 
     if (data[i] != '\n')

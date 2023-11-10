@@ -499,6 +499,14 @@ child_tty(void)
   return ptsname(pty_fd);
 }
 
+uchar *
+child_termios_chars(void)
+{
+static struct termios attr;
+  tcgetattr(pty_fd, &attr);
+  return attr.c_cc;
+}
+
 #define patch_319
 
 #ifdef debug_pty

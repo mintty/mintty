@@ -22,6 +22,7 @@ extern bool child_is_parent(void);
 extern char * procres(int pid, char * res);
 extern wchar * grandchild_process_list(void);
 extern char * child_tty(void);
+extern uchar * child_termios_chars(void);
 extern char * foreground_prog(void);  // to be free()d
 extern void user_command(wstring commands, int n);
 extern wstring child_conv_path(wstring, bool adjust_dir);

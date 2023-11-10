@@ -1,6 +1,7 @@
   * Fix memory leak (mintty/wsltty#340) caused by dynamic emoji checking.
   * Revise and unify handling of dynamic pathnames for terminal control.
   * Guard network access via dynamic pathnames.
+  * Filter paste characters causing interrupt signals, according to the current stty settings.
 
 Unicode and Emoji data
   * Unicode 15.1 update.
@@ -21,6 +22,7 @@ Font rendering
 Configuration
   * Alternative font specification supports initial + for size increase (mintty/wsltty#341).
   * New option GuardNetworkPaths.
+  * Added STTY to FilterPasteControls settings (xterm 388), as default.
 
 ### 3.6.5 (3 September 2023) ###
 
