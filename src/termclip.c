@@ -317,7 +317,10 @@ set_filter(string s)
     strcat(filter, "\177");
   if (do_filter("C1")) {
     filter_NUL = true;
-    strcat(filter, "€‚ƒ„\205†‡ˆ‰Š‹Œ‘’“”•–—˜™š›œŸ");
+    strcat(filter, "\200\201\202\203\204\205\206\207"
+                   "\210\211\212\213\214\215\216\217"
+                   "\220\221\222\223\224\225\226\227"
+                   "\230\231\232\233\234\235\236\237");
   }
   if (do_filter("STTY")) {
     int i = strlen(filter);
