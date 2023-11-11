@@ -55,8 +55,10 @@ case "$1" in
 	echo "	$emojisurl0" >&2
 	echo "	$emojisurl1" >&2
 	echo "for the selected emoji style sets, or (if none selected) all of them:" >&2
-	echo "	apple google facebook windows twitter emojione samsung" >&2
+	echo "	google" >&2
 	echo "and always extracts common emoji graphics." >&2
+	echo "Other styles are no longer provided at unicode.org:" >&2
+	echo "	[apple facebook windows twitter emojione samsung]" >&2
 	echo >&2
 	echo "Options:" >&2
 	echo "	-d	Download the chart files" >&2
@@ -135,7 +137,7 @@ for vendor in `cat "$emojis0" |
 do	seli=`expr $seli + 1`
 	case "$vendor" in
 	Appl)	st=apple; apple=$seli;;
-	Goog)	st=google; google=$seli;;
+	Sample|Goog)	st=google; google=$seli;;
 	FB)	st=facebook; facebook=$seli;;
 	Wind)	st=windows; windows=$seli;;
 	Twtr)	st=twitter; twitter=$seli;;
@@ -146,7 +148,9 @@ do	seli=`expr $seli + 1`
 done
 
 case "$1" in
-"")	set - apple google facebook windows twitter emojione samsung;;
+"")	#set - apple google facebook windows twitter emojione samsung
+	set - google
+	;;
 esac
 sel=
 while	case "$1" in

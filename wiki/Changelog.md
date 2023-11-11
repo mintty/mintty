@@ -5,6 +5,7 @@
 
 Unicode and Emoji data
   * Unicode 15.1 update.
+  * Adapt getemojis script to reduced format of unicode.org emoji charts (#1240).
 
 Terminal features
   * Tweak mousewheel scrolling: do not mix line and page events (#1234).
