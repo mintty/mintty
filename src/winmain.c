@@ -376,6 +376,10 @@ guardpath(string path, int level)
         unguard(homedir);
         free(homedir);
       }
+#ifdef consider_WSL_OSC7
+#warning exemption from path guarding is not proper
+      // if the WSL bridge/gateway could be used to transport the 
+      // current working directory back to mintty, we could enable this
       if (child_dir && *child_dir) {
         char * cwd = wslwinpath(child_dir);
         if (cwd) {
@@ -383,6 +387,7 @@ guardpath(string path, int level)
           free(cwd);
         }
       }
+#endif
     }
     else {
       unguard(getenv("HOME"));
