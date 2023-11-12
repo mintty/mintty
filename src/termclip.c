@@ -733,7 +733,23 @@ term_create_html(FILE * hf, int level)
         hprintf(hf, "  .background {\n");
       }
 
-      hprintf(hf, "    background-image: url('%s');\n", bg);
+      char * bgg = guardpath(bg, 4);
+      if (bgg) {
+        wchar * bgw = path_posix_to_win_w(bgg);
+        free(bgg);
+        free(bg);
+        bg = cs__wcstoutf(bgw);
+        free(bgw);
+        char * cc = bg;
+        while (*cc) {
+          if (*cc == '\\')
+            *cc = '/';
+          cc++;
+        }
+
+        hprintf(hf, "    background-image: url('file:///%s');\n", bg);
+      }
+
       if (!tiled) {
         hprintf(hf, "    background-attachment: no-repeat;\n");
         hprintf(hf, "    background-size: 100%% 100%%;\n");

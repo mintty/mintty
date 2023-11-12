@@ -13,6 +13,7 @@ Terminal features
   * Send Alt modifier with mousewheel events (#1234).
   * New DECSET 7765 to exchange normal and Alt-modified mouse wheel scrolling (#1234).
   * Tweak double-click filename/URL selection with colon (#1236).
+  * Fixed background in HTML screen dump.
 
 Window handling
   * Better error handling if click-opening file fails.
