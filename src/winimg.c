@@ -1082,6 +1082,12 @@ save_img(HDC dc, int x, int y, int w, int h, wstring fn)
   DeleteDC(copdc);
   DeleteObject(copbm);
 
+  // create the image file so we get proper access rights
+  char * fnp = path_win_w_to_posix(fn);
+  int f = open(fnp, O_WRONLY | O_CREAT | O_EXCL, 0600);
+  close(f);
+  free(fnp);
+
   // save as png
   CLSID png;
   CLSIDFromString(W("{557CF406-1A04-11D3-9A73-0000F81EF32E}"), &png);

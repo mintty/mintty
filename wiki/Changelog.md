@@ -17,6 +17,7 @@ Terminal features
 
 Window handling
   * Better error handling if click-opening file fails.
+  * Save image file with proper access rights.
 
 Font rendering
   * Support size adjustment of alternative fonts, for use as secondary fonts (mintty/wsltty#341).
