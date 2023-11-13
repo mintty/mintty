@@ -1155,8 +1155,8 @@ Emoji data can be found at the following sources:
   [Full Emoji Modifier Sequences](http://www.unicode.org/emoji/charts/full-emoji-modifiers.html) 
   (with all emoji data embedded)
   and extract emoji data (call it without parameters for instructions)
-  * Deploy the desired subdirectories (e.g. `apple`) and subdirectory `common`
-  * Includes apple, emojione, facebook, google, twitter, samsung, windows emojis (and some limited low-resolution sets that we shall ignore)
+  * Deploy the subdirectories `common` and `google`
+  * Used to include apple, emojione, facebook, google, twitter, samsung, windows emojis, now only provides google style
 * [OpenMoji](https://openmoji.org/)
   * Under “Get OpenMojis”, download the “[PNG Color 72×72](https://github.com/hfg-gmuend/openmoji/releases/latest/download/openmoji-72x72-color.zip)” archive (or the very large resolution if preferred)
   * Unpack the archive into `openmoji`
@@ -1166,6 +1166,9 @@ Emoji data can be found at the following sources:
 * [JoyPixels](https://www.joypixels.com/) (formerly EmojiOne)
   * Download JoyPixels Free (or Premium)
   * Deploy the preferred subdirectory (e.g. png/unicode/128) as `joypixels`
+* [Emoji data and images](https://github.com/iamcal/emoji-data) has a mix 
+  of recent and outdated emoji sets of styles apple, facebook, google, twitter.
+  Check out yourself.
 * Zoom (with an installed Zoom meeting client)
   * Deploy $APPDATA/Zoom/data/Emojis/*.png into `zoom`
 
