@@ -1,5 +1,5 @@
 <!-- Creator     : groff version 1.23.0 -->
-<!-- CreationDate: Sun Sep  3 12:36:18 2023 -->
+<!-- CreationDate: Tue Nov 14 00:42:00 2023 -->
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
 "http://www.w3.org/TR/html4/loose.dtd">
 <html>
@@ -1941,7 +1941,10 @@ attributes (see Tips wiki page
 <i><a href="https://github.com/mintty/mintty/wiki/Tips#text-attributes-and-rendering">https://github.com/mintty/mintty/wiki/Tips#text-attributes-and-rendering</a></i>
 ). <br>
 They can also be used as secondary fonts with option
-<b>FontChoice</b>. <i><br>
+<b>FontChoice</b>. To support size alignment of secondary
+fonts with the main font size, alternative font
+specifications can be preceded with &quot;+&quot; which
+increases their font size slightly. <i><br>
 Note:</i> Font10 has a special preference property; if it is
 not configured, mintty will try to activate it anyway,
 looking for an installed Fraktur or Blackletter font
@@ -1998,14 +2001,17 @@ fonts). <br>
 In addition to Unicode scripts, also Unicode blocks can be
 used to specify a secondary font, by a &quot;|&quot; prefix
 to the block name, with block specifications preceding over
-the more general script specifications.</p>
+the more general script specifications. <br>
+To align secondary font size with the main font size
+visually, the respective alternative font specification can
+be preceded with &quot;+&quot;.</p>
 
 <p style="margin-left:18%; margin-top: 1em">Examples:
 <b><br>
 FontChoice=Hebrew:6;Arabic:7;CJK:5;Han:8;Hangul:9 <br>
 Font6=David <br>
 Font7=Simplified Arabic Fixed <br>
-Font5=Malgun Gothic <br>
+Font5=+SimSun Regular <br>
 Font8=FangSong <br>
 Font9=MingLiU <br>
 FontChoice=PictoSymbols:2;Private:3 <br>
@@ -3755,7 +3761,7 @@ characters</b> (WordCharsExcl=)</p>
 that are to be excluded from word selection.</p>
 
 <p style="margin-left:9%;"><br><b class=h4>Filtering pasted text</b>
-(FilterPasteControls=)</p>
+(FilterPasteControls=STTY)</p>
 
 <p style="margin-left:18%;">With this setting, pasted text
 can be filtered for selected control characters which are
@@ -3771,6 +3777,9 @@ comma-separated list of character tags: <br>
 &ndash; <b>DEL</b> DEL <br>
 &ndash; <b>C0</b> other control characters &lt; ' ' <br>
 &ndash; <b>C1</b> control characters 0x80...0x9F <br>
+&ndash; <b>STTY</b> characters that are configured to cause
+INT, QUIT, TSTP signals, according to the current stty
+settings <br>
 (Corresponds to the xterm resource
 <b>disallowedPasteControls</b>.)</p>
 
@@ -4568,6 +4577,20 @@ checks whether there is a version update available whenever
 the Options dialog is opened and this was not checked within
 the last given number of seconds.</p>
 
+<p style="margin-left:9%;"><br><b class=h4>Guard against usage of
+dynamic network pathnames</b> (GuardNetworkPaths=7)</p>
+
+<p style="margin-left:18%;">Dynamic pathnames as used in
+escape sequences can access arbitrary files. These settings
+guard the respective functions against network file access.
+The value is a bitmask, adding the following values: <br>
+&ndash; <b>1</b> guard background image (OSC 11), sound (OSC
+440), icon (OSC I) <br>
+&ndash; <b>2</b> guard set directory (OCS 7) for window
+cloning (Alt+F2) <br>
+&ndash; <b>4</b> guard open file via link (OSC 8) or
+hovering</p>
+
 <p style="margin-left:9%;"><br><b class=h4>Sixel image clipboard
 substitution</b> (SixelClipChars=<i>space</i>)</p>
 
@@ -5174,7 +5197,7 @@ page
 
 
 <p style="margin-left:9%; margin-top: 1em">Copyright (C)
-2022 Thomas Wolff, Andy Koppe</p>
+2023 Thomas Wolff, Andy Koppe</p>
 
 <p style="margin-left:9%; margin-top: 1em">Mintty is
 released under the terms of the the <i>GNU General Public

@@ -1,7 +1,9 @@
+### 3.7.0 (14 November 2023) ###
+
+Misc
   * Fix memory leak (mintty/wsltty#340) caused by dynamic emoji checking.
   * Revise and unify handling of dynamic pathnames for terminal control.
   * Guard network access via dynamic pathnames.
-  * Filter paste characters causing interrupt signals, according to the current stty settings.
 
 Unicode and Emoji data
   * Unicode 15.1 update.
@@ -13,6 +15,7 @@ Terminal features
   * Send Alt modifier with mousewheel events (#1234).
   * New DECSET 7765 to exchange normal and Alt-modified mouse wheel scrolling (#1234).
   * Tweak double-click filename/URL selection with colon (#1236).
+  * Filter paste characters causing interrupt signals, according to the current stty settings.
   * Fixed background in HTML screen dump.
 
 Window handling
