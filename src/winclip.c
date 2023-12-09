@@ -534,23 +534,26 @@ win_open(wstring wpath, bool adjust_dir)
     }
   }
   wbuf[wl] = 0;
+  //printf("win_open %ls wbuf %ls\n", wpath, wbuf);
   delete(wpath);
+
+  // check for URL
+  wchar *p = wbuf;
+  while (iswalpha(*p)) p++;
+  if (*p == ':' && p - wbuf > 2) {
+    shell_exec(wbuf); // frees wbuf
+    return;
+  }
 
   // guard file opening against foreign network access
   char * buf = cs__wcstoutf(wbuf);
   char * gbuf = guardpath(buf, 4);
+  //printf("win_open buf %s grd %s\n", buf, gbuf);
   free(buf);
   if (!gbuf)
     return;
 
-  wchar *p = wbuf;
-  while (iswalpha(*p)) p++;
-  if (*p == ':' || *wbuf == '\\' || !wcsncasecmp(W("www."), wbuf, 4)) {
-    // Looks like it's a Windows path or URI
-    free(gbuf);
-    shell_exec(wbuf); // frees wbuf
-  }
-  else {
+  {
 #ifdef pathname_conversion_here
 #warning now deprecated; handled via guardpath
     // Need to convert POSIX path to Windows first

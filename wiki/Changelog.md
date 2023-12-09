@@ -1,3 +1,5 @@
+  * Tune and fix click-opening URL (mintty/wsltty#346).
+
 ### 3.7.0 (14 November 2023) ###
 
 Misc
