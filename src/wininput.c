@@ -2017,7 +2017,7 @@ static struct {
   {VK_TAB, 0, "Tab"},
   {VK_RETURN, 0, "Enter"},
   {VK_PAUSE, 1, "Pause"},
-  {VK_ESCAPE, 1, "Esc"},
+  {VK_ESCAPE, 1, "Esc"},  // 'unmod' enabled with #1245
   {VK_SPACE, 0, "Space"},
   {VK_SNAPSHOT, 1, "PrintScreen"},
   {VK_LWIN, 1, "LWin"},
@@ -2564,7 +2564,8 @@ static LONG last_key_time = 0;
 
   if (key == VK_MENU) {
     if (!repeat && mods == MDK_ALT && alt_state == ALT_NONE &&
-        (!altgr0 || cfg.altgr_is_alt))
+        (!altgr0 || cfg.altgr_is_alt)  // #1245
+       )
       alt_state = ALT_ALONE;
     return true;
   }
@@ -3913,6 +3914,7 @@ win_key_up(WPARAM wp, LPARAM lp)
     if (alt_state > ALT_ALONE && alt_code) {
       insert_alt_code();
     } else if (alt_state == ALT_ALONE) {
+      // support KeyFunctions=Alt:"alt" (#1245)
       pick_key_function(cfg.key_commands, "Alt", 0, key, 0, 0, scancode);
     }
     alt_state = ALT_NONE;

@@ -1,5 +1,8 @@
   * Tune and fix click-opening URL (mintty/wsltty#346).
 
+Configuration
+  * New user-definable key Alt for option KeyFunctions (#1245).
+
 ### 3.7.0 (14 November 2023) ###
 
 Misc
