@@ -2966,9 +2966,9 @@ attached with a "+" separator, e.g. \fBCS+F9\fP;
 or a prefix "*" that applies the definition for all modified variations 
 of the key, e.g. \fB*Menu\fP
 .br
-\(en special keys (some of which do not occur on typical keyboards) 
-and keypad keys, as well as modified special and keypad keys; 
-Space, Enter, Esc and Tab are only considered with at least one modifier
+\(en special keys (some of which do not occur on typical keyboards)
+and keypad keys, as well as modified special and keypad keys.
+Space, Enter and Tab are only considered with at least one modifier.
   Esc, Tab
   Enter, KP_Enter
   Space, Back
@@ -2976,6 +2976,7 @@ Space, Enter, Esc and Tab are only considered with at least one modifier
   ScrollLock, NumLock, CapsLock
   (PrintScreen)
   LWin, RWin
+  Alt (when used on its own)
   Menu
   Insert, KP_Insert
   Delete, KP_Delete
@@ -3251,6 +3252,10 @@ Ctrl+_ assignment already
 \(en \fBKeyFunctions=C+F2:new-tab-cwd;AC+F2:new-window-cwd\fP will open 
 a new tab in same directory as current process on Control+F2, or as a 
 new window on Alt+Control+F2
+.br
+\(en \fBKeyFunctions=Alt:\(ha[\fP will make Alt send the Esc keycode when it is
+pressed and released on its own, for when the Esc key seems too far away from
+the home row.
 .br
 \(en \fBKeyFunctions=c:copy;v:paste\fP in combination with setting 
 \fB-o CtrlExchangeShift=true\fP will assign copy/paste to ^C and ^V 
