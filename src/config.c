@@ -1,5 +1,5 @@
 // config.c (part of mintty)
-// Copyright 2008-2022 Andy Koppe, 2015-2022 Thomas Wolff
+// Copyright 2008-2023 Andy Koppe, 2015-2023 Thomas Wolff
 // Based on code from PuTTY-0.60 by Simon Tatham and team.
 // Licensed under the terms of the GNU General Public License v3 or later.
 
@@ -845,7 +845,7 @@ find_option(bool from_file, string name)
 #define MAX_COMMENTS (lengthof(options) * 3)
 static struct {
   char * comment;
-  uchar opti;
+  ushort opti;
 } file_opts[lengthof(options) + MAX_COMMENTS];
 static uchar arg_opts[lengthof(options)];
 static uint file_opts_num = 0;
