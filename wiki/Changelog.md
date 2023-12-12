@@ -1,5 +1,5 @@
 Misc
-  * Fix handling of options to be saved (#1246).
+  * Fix handling of options to be saved (#1246, #1247).
   * Tune and fix click-opening URL (mintty/wsltty#346).
 
 Configuration

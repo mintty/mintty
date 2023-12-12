@@ -847,7 +847,7 @@ static struct {
   char * comment;
   ushort opti;
 } file_opts[lengthof(options) + MAX_COMMENTS];
-static uchar arg_opts[lengthof(options)];
+static ushort arg_opts[lengthof(options)];
 static uint file_opts_num = 0;
 static uint arg_opts_num;
 
@@ -874,7 +874,10 @@ seen_file_option(uint i)
 static bool
 seen_arg_option(uint i)
 {
-  return memchr(arg_opts, i, arg_opts_num);
+  for (uint k = 0; k < arg_opts_num; k++)
+    if (arg_opts[k] == i)
+      return true;
+  return false;
 }
 
 static void
