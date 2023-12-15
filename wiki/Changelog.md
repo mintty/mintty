@@ -4,6 +4,7 @@ Misc
 
 Configuration
   * New user-definable key Alt for option KeyFunctions (#1245).
+  * New user-definable function intr (~#1245).
 
 ### 3.7.0 (14 November 2023) ###
 

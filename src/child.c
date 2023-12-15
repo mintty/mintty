@@ -889,6 +889,16 @@ child_break()
   }
 }
 
+/*
+  Send an INTR char.
+ */
+void
+child_intr()
+{
+  char * c_cc = (char *)child_termios_chars();
+  child_write(&c_cc[VINTR], 1);
+}
+
 void
 child_printf(const char *fmt, ...)
 {

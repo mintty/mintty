@@ -779,6 +779,10 @@ Tips wiki page \fIhttps://github.com/mintty/mintty/wiki/Tips#terminating-the-for
 Note that Ctrl+C is often configured to raise a SIGINT signal. However, 
 this is not a terminal feature and can also be reconfigured (stty), so 
 in fact BRK and Ctrl+C are inherently different functions.
+The user-definable function intr can be used to send the character that 
+is currently assigned to the SIGINT signal via stty settings; note however, 
+this does not work e.g. through ssh if the pty setting is changed, as the 
+remote side does not change the client side towards mintty.
 
 .SS Mouse tracking
 
@@ -3127,6 +3131,8 @@ Supported actions are described as follows:
 \(en \fBsave-image\fP: Save terminal image to file
 .br
 \(en \fBbreak\fP: sends a break condition to the application
+.br
+\(en \fBintr\fP: sends the character mapped to SIGINT via stty settings
 .br
 \(en \fBflipscreen\fP: switches the alternate screen
 .br

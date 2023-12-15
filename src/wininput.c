@@ -1822,6 +1822,7 @@ static struct function_def cmd_defs[] = {
   {"tek-copy", {IDM_TEKCOPY}, mflags_tek_mode},
   {"save-image", {IDM_SAVEIMG}, 0},
   {"break", {IDM_BREAK}, 0},
+  {"intr", {.fct = child_intr}, 0},
   {"flipscreen", {IDM_FLIPSCREEN}, mflags_flipscreen},
   {"open", {IDM_OPEN}, mflags_open},
   {"toggle-logging", {IDM_TOGLOG}, mflags_logging},
