@@ -256,10 +256,13 @@ wslwinpath(string path)
       return 0;
   }
 
+  trace_guard(("wslwinpath %s\n", path));
   if (0 == strcmp("~", path))
     return wslpath("~");
   else if (0 == strncmp("~/", path, 2)) {
     char * wslhome = wslpath("~");
+    if (!wslhome)
+      return 0;
     char * ret = asform("%s/%s", wslhome, path + 2);
     free(wslhome);
     return ret;
@@ -275,6 +278,7 @@ wslwinpath(string path)
         abspath = asform("%s/%s", child_dir, path);
       else
         abspath = strdup(path);
+      trace_guard(("wslwinpath abspath %s\n", abspath));
       if (*abspath != '/') {
         // failed to determine an absolute path
         free(abspath);
@@ -284,6 +288,7 @@ wslwinpath(string path)
     else
       abspath = strdup(path);
     char * winpath = wslpath(abspath);
+    trace_guard(("wslwinpath -> %s\n", winpath));
     free(abspath);
     return winpath;
   }
