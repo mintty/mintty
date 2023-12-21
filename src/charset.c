@@ -36,6 +36,7 @@ bool cs_single_forced = false;
 
 static uint codepage = 0;
 static int default_codepage;
+static bool gb18030 = false;
 
 static wchar cp_default_wchar;
 static char cp_default_char[4];
@@ -301,6 +302,20 @@ update_mode(void)
 {
   codepage =
     mode == CSM_UTF8 ? CP_UTF8 : mode == CSM_OEM  ? 437 : default_codepage;
+  //printf("update_mode cp %d def %d\n", codepage, default_codepage);
+
+#ifdef support_codepage_alignment
+  // Align console codepage
+  // todo: handle GB18030 (set flag before calling update_mode...)
+  uint wincodepage =
+    mode == CSM_UTF8 ? CP_UTF8 : mode == CSM_OEM  ? 437 :
+            gb18030 ? 54936 : default_codepage;
+  // todo: inband signalling towards child stub,
+  // i.e. child process inside child_create (does not currently exist),
+  // to do the following:
+  //SetConsoleCP(wincodepage);
+  //SetConsoleOutputCP(wincodepage);
+#endif
 
 #if HAS_LOCALES
   bool use_default_locale = mode == CSM_DEFAULT && valid_default_locale;
@@ -500,7 +515,7 @@ update_locale(void)
   string set_locale = setlocale(LC_CTYPE, locale);
   trace_locale("update_locale", locale);
 
-  bool gb18030 = false;
+  gb18030 = false;
   if (!set_locale && strcasecmp(charset, "GB18030") == 0) {
     charset = "GBK";
     char * locgbk = strdup(locale);
@@ -538,6 +553,9 @@ update_locale(void)
     }
   }
   else {
+#ifdef support_codepage_alignment
+    default_codepage = cs_codepage(charset);
+#endif
     cs_ambig_wide = font_ambig_wide;
   }
 
