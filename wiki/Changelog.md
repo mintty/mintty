@@ -2,6 +2,9 @@ Misc
   * Fix handling of options to be saved (#1246, #1247).
   * Tune and fix click-opening URL (mintty/wsltty#346).
 
+Window handling
+  * Fix instable window switching after minimize/restore (#1242, #1249).
+
 Configuration
   * New user-definable key Alt for option KeyFunctions (#1245).
   * New user-definable function intr (~#1245).

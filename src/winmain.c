@@ -786,6 +786,28 @@ manage_tab_hiding(void)
 }
 
 /*
+  Fix instable tab set behaviour (#1242). There are 3 changes below;
+  a weird set of 4 combinations of them fixes the issue while the others don't.
+  Def. fix1242 chooses among the set of working fixes, 
+  0 (none, default), 1 (a and b), 2 (b), 3 (c)
+  As they might interfere with future changes related to tabs, these options 
+  are kept in the source for documentation.
+ */
+#ifndef fix1242
+#define fix1242 0
+#endif
+#if fix1242 == 1
+#define fix1242a
+#define fix1242b
+#endif
+#if fix1242 == 2
+#define fix1242b
+#endif
+#if fix1242 == 3
+#define fix1242c
+#endif
+
+/*
   Notify tab focus. Manage hidden tab status.
  */
 static void
@@ -797,9 +819,11 @@ win_set_tab_focus(char tag)
   // guard by is_init to avoid hiding background tabs by early WM_ACTIVATE
   if (is_init && manage_tab_hiding()) {
     // hide background tabs; rather here than below?
+#ifdef fix1242a
     if (cfg.window)  // not hidden explicitly
       // attempt to suppresses initial Ctrl+TAB
       win_hide_other_tabs(wnd);
+#endif
 
     //printf("[%p] set_tab_focus %c focus %d\n", wnd, tag, GetFocus() == wnd);
     // don't need to unhide as we don't hide above
@@ -812,6 +836,12 @@ win_set_tab_focus(char tag)
     LONG style = GetWindowLong(wnd, GWL_EXSTYLE);
     style &= ~WS_EX_TOOLWINDOW;
     SetWindowLong(wnd, GWL_EXSTYLE, style);
+
+#ifndef fix1242a
+    // hide background tabs
+    if (cfg.window)  // not hidden explicitly
+      win_hide_other_tabs(wnd);
+#endif
   }
 }
 
@@ -3325,12 +3355,16 @@ win_update_transparency(int trans, bool opaque)
   LONG style = GetWindowLong(wnd, GWL_EXSTYLE);
 
   // check whether this is actually a background tab that should be hidden
+#ifdef fix1242b
   if (style & WS_EX_TOOLWINDOW) {
+    //printf("[%p] SetLayeredWindowAttributes\n", wnd);
     // for virtual hiding, set max transparency
     SetWindowLong(wnd, GWL_EXSTYLE, style | WS_EX_LAYERED);
     SetLayeredWindowAttributes(wnd, 0, 0, LWA_ALPHA);
   }
-  else {
+  else
+#endif
+  {
     // otherwise, set actual transparency
     style = trans ? style | WS_EX_LAYERED : style & ~WS_EX_LAYERED;
     SetWindowLong(wnd, GWL_EXSTYLE, style);
@@ -4020,7 +4054,7 @@ static struct {
       wm_user = false;
 
     when WM_COMMAND or WM_SYSCOMMAND: {
-# ifdef debug_messages
+# if defined(debug_messages) || defined(debug_tabs)
       static struct {
         uint idm_;
         char * idm_name;
@@ -7525,8 +7559,10 @@ static int dynfonts = 0;
 
     //printf("check all_hidden %d vanished %d\n", all_hidden, vanished);
     if (manage_tab_hiding() && all_hidden) {
+#ifdef fix1242c
       // unhide myself, hide other tabs:
       win_set_tab_focus('U');
+#endif
       // maybe not necessary to repeat this:
       win_update_transparency(cfg.transparency, cfg.opaque_when_focused);
     }
