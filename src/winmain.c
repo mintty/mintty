@@ -3846,6 +3846,7 @@ show_iconwarn(wchar * winmsg)
 #define dont_debug_only_focus_messages
 #define dont_debug_only_sizepos_messages
 #define dont_debug_mouse_messages
+#define dont_debug_minor_messages
 #define dont_debug_hook
 
 static void win_global_keyboard_hook(bool on);
@@ -3891,6 +3892,9 @@ static struct {
 # ifndef debug_mouse_messages
       && message != WM_SETCURSOR
       && message != WM_MOUSEMOVE && message != WM_NCMOUSEMOVE
+# endif
+# ifndef debug_minor_messages
+      && !strstr(wm_name, "_GET") && !strstr(wm_name, "_IME")
 # endif
      )
 # ifdef debug_only_sizepos_messages
@@ -4972,10 +4976,40 @@ static int olddelta;
       break;
     }
 
-#ifdef debug_stylestuff
-    when WM_STYLECHANGING: {
-      printf("STYLE %08X -> %08X\n", ((STYLESTRUCT *)lp)->styleOld, ((STYLESTRUCT *)lp)->styleNew);
-      //return 0;
+#if defined(debug_stylestuff) || defined(debug_messages)
+    when /* WM_STYLECHANGING or */ WM_STYLECHANGED: {
+      string what = message == WM_STYLECHANGING ? "CHNGING" : "CHANGED";
+      string which = (int)wp == GWL_EXSTYLE ? "EX" : (int)wp == GWL_STYLE ? "" : "?";
+      DWORD old = ((STYLESTRUCT *)lp)->styleOld;
+      DWORD new = ((STYLESTRUCT *)lp)->styleNew;
+      DWORD off = old & ~new;
+      DWORD on = new & ~old;
+      printf("%sSTYLE%s %08X -> %08X, off %08X on %08X\n", which, what, old, new, off, on);
+
+typedef struct {
+  DWORD st;
+  string style;
+} style_desc;
+#ifndef WS_EX_NOREDIRECTIONBITMAP
+#define WS_EX_NOREDIRECTIONBITMAP 0x00200000
+#endif
+#include "_wstyles.t"
+      void stylebits(bool off, DWORD bits, style_desc * styles, int len)
+      {
+        for (int i = 0; i < len; i++)
+          if (styles[i].st && (bits & styles[i].st) == styles[i].st)
+            printf("               %c %s\n", off ? '-' : '+', styles[i].style);
+      }
+      if ((int)wp == GWL_EXSTYLE) {
+        stylebits(true, off, ws_ex_styles, lengthof(ws_ex_styles));
+        stylebits(false, on, ws_ex_styles, lengthof(ws_ex_styles));
+      }
+      else if ((int)wp == GWL_STYLE) {
+        stylebits(true, off, ws_styles, lengthof(ws_styles));
+        stylebits(false, on, ws_styles, lengthof(ws_styles));
+      }
+
+      //if (message == WM_STYLECHANGING) return 0;
     }
 
     when WM_ERASEBKGND:

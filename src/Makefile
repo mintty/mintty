@@ -429,6 +429,9 @@ _vk.t:	# Windows Virtual Key Code names, only for debugging
 _winidm.t:	winids.h
 	sed -e 's/#define *\(IDM_[^ ]*\).*/	{\1, "\1"},/' -e t -e d winids.h > _winidm.t
 
+_wstyles.t:	# Windows GWL_STYLE and GWL_EXSTYLE values
+	./mkstyles > $@
+
 target:
 	echo TARGET $(TARGET)
 	echo platform $(platform)
