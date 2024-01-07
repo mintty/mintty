@@ -1,3 +1,6 @@
+Terminal features
+  * Dropped DSR 53 (legacy xterm mistake, dropped in xterm 389).
+
 Misc
   * Fix handling of options to be saved (#1246, #1247).
   * Tune and fix click-opening URL (mintty/wsltty#346).
