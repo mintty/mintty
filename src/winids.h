@@ -57,4 +57,9 @@
 #define IDM_CTXMENUFUNCTION 0xA000
 #define IDM_GOTAB           0xD000
 
+#ifdef sanitize_min_restore_via_sync
+#define IDM_RESTORE         0x0800
+#define IDM_FOCUS           0x0810
+#endif
+
 #endif

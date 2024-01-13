@@ -7,6 +7,7 @@ Misc
 
 Window handling
   * Fix instable window switching after minimize/restore (#1242, #1249).
+  * Fix window switching (Ctrl+ALT) after minimize/restore (#1242).
 
 Configuration
   * New user-definable key Alt for option KeyFunctions (#1245).

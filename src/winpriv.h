@@ -31,10 +31,18 @@ enum {
   WIN_MINIMIZE = 0,
   WIN_MAXIMIZE = -1,
   WIN_FULLSCREEN = -2,
+#ifdef sanitize_min_restore_via_sync
+  WIN_RESTORE = -3,
+#endif
+#ifdef async_horflush
+  WIN_HORFLUSH = -4,
+#endif
   WIN_TOP = 1,
   WIN_TITLE = 4,
   WIN_INIT_POS = 5,
+#ifdef sanitize_min_restore_via_hide
   WIN_HIDE = 8,
+#endif
 };
 // support tabbar
 extern void win_to_top(HWND top_wnd);

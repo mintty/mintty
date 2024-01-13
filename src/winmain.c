@@ -1,5 +1,5 @@
 // winmain.c (part of mintty)
-// Copyright 2008-13 Andy Koppe, 2015-2023 Thomas Wolff
+// Copyright 2008-13 Andy Koppe, 2015-2024 Thomas Wolff
 // Based on code from PuTTY-0.60 by Simon Tatham and team.
 // Licensed under the terms of the GNU General Public License v3 or later.
 
@@ -104,6 +104,12 @@ static bool default_size_token = false;
 bool clipboard_token = false;
 bool keep_screen_on = false;
 bool force_opaque = false;
+#ifdef sanitize_min_restore_via_sync
+// multi-tab minimise/restore management:
+static bool restoring = false;
+static bool focus_here = false;
+static bool focus_inhibit = false;
+#endif
 
 // Options
 bool title_settable = true;
@@ -730,6 +736,7 @@ sort_tabinfo()
 static void
 win_hide_other_tabs(HWND to_top)
 {
+  //printf("[%p] win_hide_other_tabs\n", wnd);
   BOOL CALLBACK wnd_hide_tab(HWND curr_wnd, LPARAM lp)
   {
     HWND to_top = (HWND)lp;
@@ -1202,6 +1209,19 @@ win_post_sync_msg(HWND target, int level)
       PostMessage(target, WM_USER, 0, WIN_MAXIMIZE);
     else if (level >= 3 && IsIconic(wnd))
       PostMessage(target, WM_USER, 0, WIN_MINIMIZE);
+#ifdef sanitize_min_restore_via_sync
+    else if (level >= 3 && restoring) {
+      //printf("[%p] sending RESTORE -> %p; focus_here %d\n", wnd, target, focus_here);
+      // set token to focus on this window after restoring other 
+      // windows of the tab set
+      focus_here = true;
+      if (focus_here) {
+        //ShowWindow(target, SW_RESTORE);
+        //SendMessage(target, WM_USER, 0, WIN_RESTORE);
+        SendMessage(target, WM_SYSCOMMAND, IDM_RESTORE, ' ');
+      }
+    }
+#endif
     else {
       RECT r;
       GetWindowRect(wnd, &r);
@@ -1250,9 +1270,10 @@ win_to_top(HWND top_wnd)
   // this does not work properly (see comments at when WM_USER:)
   // PostMessage(top_wnd, WM_USER, 0, WIN_TOP);
 
-  // one of these works:
+  // this used to work but fails in multiple tabs:
+  // bool fgok = SetActiveWindow(top_wnd);
+  // this works:
   int fgok = SetForegroundWindow(top_wnd);
-  // SetActiveWindow(top_wnd);
 
   if (IsIconic(top_wnd))
     ShowWindow(top_wnd, SW_RESTORE);
@@ -1911,6 +1932,9 @@ win_set_iconic(bool iconic)
     ShowWindow(wnd, iconic ? SW_MINIMIZE : SW_RESTORE);
   /* possible enhancements:
      - avoid force-to-top on restore - implementation attempt failed
+       - using SW_HIDE/SW_SHOWNA instead seems to work initially
+       - but would need to be amended to ensure window accessibility,
+       - also SW_MINIMIZE/SW_RESTORE would have to be adapted throughout
      - remember/preset maximize/fullscreen while minimize (xterm)
    */
 }
@@ -3997,6 +4021,13 @@ static struct {
 
         ShowWindow(wnd, SW_RESTORE);
       }
+#ifdef sanitize_min_restore_via_sync
+      else if (!wp && lp == WIN_RESTORE) {
+        //printf("[%p] WIN_RESTORE\n", wnd);
+        //ShowWindow(wnd, SW_RESTORE);  // only if we used SW_MINIMIZE
+        ShowWindow(wnd, SW_SHOWNA);
+      }
+#endif
       else if (!wp && lp == WIN_TITLE) {
         if (sync_level() || win_tabbar_visible()) {
           refresh_tab_titles(false);
@@ -4201,6 +4232,28 @@ static struct {
           //printf("IDM_KEY_DOWN_UP -> do_win_key_toggle %02X\n", vk);
           do_win_key_toggle(vk, on);
         }
+#ifdef sanitize_min_restore_via_sync
+#ifdef IDM_RESTORE
+        when IDM_RESTORE: {
+          focus_inhibit = true;
+          //printf("[%p] IDM_RESTORE restoring %d focus_here %d\n", wnd, restoring, focus_here);
+          //ShowWindow(wnd, SW_RESTORE);  // only if we used SW_MINIMIZE
+          ShowWindow(wnd, SW_SHOWNA);
+          //printf("[%p] IDM_RESTORE >restore focus_here %d\n", wnd, focus_here);
+        }
+#endif
+#ifdef IDM_FOCUS
+        when IDM_FOCUS: {
+          //printf("[%p] IDM_FOCUS restoring %d focus_here %d\n", wnd, restoring, focus_here);
+          // set focus to raised tab 
+          // after having restored other tab windows of a tab set
+          //BringWindowToTop(wnd);
+          //SetForegroundWindow(wnd);
+          SetActiveWindow(wnd);
+          SetFocus(wnd);
+        }
+#endif
+#endif
       }
     }
 
@@ -4709,13 +4762,99 @@ static int olddelta;
         return 0;
 #endif
 
+    /*
+      When restoring a window from minimized/iconized which is part 
+      of a virtual tabs tabset, there were some problems:
+      • Tabsets did not support transparency as opacity used to cumulate 
+        (handled since 3.6.5).
+      • Every tab had its own taskbar icon (grouped since 3.6.5).
+      • After taskbar grouping of the tabset, window switching behaved 
+        eratically (fixed in f1712).
+      • After taskbar grouping of the tabset, restoring the tab shown there 
+        did not restore the background tabs, so they were not accessible 
+        as usual; while they could be activated on the mintty tabbar, 
+        a noticeable delay exposed that they were just being restored; also 
+        it was not possible to switch to them with Ctrl+TAB (#1242 step 5).
+        To fix this, 4 strategies have been considered:
+        1. when restoring, also restore all background tabs 
+           (selected via #ifdef sanitize_min_restore_via_sync);
+           however, after the procedure, either the wrong tab was brought 
+           to the foreground, or the right foreground tab did not get 
+           the keyboard focus; all attempts to sort this out are still 
+           documented in the code but the approach was finally given up;
+           one problem appeared to be mutual restoring taking place, 
+           which was tried to be inhibited by sending the background 
+           tabs inhibit tokens (see IDM_RESTORE handling) but when that 
+           worked tabs still did not get restored properly
+        2. the current foreground tab could be marked using GWL_USERDATA 
+           and thus maintained while minimized, and a distributed 
+           procedure could use that information to focus the proper tab -
+           (not implemented)
+        3. given that background tabs are hidden anyway (using full 
+           transparency), they are not minimized in the first place;
+           this is enabled below by #ifndef sanitize_min_restore_via_sync 
+           and appears to be working; background tabs are kept hidden 
+           in order to simulate minimized state
+        4. monitor all tabs for being hidden or minimized 
+           and ensure at least one tab is accessible in case the 
+           actual foreground tab gets killed 
+           (selected via #ifdef sanitize_min_restore_via_monitoring, 
+           concept outlined but not fully implemented)
+     */
+#ifdef sanitize_min_restore_via_sync
+      if (wp == SIZE_RESTORED && manage_tab_hiding()) {
+        // sync tab set by spreading RESTORED to all background tabs
+        // to restore all windows of a tab set (see Ctrl+TAB issue above)
+
+        if (!focus_inhibit) {
+          restoring = true;
+          //printf("[%p=%s] restoring/sync focus_here %d focus_inhibit %d\n", wnd, foreground_cwd(), focus_here, focus_inhibit);
+          win_synctabs(3);
+          restoring = false;
+        }
+
+        // after restoring a tab set, the focus must be set to the 
+        // actually restored foreground window;
+        // to distinguish it from the other (hidden) tabs, it was 
+        // marked with the flag focus_here
+        if (focus_here && !focus_inhibit) {
+          // after restoring the tab set, (try to) make sure we get the 
+          // focus into the primary restored window;
+#ifdef IDM_FOCUS
+          // set focus asynchronously
+          //printf("[%p] sending IDM_FOCUS restoring %d focus_here %d\n", wnd, restoring, focus_here);
+          PostMessage(wnd, WM_SYSCOMMAND, IDM_FOCUS, ' ');
+#else
+          // set focus now
+          //BringWindowToTop(wnd);	// prepare SetFocus? doesn't work...
+          //SetForegroundWindow(wnd);	// prepare SetFocus? doesn't work...
+          //SetActiveWindow(wnd);	// prepare SetFocus? doesn't work...
+          SetFocus(wnd);
+#endif
+        }
+
+        focus_here = false;
+        focus_inhibit = false;
+      }
+      else
+#endif
       if (wp == SIZE_RESTORED && win_is_fullscreen)
         clear_fullscreen();
       else if (wp == SIZE_MAXIMIZED && go_fullscr_on_max) {
         go_fullscr_on_max = false;
         make_fullscreen();
       }
-      else if (wp == SIZE_MINIMIZED) {
+      else if (wp == SIZE_MINIMIZED
+#ifndef sanitize_min_restore_via_sync
+               // in multi-tab mode, do not minimise background tabs;
+               // this seems to work also in single-tab mode, but 
+               // keep it anyway ("never change a running system");
+               // side effects of this change are still possible...
+               && !manage_tab_hiding()
+#endif
+              )
+      {
+        // sync tab set by spreading MINIMIZED to all background tabs
         win_synctabs(3);
       }
 
@@ -7558,13 +7697,24 @@ static int dynfonts = 0;
   {
     bool all_hidden = true;
     bool vanished = false;
+#ifdef sanitize_min_restore_via_monitoring
+    bool allmin = true;
+#endif
 
     for (int w = 0; w < ntabinfo; w++) {
       HWND curr_wnd = tabinfo[w].wnd;
 
+#ifdef sanitize_min_restore_via_monitoring
+      LONG style = GetWindowLong(curr_wnd, GWL_STYLE);
+      bool currmin = style & WS_MINIMIZE;
+      if (!currmin)
+        allmin = false;
+#endif
+
       WINDOWINFO curr_wnd_info;
       curr_wnd_info.cbSize = sizeof(WINDOWINFO);
       if (!GetWindowInfo(curr_wnd, &curr_wnd_info)) {
+        //printf("check [%p] min %d %p vanished %d\n", wnd, currmin, curr_wnd, vanished);
         vanished = true;
         if (!manage_tab_hiding())
           break;
@@ -7574,6 +7724,7 @@ static int dynfonts = 0;
         BYTE b;
         GetLayeredWindowAttributes(curr_wnd, 0, &b, 0);
         bool hidden = layered && !b;
+        //printf("check [%p] min %d %p hidden %d\n", wnd, currmin, curr_wnd, hidden);
         //printf("[%p] layered %d attr %d hidden %d\n", wnd, layered, b, hidden);
 
         if (!hidden) {
@@ -7582,6 +7733,12 @@ static int dynfonts = 0;
         }
       }
     }
+#ifdef sanitize_min_restore_via_monitoring
+    if (allmin) {
+      //TODO: ensure a background tab is accessible;
+      // maybe also check for WS_EX_LAYERED-hidden background tabs...
+    }
+#endif
 
 #ifdef monitor_focussed_tab_on_top
     // tab management: ensure focussed tab on top
