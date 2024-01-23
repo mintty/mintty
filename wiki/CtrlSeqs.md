@@ -203,10 +203,14 @@ Mintty supports reflow of wrapped lines if the terminal is resized and its
 width is changed. This feature, applicable with setting `RewrapOnResize`, 
 can be disabled per line, usable for example for prompt lines.
 
-| **sequence**  | **rewrap on resize** |
-|:--------------|:---------------------|
-| `^[[?2027l`   | disabled             |
-| `^[[?2027h`   | enabled (default)    |
+| **sequence**    | **rewrap on resize** |
+|:----------------|:---------------------|
+| `^[[?7723l`     | disabled             |
+| `^[[?7723h`     | enabled (default)    |
+| `^[[?2027l` (*) | disabled             |
+| `^[[?2027h` (*) | enabled (default)    |
+
+Note: 2027 is DEPRECATED as some other terminals meanwhile use it differently.
 
 
 ## Scrollbar hiding ##

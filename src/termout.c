@@ -2344,7 +2344,7 @@ set_modes(bool state)
             do_update();
             usleep(1000);  // flush update
           }
-        when 2027:
+        when 7723 or 2027: /* Reflow mode; 2027 is deprecated */
           term.curs.rewrap_on_resize = state;
       }
     }
@@ -2513,7 +2513,7 @@ get_mode(bool privatemode, int arg)
         return 2 - !!(term.curs.bidimode & LATTR_BOXMIRROR);
       when 2501: /* bidi direction auto-detection */
         return 2 - !(term.curs.bidimode & LATTR_BIDISEL);
-      when 2027:
+      when 7723 or 2027: /* Reflow mode; 2027 is deprecated */
         return 2 - term.curs.rewrap_on_resize;
       otherwise:
         return 0;
