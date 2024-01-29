@@ -216,7 +216,10 @@ get_selection(bool attrs, pos start, pos end, bool rect, bool allinline, bool wi
     }
     if (nl) {
       clip_addchar(buf, '\r', 0, false, hint);
-      clip_addchar(buf, '\n', 0, false, hint);
+      // mark lineend with line attributes, particularly double-width/height
+      cattr lcattr = CATTR_DEFAULT;
+      lcattr.link = line->lattr;
+      clip_addchar(buf, '\n', &lcattr, false, hint);
     }
     start.y++;
     start.x = rect ? old_top_x : 0;
@@ -685,6 +688,9 @@ term_create_html(FILE * hf, int level)
   hprintf(hf, "  .super, .sub, .small { line-height: 0; font-size: 0.7em; letter-spacing: 0.3em; }\n");
   hprintf(hf, "  .super { vertical-align: super; }\n");
   hprintf(hf, "  .sub { vertical-align: sub; }\n");
+  hprintf(hf, "  .double-width {display: inline-block; line-height: 1.2; transform-origin: left; transform: scale(2, 1);}\n");
+  hprintf(hf, "  .double-height-top {display: inline-block; line-height: 2.4; transform-origin: left; transform: scale(2, 2);}\n");
+  hprintf(hf, "  .double-height-bottom {display: none;}\n");
   hprintf(hf, "  #vt100 span {\n");
   if (level >= 2) {
     // font needed in <span> for some tools (e.g. Powerpoint)
@@ -846,6 +852,8 @@ term_create_html(FILE * hf, int level)
   clip_workbuf * buf = get_selection(true, start, end, rect, level >= 3, false);
   int i0 = 0;
   bool odd = true;
+  bool new_line = true;
+  ushort lattr = LATTR_NORM;
   for (uint i = 0; i < buf->len; i++) {
     if (!buf->text[i] || buf->text[i] == '\r' || buf->text[i] == '\n'
         // buf->cattrs[i] ~!= buf->cattrs[i0] ?
@@ -858,6 +866,21 @@ term_create_html(FILE * hf, int level)
         || buf->cattrs[i].ulcolr != buf->cattrs[i0].ulcolr
        )
     {
+      if (new_line) {
+        wchar * nl = wcschr(&buf->text[i], '\n');
+        if (nl) {
+          int offset = nl - &buf->text[i];
+          lattr = (ushort)buf->cattrs[i + offset].link & LATTR_MODE;
+        }
+        else
+          lattr = LATTR_NORM;
+        if (lattr)
+          hprintf(hf, "<div class='double-%s'>",
+                      lattr == LATTR_WIDE ? "width" :
+                      lattr == LATTR_TOP ? "height-top" : "height-bottom");
+        new_line = false;
+      }
+
       // flush chunk with equal attributes
       hprintf(hf, "<span class='%s", odd ? "od" : "ev");
 
@@ -1169,12 +1192,17 @@ term_create_html(FILE * hf, int level)
     if (buf->text[i] == '\n') {
       i++;
       i0 = i;
+      if (lattr)
+        hprintf(hf, "</div>");
       if (enhtml)
-        // <br> needed for Powerpoint
-        hprintf(hf, "<br\n>");
+        // <br> needed for HTML and for Powerpoint
+        hprintf(hf, "<br%s\n>", lattr == LATTR_BOT ? " class='double-height-bottom'" : "");
       else
         hprintf(hf, "\n");
       odd = !odd;
+
+      new_line = true;
+      lattr = LATTR_NORM;
     }
   }
   destroy_clip_workbuf(buf);

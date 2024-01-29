@@ -1,6 +1,7 @@
 Terminal features
   * Dropped DSR 53 (legacy xterm mistake, dropped in xterm 389).
   * HTML screen dump supports subscript or superscript.
+  * HTML screen dump supports DEC double-width lines and pairs of double-height lines.
 
 Misc
   * Fix handling of options to be saved (#1246, #1247).
