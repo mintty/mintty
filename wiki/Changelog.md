@@ -1,5 +1,6 @@
 Terminal features
   * Dropped DSR 53 (legacy xterm mistake, dropped in xterm 389).
+  * HTML screen dump supports subscript or superscript.
 
 Misc
   * Fix handling of options to be saved (#1246, #1247).

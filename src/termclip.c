@@ -682,6 +682,9 @@ term_create_html(FILE * hf, int level)
     );
   if (level >= 3)
     hprintf(hf, "  body.mintty { margin: 0; padding: 0; }\n");
+  hprintf(hf, "  .super, .sub, .small { line-height: 0; font-size: 0.7em; letter-spacing: 0.3em; }\n");
+  hprintf(hf, "  .super { vertical-align: super; }\n");
+  hprintf(hf, "  .sub { vertical-align: sub; }\n");
   hprintf(hf, "  #vt100 span {\n");
   if (level >= 2) {
     // font needed in <span> for some tools (e.g. Powerpoint)
@@ -838,7 +841,7 @@ term_create_html(FILE * hf, int level)
   hprintf(hf, "<body class=mintty onload='setup();'>\n");
   //hprintf(hf, "  <table border=0 cellpadding=0 cellspacing=0><tr><td>\n");
   hprintf(hf, "  <div class=background id='vt100'>\n");
-  hprintf(hf, "   <pre>");
+  hprintf(hf, "   <pre\n>");
 
   clip_workbuf * buf = get_selection(true, start, end, rect, level >= 3, false);
   int i0 = 0;
@@ -900,6 +903,14 @@ term_create_html(FILE * hf, int level)
       // add marker classes
       if (ca->attr & ATTR_FRAMED)
         hprintf(hf, " emoji");  // mark emoji style
+
+      // add subscript or superscript
+      if ((ca->attr & (ATTR_SUBSCR | ATTR_SUPERSCR)) == (ATTR_SUBSCR | ATTR_SUPERSCR))
+        hprintf(hf, " small");
+      else if (ca->attr & ATTR_SUBSCR)
+        hprintf(hf, " sub");
+      else if (ca->attr & ATTR_SUPERSCR)
+        hprintf(hf, " super");
 
       // style adding function
       bool with_style = false;
@@ -1092,10 +1103,30 @@ term_create_html(FILE * hf, int level)
       char * s = cs__wcstoutf(&buf->text[i0]);
       buf->text[i] = save;
 
+      // finish styles
+      hprintf(hf, "'>");
+
       // write chunk, apply HTML escapes
+      void hprinttext(char * t) {
+        if (ca->attr & ATTR_FRAMED)
+          while (*t) {
+            hprintf(hf, "%c", *t++);
+#ifdef export_emoji_style
+            // here we should:
+            // * split the string into UTF-8 characters
+            // * check whether each char actually has an emoji presentation:
+            //   (emoji_tags(emoji_idx(ch)) & EM_emoj)
+            //   and only append 0xFE0F then
+            // * limit (scale) width to actual character width
+            if ((*t & 0xC0) != 0x80)
+              hprintf(hf, "️");
+#endif
+          }
+        else
+          hprintf(hf, "%s", t);
+      }
       char * s1 = strpbrk(s, "<&");
       if (s1) {
-        hprintf(hf, "'>");
         char * s0 = s;
         do {
           if (*s0 == '<') {
@@ -1110,7 +1141,7 @@ term_create_html(FILE * hf, int level)
             char c = s1 ? *s1 : 0;
             if (s1)
               *s1 = 0;
-            hprintf(hf, "%s", s0);
+            hprinttext(s0);
             if (s1) {
               *s1 = c;
               s0 = s1;
@@ -1120,11 +1151,11 @@ term_create_html(FILE * hf, int level)
           }
           s1 = strpbrk(s0, "<&");
         } while (*s0);
-        hprintf(hf, "</span>");
       }
       else
-        hprintf(hf, "'>%s</span>", s);
+        hprinttext(s);
       free(s);
+      hprintf(hf, "</span>");
 
       // forward chunk pointer
       i0 = i;
