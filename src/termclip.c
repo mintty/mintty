@@ -1120,14 +1120,19 @@ term_create_html(FILE * hf, int level)
         // more precise cursor colour adjustments could be made...
       }
 
+      // finish styles
+      hprintf(hf, "'>");
+
       // retrieve chunk of text from buffer
       wchar save = buf->text[i];
       buf->text[i] = 0;
       char * s = cs__wcstoutf(&buf->text[i0]);
       buf->text[i] = save;
-
-      // finish styles
-      hprintf(hf, "'>");
+      // here we could:
+      // * handle the chunk string by Unicode glyphs
+      // * check whether each char is an emoji char or sequence
+      // * check its terminal width
+      // * scale width to actual (narrow or multi-cell) width
 
       // write chunk, apply HTML escapes
       void hprinttext(char * t) {
@@ -1135,12 +1140,10 @@ term_create_html(FILE * hf, int level)
           while (*t) {
             hprintf(hf, "%c", *t++);
 #ifdef export_emoji_style
-            // here we should:
-            // * split the string into UTF-8 characters
+            // here we should, in addition to the above:
             // * check whether each char actually has an emoji presentation:
             //   (emoji_tags(emoji_idx(ch)) & EM_emoj)
             //   and only append 0xFE0F then
-            // * limit (scale) width to actual character width
             if ((*t & 0xC0) != 0x80)
               hprintf(hf, "️");
 #endif
