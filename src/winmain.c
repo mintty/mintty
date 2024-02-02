@@ -3397,6 +3397,17 @@ win_update_transparency(int trans, bool opaque)
         trans = 0;
       if (force_opaque)
         trans = 0;
+      // set the alpha value to opaque first, then back, 
+      // in order to catch weird behaviour of Windows;
+      // if the window is resized while it does not have focus, 
+      // as via Windows 11 grid snap resizing 
+      // (mintty/wsltty#348, transferred to #1256), 
+      // transparency is lost although configuration settings 
+      // (GWL_EXSTYLE, Layered alpha attribute) do not get changed;
+      // this workaround at least recovers the configured mintty setting 
+      // after the window gets focus again; it is, however, not called 
+      // immediately during this resize
+      SetLayeredWindowAttributes(wnd, 0, 255, LWA_ALPHA);
       SetLayeredWindowAttributes(wnd, 0, 255 - (uchar)trans, LWA_ALPHA);
     }
   }

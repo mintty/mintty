@@ -11,6 +11,7 @@ Window handling
   * Fix instable window switching after minimize/restore (#1242, #1249).
   * Fix window switching (Ctrl+ALT) after minimize/restore (#1242).
   * New rewrap per-line disable mode DECRST 7723 (deprecated 2027, #1255).
+  * Semi-workaround for transparency loss when resizing unfocused grid-snapped window (#1256).
 
 Configuration
   * New user-definable key Alt for option KeyFunctions (#1245).
