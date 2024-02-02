@@ -427,7 +427,7 @@ _vk.t:	# Windows Virtual Key Code names, only for debugging
 	sed -e 's/^#define \(VK_[^ ]*\) \(0x[0-9A-Fa-f]*\)$$/	{\2, "\1"},/' -e t -e d /usr/include/w32api/winuser.h > _vk.t
 
 _winidm.t:	winids.h
-	sed -e 's/#define *\(IDM_[^ ]*\).*/	{\1, "\1"},/' -e t -e d winids.h > _winidm.t
+	sed -e '$$ d' -e '/#ifdef/ b' -e '/#endif/ b' -e 's/#define *\(IDM_[^ ]*\).*/	{\1, "\1"},/' -e t -e d winids.h > _winidm.t
 
 _wstyles.t:	# Windows GWL_STYLE and GWL_EXSTYLE values
 	./mkstyles > $@
