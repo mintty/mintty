@@ -648,14 +648,33 @@ sum_rect(short y0, short x0, short y1, short x1)
           sum += 0x10;
         if (attr & ATTR_REVERSE)
           sum += 0x20;
-        if (attr & ATTR_BLINK)
+        if (attr & (ATTR_BLINK | ATTR_BLINK2))
           sum += 0x40;
         if (attr & ATTR_BOLD)
           sum += 0x80;
+        if (attr & ATTR_INVISIBLE) {
+          sum += 0x08;
+          // for xterm, invisible char value is apparently always 0x20
+          sum -= line->chars[x].chr;
+          sum += ' ';
+        }
+        if (attr & ATTR_PROTECTED)
+          sum += 0x04;
+#ifdef support_vt525_color_checksum
+        // it's a bit more complex than this, supports only 16 colours, 
+        // and xterm/VT525 checksum handling is incompatible with 
+        // xterm/VT420 checksum calculation, so we skip this
+        int fg = (attr & ATTR_FGMASK) >> ATTR_FGSHIFT;
+        if (fg < 16)
+          sum += fg << 4;
+        int bg = (attr & ATTR_BGMASK) >> ATTR_BGSHIFT;
+        if (bg < 16)
+          sum += bg;
+#endif
         int xc = x;
         while (line->chars[xc].cc_next) {
           xc += line->chars[xc].cc_next;
-          sum += line->chars[xc].chr & 0xFF;
+          sum += line->chars[xc].chr & 0xFFFF;
         }
       }
     }
