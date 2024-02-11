@@ -599,7 +599,7 @@ update_locale(void)
   default_codepage = cs_codepage(charset);
   default_locale = asform("C.%u", default_codepage);
   cs_ambig_wide = charwidth == 2 || font_ambig_wide;
-  bool gb18030 = 0 == strcasecmp(cfg.charset, "GB18030");
+  gb18030 = 0 == strcasecmp(cfg.charset, "GB18030");
 #endif
 
   update_mode();
