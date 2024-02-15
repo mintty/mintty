@@ -637,7 +637,7 @@ msgstr "选中后立即复制(&Y)"
 #. __ Context menu:
 #: config.c:4133 config.c:4166 config.c:4332 wininput.c:684
 msgid "Copy with TABs"
-msgstr "以纯文本复制（包括 &Tab）"
+msgstr "复制时包含制表符"
 
 #. __ Options - Mouse:
 #. __ Options - Selection:
