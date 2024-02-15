@@ -7,6 +7,7 @@ Terminal features
 Misc
   * Fix handling of options to be saved (#1246, #1247).
   * Tune and fix click-opening URL (mintty/wsltty#346, #1254).
+  * Fix layout of Options dialog Selection pane (#1257).
 
 Window handling
   * Fix instable window switching after minimize/restore (#1242, #1249).

@@ -4318,13 +4318,11 @@ setup_config_box(controlbox * b)
       dlg_stdcheckbox_handler, &new_cfg.input_clears_selection
     );
 
-#define copy_as_html_single_line
-
     //__ Options - Selection: treeview label
     s = ctrl_new_set(b, _("Selection"), null,
     //__ Options - Selection: section title
                         _("Clipboard"));
-    ctrl_columns(s, 2, 50, 50);
+    ctrl_columns(s, 2, 100, 0);
     ctrl_checkbox(
       //__ Options - Selection:
       s, _("Cop&y on select"),
@@ -4335,14 +4333,15 @@ setup_config_box(controlbox * b)
       s, _("Copy with TABs"),
       dlg_stdcheckbox_handler, &new_cfg.copy_tabs
     )->column = 0;
-    ctrl_columns(s, 1, 100);  // reset column stuff so we can rearrange them
-    ctrl_columns(s, 2, 50, 50);
     ctrl_checkbox(
       //__ Options - Selection:
       s, _("Copy as &rich text"),
       dlg_stdcheckbox_handler, &new_cfg.copy_as_rtf
     )->column = 0;
-#ifndef copy_as_html_single_line
+#ifdef copy_as_html_right_block
+    // HTML selection as 2×2 block in right column, with previous:
+    ctrl_columns(s, 1, 100);  // reset column stuff so we can rearrange them
+    ctrl_columns(s, 2, 50, 50);
     ctrl_radiobuttons(
       //__ Options - Selection:
       s, _("Copy as &HTML"), 2,
