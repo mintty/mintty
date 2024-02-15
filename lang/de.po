@@ -504,12 +504,12 @@ msgstr ""
 #. __ Options - Text - Emojis:
 #: config.c:4013
 msgid "Style"
-msgstr ""
+msgstr "Stil"
 
 #. __ Options - Text - Emojis:
 #: config.c:4018
 msgid "Placement"
-msgstr ""
+msgstr "Platzierung"
 
 #. __ Options - Keys: treeview label
 #: config.c:4026 config.c:4056 config.c:4091 config.c:4109
@@ -749,22 +749,22 @@ msgstr "Auswahl und Clipboard"
 #. __ Options - Selection:
 #: config.c:4314
 msgid "Clear selection on input"
-msgstr ""
+msgstr "Auswahl zurücksetzen bei Eingabe"
 
 #. __ Options - Selection: section title
 #: config.c:4323
 msgid "Clipboard"
-msgstr ""
+msgstr "Zwischenablage"
 
 #. __ Options - Selection:
 #: config.c:4372
 msgid "Trim space from selection"
-msgstr ""
+msgstr "Auswahl ohne Leerzeichen am Ende"
 
 #. __ Options - Selection:
 #: config.c:4377
 msgid "Allow setting selection"
-msgstr ""
+msgstr "Setzen der Auswahl zulassen"
 
 #. __ Options - Selection: section title
 #. __ Options - Window: treeview label
@@ -775,12 +775,12 @@ msgstr "Fenster"
 #. __ Options - Selection: clock position of info popup for text size
 #: config.c:4389
 msgid "Show size while selecting (0..12)"
-msgstr ""
+msgstr "Zeig Größe während Auswahl (0..12)"
 
 #. __ Options - Selection:
 #: config.c:4396
 msgid "Suspend output while selecting"
-msgstr ""
+msgstr "Ausgabe pausieren während Auswahl"
 
 #. __ Options - Window: panel title
 #: config.c:4408
@@ -1218,7 +1218,7 @@ msgstr "Speichern als &Bild"
 #. __ Context menu: write terminal window contents as HTML file
 #: wininput.c:713
 msgid "HTML Screen Dump"
-msgstr ""
+msgstr "Speichern als HTML"
 
 #. __ Context menu: clear scrollback buffer (lines scrolled off the window)
 #: wininput.c:721
@@ -1270,7 +1270,7 @@ msgstr "Aufruf:"
 
 #: winmain.c:5905
 msgid "[OPTION]... [ PROGRAM [ARG]... | - ]"
-msgstr ""
+msgstr "[OPTION]... [ PROGRAMM [ARG]... | - ]"
 
 #. __ help text (output of -H / --help), after initial line ("synopsis")
 #: winmain.c:5908
