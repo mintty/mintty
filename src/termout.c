@@ -654,9 +654,11 @@ sum_rect(short y0, short x0, short y1, short x1)
           sum += 0x80;
         if (attr & ATTR_INVISIBLE) {
           sum += 0x08;
-          // for xterm, invisible char value is apparently always 0x20
+#ifdef xterm_before_390
+          // fixed in xterm 390: invisible char value was always 0x20
           sum -= line->chars[x].chr;
           sum += ' ';
+#endif
         }
         if (attr & ATTR_PROTECTED)
           sum += 0x04;
