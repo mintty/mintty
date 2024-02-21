@@ -4434,10 +4434,10 @@ term_invalidate(int left, int top, int right, int bottom)
     top = 0;
   if (right >= term.cols)
     right = term.cols - 1;
-  if (bottom >= term.rows)
-    bottom = term.rows - 1;
+  if (bottom >= term_allrows)
+    bottom = term_allrows - 1;
 
-  for (int i = top; i <= bottom && i < term.rows; i++) {
+  for (int i = top; i <= bottom && i < term_allrows; i++) {
     if ((term.displines[i]->lattr & LATTR_MODE) == LATTR_NORM)
       for (int j = left; j <= right && j < term.cols; j++)
         term.displines[i]->chars[j].attr.attr |= ATTR_INVALID;

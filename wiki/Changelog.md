@@ -3,6 +3,7 @@ Terminal features
   * HTML screen dump supports subscript or superscript.
   * HTML screen dump supports DEC double-width lines and pairs of double-height lines.
   * Tweak DECRQCRA Rectangular Checksum to match xterm (~#1225, xterm 390).
+  * Fix status area refresh, especially after restoring a minimized window.
 
 Misc
   * Fix handling of options to be saved (#1246, #1247).
