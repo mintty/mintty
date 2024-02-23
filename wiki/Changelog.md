@@ -1,3 +1,5 @@
+### 3.7.1 (24 February 2024) ###
+
 Terminal features
   * Dropped DSR 53 (legacy xterm mistake, dropped in xterm 389).
   * HTML screen dump supports subscript or superscript.
