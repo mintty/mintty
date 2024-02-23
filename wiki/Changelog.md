@@ -4,6 +4,7 @@ Terminal features
   * HTML screen dump supports DEC double-width lines and pairs of double-height lines.
   * Tweak DECRQCRA Rectangular Checksum to match xterm (~#1225, xterm 390).
   * Fix status area refresh, especially after restoring a minimized window.
+  * Workaround for rendering failure of top-left background text on background image.
 
 Misc
   * Fix handling of options to be saved (#1246, #1247).

@@ -3328,6 +3328,24 @@ win_text(int tx, int ty, wchar *text, int len, cattr attr, cattr *textattr, usho
   }
 #endif
 
+#ifdef debug_non_blank_lines
+  void printline() {
+    bool dopri = false;
+    for (int i = 0; i < len; i++)
+      if (text[i] != ' ') {
+        dopri = true;
+        break;
+      }
+    if (dopri) {
+      printf("%d:%d %06X %06X (def %d) %d", ty, tx, fg, bg, default_bg, len);
+      for (int i = 0; i < len; i++)
+        printf(" %02X", text[i]);
+      printf("\n");
+    }
+  }
+  printline();
+#endif
+
  /* Begin text output */
   int yt = y + (ff->row_spacing / 2) - (lattr == LATTR_BOT ? cell_height : 0);
   int xt = x + (ff->col_spacing / 2);
@@ -3779,6 +3797,19 @@ draw:;
         SetBkMode(dc, TRANSPARENT);
         overwropt = 0;
       }
+      /*
+        With image background (-o Background=...png), if output in the 
+        top line begins with reverse or coloured background, 
+        a mysterious rendering bug hides the first chunk of output 
+        in frequent cases at that position.
+        (This was traced down in mintty deeply so the remaining suspicion 
+        is it's a bug in Windows.)
+        As a workaround, we invalidate the top-left cell right away 
+        so it gets printed to the window repeatedly, which effectively 
+        makes it visible from the first retry.
+       */
+      if (!tx && !ty && *cfg.background && !default_bg)
+        term_invalidate(0, 0, 0, 0);
     }
   text_out_end();
 
