@@ -3750,7 +3750,9 @@ draw:;
   if (combining || combining_double)
     *dxs = char_width;  // convince Windows to apply font underlining
 
+ /* Now, really draw the text */
   text_out_start(dc, text, len, dxs);
+
   for (int xoff = 0; xoff < xwidth; xoff++)
     if (combining || combining_double) {
       // Workaround for mangled display of combining characters;
@@ -3797,22 +3799,25 @@ draw:;
         SetBkMode(dc, TRANSPARENT);
         overwropt = 0;
       }
-      /*
-        With image background (-o Background=...png), if output in the 
-        top line begins with reverse or coloured background, 
-        a mysterious rendering bug hides the first chunk of output 
-        in frequent cases at that position.
-        (This was traced down in mintty deeply so the remaining suspicion 
-        is it's a bug in Windows.)
-        As a workaround, we invalidate the top-left cell right away 
-        so it gets printed to the window repeatedly, which effectively 
-        makes it visible from the first retry.
-       */
-      if (!tx && !ty && *cfg.background && !default_bg)
-        term_invalidate(0, 0, 0, 0);
     }
+
+    /*
+      With image background (-o Background=...png), if output in the 
+      top line begins with reverse or coloured background, 
+      a mysterious rendering bug hides the first chunk of output 
+      in frequent cases at that position.
+      (This was traced down in mintty deeply so the remaining suspicion 
+      is it's a bug in Windows.)
+      As a workaround, we invalidate the top-left cell right away 
+      so it gets printed to the window repeatedly, which effectively 
+      makes it visible from the first retry.
+     */
+    if (!tx && !ty && *cfg.background && !default_bg)
+      term_invalidate(0, 0, 0, 0);
+
   text_out_end();
 
+ /* Reset coordinate transformation */
   if (coord_transformed2) {
     SetWorldTransform(dc, &old_xform2);
     // restore these in case we're in a shadow loop
