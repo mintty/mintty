@@ -3997,6 +3997,8 @@ do_dcs(void)
         child_printf("\eP1$r%u$}\e\\", term.st_active);
       } else if (!strcmp(s, "-p")) {  // DECARR (auto repeat rate)
         child_printf("\eP1$r%u-p\e\\", term.repeat_rate);
+      } else if (!strcmp(s, ">4m")) {  // XTQMODKEYS
+        child_printf("\eP1$r>4;%um\e\\", term.modify_other_keys);
       } else {
         child_printf("\eP0$r\e\\");
       }

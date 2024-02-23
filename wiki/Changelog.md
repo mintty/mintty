@@ -6,6 +6,7 @@ Terminal features
   * Fix status area refresh, especially after restoring a minimized window.
   * Workaround for rendering failure of top-left background text on background image.
   * Fix invisible and blinking attributes on background image.
+  * Added XTQMODKEYS to DECRQSS (#1189, xterm 389).
 
 Misc
   * Fix handling of options to be saved (#1246, #1247).
