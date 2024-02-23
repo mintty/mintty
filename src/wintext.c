@@ -3753,7 +3753,7 @@ draw:;
  /* Now, really draw the text */
   text_out_start(dc, text, len, dxs);
 
-  for (int xoff = 0; xoff < xwidth; xoff++)
+  for (int xoff = 0; xoff < xwidth; xoff++) {
     if (combining || combining_double) {
       // Workaround for mangled display of combining characters;
       // Arabic shaping should not be affected as the transformed 
@@ -3814,6 +3814,7 @@ draw:;
      */
     if (!tx && !ty && *cfg.background && !default_bg)
       term_invalidate(0, 0, 0, 0);
+  }
 
   text_out_end();
 
