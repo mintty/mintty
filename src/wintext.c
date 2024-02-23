@@ -3751,6 +3751,10 @@ draw:;
     *dxs = char_width;  // convince Windows to apply font underlining
 
  /* Now, really draw the text */
+  // handle invisible and blinking attributes on image background
+  if (fg == bg && default_bg && *cfg.background)
+    goto skip_drawing;
+
   text_out_start(dc, text, len, dxs);
 
   for (int xoff = 0; xoff < xwidth; xoff++) {
@@ -3817,6 +3821,8 @@ draw:;
   }
 
   text_out_end();
+
+skip_drawing:;
 
  /* Reset coordinate transformation */
   if (coord_transformed2) {
