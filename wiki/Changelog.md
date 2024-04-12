@@ -1,3 +1,6 @@
+Terminal features
+  * Restore wrap modes on return from VT52 mode.
+
 ### 3.7.1 (24 February 2024) ###
 
 Terminal features

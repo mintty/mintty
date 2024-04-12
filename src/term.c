@@ -277,6 +277,10 @@ term_reset(bool full)
   }
 
   term.state = NORMAL;
+  if (term.vt52_mode) {
+    term.autowrap = term.save_autowrap;
+    term.rev_wrap = term.save_rev_wrap;
+  }
   term.vt52_mode = 0;
 
   // DECSTR attributes and cursor states to be reset

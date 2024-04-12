@@ -1485,14 +1485,14 @@ do_vt52(uchar c)
 {
   term_cursor *curs = &term.curs;
   term.state = NORMAL;
-  term.autowrap = false;
-  term.rev_wrap = false;
   term.esc_mod = 0;
   switch (c) {
     when '\e':
       term.state = ESCAPE;
     when '<':  /* Exit VT52 mode (Enter VT100 mode). */
       term.vt52_mode = 0;
+      term.autowrap = term.save_autowrap;
+      term.rev_wrap = term.save_rev_wrap;
     when '=':  /* Enter alternate keypad mode. */
       term.app_keypad = true;
     when '>':  /* Exit alternate keypad mode. */
@@ -2138,8 +2138,13 @@ set_modes(bool state)
             term.curs.cset_single = CSET_ASCII;
             term_update_cs();
           }
-          else
+          else {
             term.vt52_mode = 1;
+            term.save_autowrap = term.autowrap;
+            term.save_rev_wrap = term.rev_wrap;
+            term.autowrap = false;
+            term.rev_wrap = false;
+          }
         when 3:  /* DECCOLM: 80/132 columns */
           if (term.deccolm_allowed) {
             term.selected = false;

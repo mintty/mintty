@@ -585,6 +585,8 @@ struct term {
   uchar esc_mod;  // Modifier character in escape sequences
 
   uchar vt52_mode;
+  bool save_autowrap;
+  bool save_rev_wrap;
 
   uint csi_argc;
   uint csi_argv[32];
