@@ -1,5 +1,7 @@
 Terminal features
   * Restore wrap modes on return from VT52 mode.
+  * Fix scrolling artefacts at overhanging emojis with setting EmojiPlacement=full (#1261).
+  * Drop exemptions from emoji space expansion (numbers and flag letters, ~#1104).
 
 ### 3.7.1 (24 February 2024) ###
 
