@@ -3109,6 +3109,13 @@ do_csi(uchar c)
           term.tabs[i] = false;
         term.newtab = 0;  // don't set new default tabs on resize
       }
+    when CPAIR('?', 'W'):  /* DECST8C: reset tab stops (VT510, xterm 389) */
+      if (arg0 == 5 && term.tabs) {
+        for (int i = 0; i < term.cols; i++)
+          term.tabs[i] = (i % 8 == 0);
+      }
+    when CPAIR('"', 'v'):  /* DECRQDE: request display extent (VT340, xterm 387) */
+      child_printf("\e[%d;%d;1;1;1\"w", term.rows, term.cols);
     when 'r': {      /* DECSTBM: set scrolling region */
       int top = arg0_def1 - 1;
       int bot = (arg1 ? min(arg1, term.rows) : term.rows) - 1;

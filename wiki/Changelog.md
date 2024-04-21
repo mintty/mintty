@@ -2,6 +2,8 @@ Terminal features
   * Restore wrap modes on return from VT52 mode.
   * Fix scrolling artefacts at overhanging emojis with setting EmojiPlacement=full (#1261).
   * Drop exemptions from emoji space expansion (numbers and flag letters, ~#1104).
+  * Escape sequence DECST8C reset tab stops (xterm 389, VT510).
+  * Escape sequence DECRQDE request display extent (xterm 387, VT340).
 
 ### 3.7.1 (24 February 2024) ###
 
