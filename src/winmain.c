@@ -219,6 +219,8 @@ static COLORREF (WINAPI * pGetThemeSysColor)(HTHEME hth, int colid) = 0;
 static HTHEME (WINAPI * pOpenThemeData)(HWND, LPCWSTR pszClassList) = 0;
 static HRESULT (WINAPI * pCloseThemeData)(HTHEME) = 0;
 
+static BOOL (WINAPI * pGetLayeredWindowAttributes)(HWND, COLORREF *, BYTE *, DWORD *) = 0;
+
 
 #define dont_debug_guardpath
 
@@ -494,6 +496,8 @@ load_dwm_funcs(void)
       (void *)GetProcAddress(user32, "SetWindowCompositionAttribute");
     pSystemParametersInfo =
       (void *)GetProcAddress(user32, "SystemParametersInfoW");
+    pGetLayeredWindowAttributes =
+      (void *)GetProcAddress(user32, "GetLayeredWindowAttributes");
   }
   if (uxtheme) {
     DWORD win_version = GetVersion();
@@ -7682,10 +7686,10 @@ static int dynfonts = 0;
       WINDOWINFO curr_wnd_info;
       curr_wnd_info.cbSize = sizeof(WINDOWINFO);
       GetWindowInfo(curr_wnd, &curr_wnd_info);
-      if (class_atom == curr_wnd_info.atomWindowType) {
+      if (class_atom == curr_wnd_info.atomWindowType && pGetLayeredWindowAttributes) {
         bool layered = GetWindowLong(curr_wnd, GWL_EXSTYLE) & WS_EX_LAYERED;
         BYTE b;
-        GetLayeredWindowAttributes(curr_wnd, 0, &b, 0);
+        pGetLayeredWindowAttributes(curr_wnd, 0, &b, 0);
         bool hidden = layered && !b;
         if (!hidden) {
           all_hidden = false;
@@ -7730,10 +7734,14 @@ static int dynfonts = 0;
         if (!manage_tab_hiding())
           break;
       }
-      else if (manage_tab_hiding() && class_atom == curr_wnd_info.atomWindowType) {
+      else if (manage_tab_hiding()
+               && class_atom == curr_wnd_info.atomWindowType
+               && pGetLayeredWindowAttributes
+              )
+      {
         bool layered = GetWindowLong(curr_wnd, GWL_EXSTYLE) & WS_EX_LAYERED;
         BYTE b;
-        GetLayeredWindowAttributes(curr_wnd, 0, &b, 0);
+        pGetLayeredWindowAttributes(curr_wnd, 0, &b, 0);
         bool hidden = layered && !b;
         //printf("check [%p] min %d %p hidden %d\n", wnd, currmin, curr_wnd, hidden);
         //printf("[%p] layered %d attr %d hidden %d\n", wnd, layered, b, hidden);
