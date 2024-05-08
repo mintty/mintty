@@ -5,6 +5,9 @@ Terminal features
   * Escape sequence DECST8C reset tab stops (xterm 389, VT510).
   * Escape sequence DECRQDE request display extent (xterm 387, VT340).
 
+Misc
+  * Support fallback to legacy wslbridge for old Windows versions (mintty/wsltty#350).
+
 ### 3.7.1 (24 February 2024) ###
 
 Terminal features
