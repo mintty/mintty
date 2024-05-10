@@ -643,6 +643,22 @@ apply_attr_colour_rtf(cattr ca, attr_colour_mode mode, int * pfgi, int * pbgi)
 }
 
 void
+win_copy_text(const char *s)
+{
+  unsigned int size;
+  wchar *text = cs__mbstowcs(s);
+
+  if (text == NULL) {
+    return;
+  }
+  size = wcslen(text);
+  if (size > 0) {
+    win_copy(text, 0, size + 1);
+  }
+  free(text);
+}
+
+void
 win_copy(const wchar *data, cattr *cattrs, int len)
 {
   win_copy_as(data, cattrs, len, 0);

@@ -46,7 +46,6 @@ extern void win_save_title(void);
 extern void win_restore_title(void);
 extern void win_copy_title(void);
 extern char * win_get_title(void);
-extern void win_copy_text(const char *s);
 
 /* colour */
 extern colour win_get_colour(colour_i);
@@ -87,6 +86,7 @@ extern int win_char_width(xchar, cattrflags attr);
 extern wchar win_combine_chars(wchar bc, wchar cc, cattrflags attr);
 
 extern void win_open(wstring path, bool adjust_dir);
+extern void win_copy_text(const char *s);
 extern void win_copy(const wchar *data, cattr *cattrs, int len);
 extern void win_copy_as(const wchar *data, cattr *cattrs, int len, char what);
 extern void win_paste(void);
