@@ -1763,6 +1763,10 @@ in order to adapt the selected locale to the width preference.
 the response to the Secondary Device Attributes request will report 
 the built-in Unicode version as its third parameter.
 
+\fINote:\fP The \fBsingle\fP settings spoil essential double-width 
+rendering including CJK script display; they are only intended to 
+adapt to terminals that cannot display double width at all.
+
 \fIWarning:\fP With this option, actual width properties as rendered 
 on the screen and width assumptions of the \fBwcwidth\fP function may be 
 inconsistent for the impacted characters, which may confuse 
