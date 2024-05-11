@@ -91,6 +91,7 @@ extern void win_copy(const wchar *data, cattr *cattrs, int len);
 extern void win_copy_as(const wchar *data, cattr *cattrs, int len, char what);
 extern void win_paste(void);
 extern void win_paste_path(void);
+extern char * get_clipboard(void);
 
 extern void win_set_timer(void_fn cb, uint ticks);
 

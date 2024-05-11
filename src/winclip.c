@@ -1347,6 +1347,36 @@ do_win_paste(bool do_path)
   CloseClipboard();
 }
 
+char *
+get_clipboard(void)
+{
+  if (!OpenClipboard(null))
+    return 0;
+
+  HGLOBAL data;
+  char * res;
+  if ((data = GetClipboardData(CF_UNICODETEXT))) {
+    wchar *s = GlobalLock(data);
+    //printf("CF_UNICODETEXT <%ls>\n", s);
+    res = cs__wcstombs(s);
+    GlobalUnlock(data);
+  }
+  else if ((data = GetClipboardData(CF_TEXT))) {
+    char *cs = GlobalLock(data);
+    //printf("CF_TEXT <%s>\n", cs);
+    uint l = MultiByteToWideChar(CP_ACP, 0, cs, -1, 0, 0) - 1;
+    wchar s[l];
+    MultiByteToWideChar(CP_ACP, 0, cs, -1, s, l);
+    res = cs__wcstombs(s);
+    GlobalUnlock(data);
+  }
+  else
+    res = 0;
+
+  CloseClipboard();
+  return res;
+}
+
 void
 win_paste(void)
 {
