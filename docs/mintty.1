@@ -2318,6 +2318,7 @@ The value is bitmask composed of the following values (subject to change):
 \fBAllow control sequence to set selection\fP (AllowSetSelection=false)
 If enabled, the terminal control sequence OSC 52 is allowed to set the 
 clipboard selection for pasting (using base64-encoded contents, like xterm).
+
 Note that this feature is a security risk as remote software may set 
 malicious clipboard contents that could get pasted into the terminal.
 
@@ -2325,7 +2326,9 @@ malicious clipboard contents that could get pasted into the terminal.
 \fBAllow control sequence to paste selection\fP (AllowPasteSelection=false)
 If enabled, the terminal control sequence OSC 52 is allowed to paste the 
 clipboard selection (pasting base64-encoded, like xterm).
-Note that this feature is also considered a security risk.
+
+Note that this feature is considered a security risk as malicious software 
+could spy on your clipboard.
 
 .TQ
 \fBBell		\fP
