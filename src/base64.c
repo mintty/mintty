@@ -202,8 +202,8 @@ int base64_decode(const char *input, int ilen, char *out, int olen)
 #include "base64.h"
 
 struct base64_test {
-  const char *orig;
-  const char *encode;
+  char *orig;
+  char *encode;
 };
 
 static struct base64_test test_sets[] = {
@@ -222,6 +222,7 @@ static struct base64_test test_sets[] = {
   { "bö", "YsO2" },
   { "e€", "ZeKCrA==" },
   { "oeœ", "b2XFkw==" },
+  { "", "a,b" }
 };
 
 #define ARRAY_SIZE(a)		(sizeof(a) / sizeof(a[0]))
@@ -249,10 +250,10 @@ static void decode_string(const char *s, char *out, int len)
 
   out_len = base64_decode(s, strlen(s), out, len - 1);
   if (out_len < 0) {
-    error("Encode %s with len %d return %d\n", s, len, out_len);
+    error("Decode %s with len %d return %d\n", s, len, out_len);
   }
   if (out_len > len - 1) {
-    error("Encode %s with len %d return invalid len %d\n", s, len, out_len);
+    error("Decode %s with len %d return invalid len %d\n", s, len, out_len);
   }
   out[out_len] = '\0';
 }
@@ -262,7 +263,7 @@ static void test_encode(void)
   char buf[1024];
   unsigned int i;
 
-  for (i = 0; i < ARRAY_SIZE(test_sets); i += 1) {
+  for (i = 0; i < ARRAY_SIZE(test_sets) - 1; i += 1) {
     encode_string(test_sets[i].orig, &buf[0], sizeof(buf));
     if (strcmp(buf, test_sets[i].encode) != 0) {
       error("Encode %s return %s, expect %s\n",
