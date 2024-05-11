@@ -151,6 +151,7 @@ const config default_cfg = {
   .copy_as_rtf_font_size = 0,
   .trim_selection = true,
   .allow_set_selection = false,
+  .allow_paste_selection = false,
   .selection_show_size = false,
   // Window
   .cols = 80,
@@ -471,6 +472,7 @@ options[] = {
   {"CopyAsRTFFontHeight", OPT_INT, offcfg(copy_as_rtf_font_size)},
   {"TrimSelection", OPT_BOOL, offcfg(trim_selection)},
   {"AllowSetSelection", OPT_BOOL, offcfg(allow_set_selection)},
+  {"AllowPasteSelection", OPT_BOOL, offcfg(allow_paste_selection)},
   {"SelectionShowSize", OPT_INT, offcfg(selection_show_size)},
 
   // Window
@@ -4374,11 +4376,13 @@ setup_config_box(controlbox * b)
       s, _("Trim space from selection"),
       dlg_stdcheckbox_handler, &new_cfg.trim_selection
     );
+#ifdef options_menu_allow_selection
     ctrl_checkbox(
       //__ Options - Selection:
       s, _("Allow setting selection"),
       dlg_stdcheckbox_handler, &new_cfg.allow_set_selection
     );
+#endif
 
     //__ Options - Selection: treeview label
     s = ctrl_new_set(b, _("Selection"), null,

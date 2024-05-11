@@ -2318,6 +2318,14 @@ The value is bitmask composed of the following values (subject to change):
 \fBAllow control sequence to set selection\fP (AllowSetSelection=false)
 If enabled, the terminal control sequence OSC 52 is allowed to set the 
 clipboard selection for pasting (using base64-encoded contents, like xterm).
+Note that this feature is a security risk as remote software may set 
+malicious clipboard contents that could get pasted into the terminal.
+
+.TQ
+\fBAllow control sequence to paste selection\fP (AllowPasteSelection=false)
+If enabled, the terminal control sequence OSC 52 is allowed to paste the 
+clipboard selection (pasting base64-encoded, like xterm).
+Note that this feature is also considered a security risk.
 
 .TQ
 \fBBell		\fP
@@ -2448,8 +2456,9 @@ for an overview of SGR attributes.
 .br
 See \fIhttp://invisible\-island.net/xterm/ctlseqs/ctlseqs.txt\fP
 for a full listing of escape control sequences.
+
 .br
-For some of the option values, more specific configuration parameters exist:
+Some of the settings have more specific configuration options:
 .br
 \(en AllowBlinking=false \(<> SuppressSGR=5,6
 .br
@@ -2457,7 +2466,7 @@ For some of the option values, more specific configuration parameters exist:
 .br
 \(en NoAltScreen=true \(~~ SuppressDEC=47,1047,1048,1049 (switchable)
 .br
-\(en AllowSetSelection=false \(<> SuppressOSC=52
+\(en Allow{Set,Paste}Selection=false \(<> SuppressOSC=52
 .RE
 
 .TQ

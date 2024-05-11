@@ -4,9 +4,15 @@ Terminal features
   * Drop exemptions from emoji space expansion (numbers and flag letters, ~#1104).
   * Escape sequence DECST8C reset tab stops (xterm 389, VT510).
   * Escape sequence DECRQDE request display extent (xterm 387, VT340).
+  * Support OSC 52 ? to paste base64-encoded clibboard (#1264, xterm).
+  * Support OSC 52 to clear clibboard (xterm).
 
 Misc
   * Support fallback to legacy wslbridge for old Windows versions (mintty/wsltty#350).
+
+Configuration
+  * New option AllowPasteSelection (#1264).
+  * Drop AllowSetSelection from interactive Options menu (~#1264).
 
 ### 3.7.1 (24 February 2024) ###
 
