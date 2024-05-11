@@ -11,8 +11,9 @@ enum {
 };
 
 
-int base64_encode(const char *input, int ilen, char *output, int olen);
-int base64_decode(const char *input, int ilen, char *out, int olen);
-int base64_decode_clip(const char *input, int ilen, char *out, int olen);
+extern int base64_encode(const unsigned char *input, int ilen, char *output, int olen);
+extern char * base64(char * s);
+extern int base64_decode(const char *input, int ilen, char *out, int olen);
+extern int base64_decode_clip(const char *input, int ilen, char *out, int olen);
 
 #endif
