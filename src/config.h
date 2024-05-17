@@ -89,6 +89,7 @@ typedef struct {
   bool old_locale;
   int fontmenu;
   wstring tek_font;
+  wstring tab_font;
   // Keys
   bool backspace_sends_bs;
   bool delete_sends_del;

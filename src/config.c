@@ -96,6 +96,7 @@ const config default_cfg = {
   .old_locale = false,
   .fontmenu = -1,
   .tek_font = W(""),
+  .tab_font = W(""),
   // Keys
   .backspace_sends_bs = CERASE == '\b',
   .delete_sends_del = false,
@@ -411,6 +412,7 @@ options[] = {
   {"FontRTL", OPT_WSTRING, offcfg(fontfams[11].name)},
   {"FontRTLWeight", OPT_INT, offcfg(fontfams[11].weight)},
   {"TekFont", OPT_WSTRING, offcfg(tek_font)},
+  {"TabFont", OPT_WSTRING, offcfg(tab_font)},
 
   // Keys
   {"BackspaceSendsBS", OPT_BOOL, offcfg(backspace_sends_bs)},

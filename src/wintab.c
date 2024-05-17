@@ -126,6 +126,26 @@ tab_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp, UINT_PTR uid, DWORD_PTR data
 }
 #endif
 
+static void
+create_tabbar_font()
+{
+  if (tabbar_font)
+    DeleteObject(tabbar_font);
+  tabbar_font = 0;
+  if (*cfg.tab_font)
+    tabbar_font = CreateFontW(cell_height * TABFONTSCALE, cell_width * TABFONTSCALE, 0, 0, FW_DONTCARE, false, false, false,
+                              DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
+                              DEFAULT_QUALITY, FIXED_PITCH | FF_DONTCARE,
+                              cfg.tab_font);
+  if (!tabbar_font) {
+    tabbar_font = CreateFontW(cell_height * TABFONTSCALE, cell_width * TABFONTSCALE, 0, 0, FW_DONTCARE, false, false, false,
+                              DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
+                              DEFAULT_QUALITY, FIXED_PITCH | FF_DONTCARE,
+                              cfg.font.name);
+  }
+  SendMessage(tab_wnd, WM_SETFONT, (WPARAM)tabbar_font, 1);
+}
+
 // We need to make a container for the tabbar for handling WM_NOTIFY, also for further extensions
 static LRESULT CALLBACK
 container_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
@@ -170,13 +190,7 @@ container_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 #if CYGWIN_VERSION_API_MINOR >= 74
     SetWindowSubclass(tab_wnd, tab_proc, 0, 0);
 #endif
-    if (tabbar_font)
-      DeleteObject(tabbar_font);
-    tabbar_font = CreateFontW(cell_height * TABFONTSCALE, cell_width * TABFONTSCALE, 0, 0, FW_DONTCARE, false, false, false,
-                              DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
-                              DEFAULT_QUALITY, FIXED_PITCH | FF_DONTCARE,
-                              cfg.font.name);
-    SendMessage(tab_wnd, WM_SETFONT, (WPARAM)tabbar_font, 1);
+    create_tabbar_font();
   }
   else if (msg == WM_SHOWWINDOW) {
     //printf("tabbar con_proc WM_SHOWWINDOW\n");
@@ -189,13 +203,7 @@ container_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
   }
   else if (msg == WM_SIZE) {
     //printf("tabbar con_proc WM_SIZE\n");
-    if (tabbar_font)
-      DeleteObject(tabbar_font);
-    tabbar_font = CreateFontW(cell_height * TABFONTSCALE, cell_width * TABFONTSCALE, 0, 0, FW_DONTCARE, false, false, false,
-                              DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
-                              DEFAULT_QUALITY, FIXED_PITCH | FF_DONTCARE,
-                              cfg.font.name);
-    SendMessage(tab_wnd, WM_SETFONT, (WPARAM)tabbar_font, 1);
+    create_tabbar_font();
 
     SetWindowPos(tab_wnd, 0,
                  0, 0,

@@ -13,6 +13,7 @@ Misc
 Configuration
   * New option AllowPasteSelection (#1264).
   * Drop AllowSetSelection from interactive Options menu (~#1264).
+  * New option TabFont.
 
 ### 3.7.1 (24 February 2024) ###
 
