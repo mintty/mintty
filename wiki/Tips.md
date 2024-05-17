@@ -187,7 +187,7 @@ installed, mintty can be called from cygwin to run a WSL terminal session:
 * `mintty --WSL` (for the Default distribution as set with `wslconfig /s` or `wsl -s`)
 
 Note, the `wslbridge2` gateways need to be installed in `/bin` for this purpose 
-(see below for details).
+(see below for details). (Fallback to legacy wslbridge on older Windows is supported.)
 
 A WSL terminal session can be configured for the mintty session launcher 
 in the config file, like:

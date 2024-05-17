@@ -326,7 +326,8 @@ namespace and converted before opening in Windows.
 \fB\-\-WSL\fP=\fIWSL DISTRIBUTION NAME\fP
 Run a WSL session, setting other parameters as appropriate and involving 
 the \fIwslbridge2\fP gateway implicitly 
-(which should be installed in /bin for this purpose).
+(which should be installed in /bin for this purpose; 
+fallback to legacy wslbridge on older Windows is supported).
 If the distribution name is empty, the default WSL installation is run; 
 otherwise, it refers to the installed WSL packages as listed by the 
 Windows tool \fBwslconfig /l\fP or \fBwsl \-l\fP.
