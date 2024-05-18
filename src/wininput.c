@@ -214,6 +214,7 @@ wnd_enum_tabs(HWND curr_wnd, LPARAM lParam)
     int len = GetWindowTextLengthW(curr_wnd);
     wchar title[len + 1];
     len = GetWindowTextW(curr_wnd, title, len + 1);
+    strip_title(title);
 
     AppendMenuW((HMENU)menu, MF_ENABLED, IDM_GOTAB + tabi, title);
     MENUITEMINFOW mi;

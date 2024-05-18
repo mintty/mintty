@@ -10,6 +10,9 @@ Terminal features
 Misc
   * Support fallback to legacy wslbridge for old Windows versions (mintty/wsltty#350).
 
+Desktop integration
+  * Avoid taskbar icon width twitching in Windows 11 (#1263).
+
 Configuration
   * New option AllowPasteSelection (#1264).
   * Drop AllowSetSelection from interactive Options menu (~#1264).

@@ -856,6 +856,14 @@ win_set_tab_focus(char tag)
   }
 }
 
+void
+strip_title(wchar * title)
+{
+  wchar * tp = title + wcslen(title) - 1;
+  while (tp > title && *tp == L'\u00A0')
+    *tp-- = 0;
+}
+
 /*
   Enumerate all windows of the mintty class.
   ///TODO: Maintain a local list of them.
@@ -885,6 +893,7 @@ refresh_tab_titles(bool trace)
       }
       wchar title[len + 1];
       GetWindowTextW(curr_wnd, title, len + 1);
+      strip_title(title);
 #ifdef debug_tabbar
       printf("[%8p] get tab %8p: <%ls>\n", wnd, curr_wnd, title);
 #endif
@@ -1084,18 +1093,26 @@ win_set_icon(char * s, int icon_index)
   }
 }
 
+static wchar * iconlabelpad = W("                                                  ");
+
 void
 win_set_title(char *title)
 {
   //printf("win_set_title settable %d <%s>\n", title_settable, title);
+static int padlen = 0;
+  if (!padlen)
+    padlen = wcslen(iconlabelpad);
+
   if (title_settable) {
-    wchar wtitle[strlen(title) + 1];
+    wchar wtitle[strlen(title) + 1 + padlen];
     if (cs_mbstowcs(wtitle, title, lengthof(wtitle)) >= 0) {
       // check current title to suppress unnecessary update_tab_titles()
       int len = GetWindowTextLengthW(wnd);
       wchar oldtitle[len + 1];
       GetWindowTextW(wnd, oldtitle, len + 1);
+      strip_title(oldtitle);
       if (0 != wcscmp(wtitle, oldtitle)) {
+        wcscat(wtitle, iconlabelpad);
         SetWindowTextW(wnd, wtitle);
         usleep(1000);
         update_tab_titles();
@@ -1110,7 +1127,8 @@ win_copy_title(void)
   int len = GetWindowTextLengthW(wnd);
   wchar title[len + 1];
   len = GetWindowTextW(wnd, title, len + 1);
-  win_copy(title, 0, len + 1);
+  strip_title(title);
+  win_copy(title, 0, wcslen(title) + 1);
 }
 
 char *
@@ -1119,6 +1137,7 @@ win_get_title(void)
   int len = GetWindowTextLengthW(wnd);
   wchar title[len + 1];
   GetWindowTextW(wnd, title, len + 1);
+  strip_title(title);
   return cs__wcstombs(title);
 }
 
@@ -1163,6 +1182,7 @@ win_save_title(void)
   int len = GetWindowTextLengthW(wnd);
   wchar *title = newn(wchar, len + 1);
   GetWindowTextW(wnd, title, len + 1);
+  // don't strip_title; fill the stack transparently, with the padding
   delete(titles[titles_i]);
   titles[titles_i++] = title;
   if (titles_i == lengthof(titles))
@@ -1176,6 +1196,7 @@ win_restore_title(void)
     titles_i = lengthof(titles);
   wstring title = titles[--titles_i];
   if (title) {
+    // don't pad title; stack is filled transparently, with the padding
     SetWindowTextW(wnd, title);
     update_tab_titles();
     delete(title);
@@ -1292,6 +1313,7 @@ wnd_enum_proc(HWND curr_wnd, LPARAM unused(lp))
     int len = GetWindowTextLengthW(curr_wnd);
     wchar title[len + 1];
     GetWindowTextW(curr_wnd, title, len + 1);
+    strip_title(title);
     printf("[%8p.%d]%1s %2s %8p %ls\n", wnd, (int)unused_lp,
            curr_wnd == wnd ? "=" : IsIconic(curr_wnd) ? "i" : "",
            !first_wnd && curr_wnd != wnd && !IsIconic(curr_wnd) ? "->" : "",
@@ -7172,6 +7194,12 @@ static int dynfonts = 0;
     window_style |= WS_HSCROLL;
   else if (horbar == 2 && horsqueeze())
     window_style |= WS_HSCROLL;
+
+  // Pad title with trailing non-break space...
+  wchar * labelbuf = newn(wchar, wcslen(wtitle) + wcslen(iconlabelpad) + 1);
+  wcscpy(labelbuf, wtitle);
+  wcscat(labelbuf, iconlabelpad);
+  wtitle = labelbuf;
 
   // Create initial window.
   term.show_scrollbar = cfg.scrollbar;  // hotfix #597
