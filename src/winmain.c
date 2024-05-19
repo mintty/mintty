@@ -143,6 +143,7 @@ static bool wsltty_appx = true;
 #else
 static bool wsltty_appx = false;
 #endif
+OSVERSIONINFO winver;
 
 
 static HBITMAP caretbm;
@@ -1099,9 +1100,16 @@ void
 win_set_title(char *title)
 {
   //printf("win_set_title settable %d <%s>\n", title_settable, title);
-static int padlen = 0;
-  if (!padlen)
-    padlen = wcslen(iconlabelpad);
+static int padlen = -1;
+  if (padlen < 0) {
+    if (winver.dwMajorVersion >= 0xA0 && winver.dwBuildNumber >= 22000)
+      // Windows 11
+      padlen = wcslen(iconlabelpad);
+    else {
+      padlen = 0;
+      iconlabelpad = 0;
+    }
+  }
 
   if (title_settable) {
     wchar wtitle[strlen(title) + 1 + padlen];
@@ -1112,7 +1120,9 @@ static int padlen = 0;
       GetWindowTextW(wnd, oldtitle, len + 1);
       strip_title(oldtitle);
       if (0 != wcscmp(wtitle, oldtitle)) {
-        wcscat(wtitle, iconlabelpad);
+        if (padlen > 0)
+          // Windows 11: pad title with trailing non-break space
+          wcscat(wtitle, iconlabelpad);
         SetWindowTextW(wnd, wtitle);
         usleep(1000);
         update_tab_titles();
@@ -6259,6 +6269,10 @@ main(int argc, char *argv[])
     fflush(mtlog);
   }
 #endif
+
+  winver.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
+  GetVersionEx(&winver);
+
   init_config();
   cs_init();
 
@@ -7195,11 +7209,14 @@ static int dynfonts = 0;
   else if (horbar == 2 && horsqueeze())
     window_style |= WS_HSCROLL;
 
-  // Pad title with trailing non-break space...
-  wchar * labelbuf = newn(wchar, wcslen(wtitle) + wcslen(iconlabelpad) + 1);
-  wcscpy(labelbuf, wtitle);
-  wcscat(labelbuf, iconlabelpad);
-  wtitle = labelbuf;
+  // Avoid twitching taskbar icon (#1263)
+  if (winver.dwMajorVersion >= 0xA0 && winver.dwBuildNumber >= 22000) {
+    // Windows 11: pad title with trailing non-break space
+    wchar * labelbuf = newn(wchar, wcslen(wtitle) + wcslen(iconlabelpad) + 1);
+    wcscpy(labelbuf, wtitle);
+    wcscat(labelbuf, iconlabelpad);
+    wtitle = labelbuf;
+  }
 
   // Create initial window.
   term.show_scrollbar = cfg.scrollbar;  // hotfix #597
