@@ -6,6 +6,7 @@ Terminal features
   * Escape sequence DECRQDE request display extent (xterm 387, VT340).
   * Support OSC 52 ? to paste base64-encoded clibboard (#1264, xterm).
   * Support OSC 52 to clear clibboard (xterm).
+  * Fixed DSR Locator status response.
 
 Misc
   * Support fallback to legacy wslbridge for old Windows versions (mintty/wsltty#350).

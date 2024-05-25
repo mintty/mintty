@@ -3276,8 +3276,8 @@ do_csi(uchar c)
         when 26:  // Keyboard Report
           child_printf("\e[?27;0;%cn", term.has_focus ? '0' : '8');
         // DEC Locator
-        when /*53 or*/ 55:  // 53 was a legacy xterm mistake, dropped in 389
-          child_printf("\e[?53n");
+        when 55:  // alternative 53 was a legacy xterm mistake, dropped in 389
+          child_printf("\e[?50n");  // 53 was a ctlseqs mistake
         when 56:
           child_printf("\e[?57;1n");
       }
