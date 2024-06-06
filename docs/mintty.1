@@ -1876,9 +1876,11 @@ See also settings \fBAltGrIsAlsoAlt\fP and \fBCtrlAltIsAltGr\fP.
 
 .TQ
 \fBOld method of AltGr detection\fP (OldAltGrDetection=no)
-Setting this hidden option would disable a workaround for an 
-incompatibility in the Windows on-screen keyboard, 
-just in case it has any side effects.
+Setting this hidden option restores handling of the AltGr keyboard modifier 
+to old versions, it is a bitmask combining values; 1 would disable a 
+workaround for an incompatibility in the Windows on-screen keyboard, 
+2 would disable revised AltGr handling for flexible right-Alt/left-Control 
+sequence variations.
 
 .TQ
 \fBSupport injection of external hotkeys\fP (SupportExternalHotkeys=2)
@@ -4053,7 +4055,7 @@ Additional information can be found on the wiki on the mintty project page
 
 .SH LICENSE
 
-Copyright (C) 2023 Thomas Wolff, Andy Koppe
+Copyright (C) 2024 Thomas Wolff, Andy Koppe
 
 Mintty is released under the terms of the the \fIGNU General Public License\fP
 version 3.

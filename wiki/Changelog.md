@@ -8,6 +8,9 @@ Terminal features
   * Support OSC 52 to clear clibboard (xterm).
   * Fixed DSR Locator status response.
 
+Keyboard handling
+  * Revise AltGr handling to support flexible right-Alt+left-Ctrl combinations (#1266).
+
 Misc
   * Support fallback to legacy wslbridge for old Windows versions (mintty/wsltty#350).
 

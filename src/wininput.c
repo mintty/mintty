@@ -1,5 +1,5 @@
 // wininput.c (part of mintty)
-// Copyright 2008-23 Andy Koppe, 2015-2023 Thomas Wolff
+// Copyright 2008-23 Andy Koppe, 2015-2024 Thomas Wolff
 // Licensed under the terms of the GNU General Public License v3 or later.
 
 #include "winpriv.h"
@@ -893,7 +893,11 @@ static int alt_code;
 static bool alt_uni;
 
 static bool lctrl;  // Is left Ctrl pressed?
-static int lctrl_time;
+static int lctrl_time = 0;
+static int ralt_time = 0;
+static int is_lctrl = 0;
+static bool is_ralt = false;
+static bool is_altgr = false;
 
 mod_keys
 get_mods(void)
@@ -1986,8 +1990,8 @@ vk_name(uint key)
   for (uint i = 0; i < lengthof(vk_names); i++)
     if (key == vk_names[i].vk_)
       return vk_names[i].vk_name;
-  static char vk_name[3];
-  sprintf(vk_name, "%02X", key & 0xFF);
+  static char vk_name[6];
+  sprintf(vk_name, "VK_%02X", key & 0xFF);
   return vk_name;
 }
 #endif
@@ -2403,6 +2407,65 @@ insert_alt_code(void)
 // So let's go with the biggest number.
 #define TO_UNICODE_MAX 16
 
+#define dont_debug_altgr
+
+#ifdef debug_altgr
+
+static int
+send_vks(bool down, int vk1, int vk2)
+{
+#ifdef debug_virtual_key_codes
+  printf("[7mfeeding VKs %02X %02X[m\n", vk1, vk2);
+#endif
+
+  DWORD ext(int vk) {
+    if (vk == VK_RSHIFT || vk == VK_RCONTROL || vk == VK_RMENU || vk == VK_RBUTTON || vk == VK_RWIN)
+      return KEYEVENTF_EXTENDEDKEY;
+    else
+      return 0;
+  }
+
+  INPUT ki[2];
+  ki[0].type = INPUT_KEYBOARD;
+  ki[1].type = INPUT_KEYBOARD;
+  ki[0].ki.dwFlags = (down ? 0 : KEYEVENTF_KEYUP) | ext(vk1);
+  ki[1].ki.dwFlags = (down ? 0 : KEYEVENTF_KEYUP) | ext(vk2);
+  ki[0].ki.wVk = vk1 & 0xFF;
+  ki[1].ki.wVk = vk2 & 0xFF;
+  ki[0].ki.wScan = 0;
+  ki[1].ki.wScan = 0;
+  LONG t = GetMessageTime() + 10;
+  ki[0].ki.time = t;
+  ki[1].ki.time = t;
+  ki[0].ki.dwExtraInfo = 0;
+  ki[1].ki.dwExtraInfo = 0;
+  return SendInput(2, ki, sizeof(INPUT));
+}
+
+static bool
+send_test_vks(bool down, int key)
+{
+  if (key == 0x31)
+    return send_vks(down, VK_LCONTROL, VK_LMENU);
+  if (key == 0x32)
+    return send_vks(down, VK_LCONTROL, VK_RMENU);
+  if (key == 0x33)
+    return send_vks(down, VK_RCONTROL, VK_LMENU);
+  if (key == 0x34)
+    return send_vks(down, VK_RCONTROL, VK_RMENU);
+  if (key == 0x35)
+    return send_vks(down, VK_LMENU, VK_LCONTROL);
+  if (key == 0x36)
+    return send_vks(down, VK_LMENU, VK_RCONTROL);
+  if (key == 0x37)
+    return send_vks(down, VK_RMENU, VK_LCONTROL);
+  if (key == 0x38)
+    return send_vks(down, VK_RMENU, VK_RCONTROL);
+  return false;
+}
+
+#endif
+
 bool
 win_key_down(WPARAM wp, LPARAM lp)
 {
@@ -2421,7 +2484,12 @@ win_key_down(WPARAM wp, LPARAM lp)
     comp_state = COMP_NONE;
 
 #ifdef debug_virtual_key_codes
-  printf("win_key_down %02X %s scan %d ext %d rpt %d/%d other %02X\n", key, vk_name(key), scancode, extended, repeat, count, HIWORD(lp) >> 8);
+  printf("[7mwin_key_down %02X %s scan %02X ext %d rpt %d/%d other %02X[m\n", key, vk_name(key), scancode, extended, repeat, count, HIWORD(lp) >> 8);
+#endif
+
+#ifdef debug_altgr
+  if (send_test_vks(true, key))
+    return false;
 #endif
 
 static LONG last_key_time = 0;
@@ -2466,7 +2534,7 @@ static LONG last_key_time = 0;
 
   // Fix AltGr detection;
   // workaround for broken Windows on-screen keyboard (#692)
-  if (!cfg.old_altgr_detection) {
+  if (!(cfg.old_altgr_detection & 1)) {
     static bool lmenu_tweak = false;
     if (key == VK_MENU && !scancode) {
       extended = true;
@@ -2485,20 +2553,73 @@ static LONG last_key_time = 0;
   // Distinguish real LCONTROL keypresses from fake messages sent for AltGr.
   // It's a fake if the next message is an RMENU with the same timestamp.
   // Or, as of buggy TeamViewer, if the RMENU comes soon after (#783).
-  if (key == VK_CONTROL && !extended) {
-    lctrl = true;
-    lctrl_time = GetMessageTime();
-    //printf("lctrl (true) %d (%d)\n", lctrl, is_key_down(VK_LCONTROL));
-  }
-  else if (lctrl_time) {
-    lctrl = !(key == VK_MENU && extended 
-              && GetMessageTime() - lctrl_time <= cfg.ctrl_alt_delay_altgr);
-    lctrl_time = 0;
-    //printf("lctrl (time) %d (%d)\n", lctrl, is_key_down(VK_LCONTROL));
+  if (cfg.old_altgr_detection & 2) {
+    if (key == VK_CONTROL && !extended) {
+      lctrl = true;
+      lctrl_time = GetMessageTime();
+      //printf("lctrl (true) %d (%d)\n", lctrl, is_key_down(VK_LCONTROL));
+    }
+    else if (lctrl_time) {
+      lctrl = !(key == VK_MENU && extended 
+                && GetMessageTime() - lctrl_time <= cfg.ctrl_alt_delay_altgr);
+      lctrl_time = 0;
+      //printf("lctrl (time) %d (%d)\n", lctrl, is_key_down(VK_LCONTROL));
+    }
+    else {
+      lctrl = is_key_down(VK_LCONTROL) && (lctrl || !is_key_down(VK_RMENU));
+      //printf("lctrl (else) %d (%d)\n", lctrl, is_key_down(VK_LCONTROL));
+    }
   }
   else {
-    lctrl = is_key_down(VK_LCONTROL) && (lctrl || !is_key_down(VK_RMENU));
-    //printf("lctrl (else) %d (%d)\n", lctrl, is_key_down(VK_LCONTROL));
+    // State machine to distinguish left-Control and right-Alt 
+    // as pressed in any sequence with same timestamp to form AltGr,
+    // as well as both modifiers separately,
+    // in order to support all of AltGr, Ctrl+AltGr, etc.
+    // - workaround for Citrix problem (#1266)
+    // - keep this workaround separate from other AltGr workarounds 
+    //   to prevent nasty interference, so maintain extra flags and timestamps
+/*
+keys: C is VK_LCONTROL, 2 is simulated LCONTROL+RMENU, 7 is RMENU+LCONTROL
+VK: events observed
+state: as desired
+	1	2	3	4	5	6	7	8
+keys	AGr/2	7	C+AGr	AGr+C	C+2	2+C	C+7	7+C
+VK	C=M	C=M=C	C+M	C=M+C	C+C=M	C=M+C	C+M=C	C=M=C+C
+state	A	A	CA	CA	CA	CA	CA	CA
+
+state transition matrix
+state		input (= same timestamp, > later)
+C	M	>C	=C	>M	=M
+---------------------------------------------
+0	0	+C	?	+M	?
+C	0	2C	-	C+MA	-1C+MA
+0	M	+C	+A	-	-
+C	M	+C	+A	-	-
+*/
+    if (key == VK_CONTROL && !extended) {
+      lctrl_time = GetMessageTime();
+      if (is_ralt && lctrl_time - ralt_time <= cfg.ctrl_alt_delay_altgr)
+        is_altgr = true;
+      else
+        if (is_lctrl)
+          is_lctrl = 2;
+        else
+          is_lctrl = true;
+    }
+    else if (key == VK_MENU && extended) {
+      ralt_time = GetMessageTime();
+      if (!is_ralt) {
+        is_ralt = true;
+        if (is_lctrl) {
+          is_altgr = true;
+          if (is_ralt && ralt_time - lctrl_time <= cfg.ctrl_alt_delay_altgr)
+            if (is_lctrl)
+              is_lctrl -= 1;
+        }
+      }
+    }
+    lctrl = is_lctrl;
+    //printf("-- is_lctrl %d is_ralt %d is_altgr %d\n", is_lctrl, is_ralt, is_altgr);
   }
 
   bool numlock = kbd[VK_NUMLOCK] & 1;
@@ -2528,6 +2649,8 @@ static LONG last_key_time = 0;
   }
 
   bool altgr = ralt | ctrl_lalt_altgr;
+  //altgr |= is_altgr;  // doesn't appear to be necessary
+
   // While this should more properly reflect the AltGr modifier state, 
   // with the current implementation it has the opposite effect;
   // it spoils Ctrl+AltGr with modify_other_keys mode.
@@ -3375,10 +3498,10 @@ static struct {
   }
 
   bool altgr_key(void) {
+    trace_alt("altgr_key altgr %d alt %d -> %d\n", altgr, alt, lalt & !ctrl_lalt_altgr);
     if (!altgr)
       return false;
 
-    trace_alt("altgr_key alt %d -> %d\n", alt, lalt & !ctrl_lalt_altgr);
     alt = lalt & !ctrl_lalt_altgr;
 
     // Sync keyboard layout with our idea of AltGr.
@@ -3388,6 +3511,8 @@ static struct {
     // Need to check there's a Ctrl that isn't part of Ctrl+LeftAlt==AltGr.
     if ((ctrl & !ctrl_lalt_altgr) | (lctrl & rctrl))
       return false;
+
+    trace_alt("altgr_key -> layout alt %d\n", alt);
 
     // Try the layout.
     return layout();
@@ -3794,6 +3919,21 @@ win_key_up(WPARAM wp, LPARAM lp)
 #ifdef debug_virtual_key_codes
   printf("  win_key_up %02X (down %02X) %s\n", key, last_key_down, vk_name(key));
 #endif
+
+#ifdef debug_altgr
+  if (send_test_vks(false, key))
+    return false;
+#endif
+
+  bool extended = HIWORD(lp) & KF_EXTENDED;
+  if (key == VK_CONTROL && !extended) {
+    is_lctrl = 0;
+    is_altgr = false;
+  }
+  if (key == VK_MENU && extended) {
+    is_ralt = false;
+    is_altgr = false;
+  }
 
   if (key == VK_CANCEL) {
     // in combination with Control, this may be the KEYUP event 
