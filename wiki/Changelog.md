@@ -10,6 +10,7 @@ Terminal features
 
 Text rendering
   * Render dim attribute as a Light font variation if available.
+  * Tentatively changing default bold rendering as bold font.
 
 Keyboard handling
   * Revise AltGr handling to support flexible right-Alt+left-Ctrl combinations (#1266).
@@ -25,6 +26,7 @@ Configuration
   * Drop AllowSetSelection from interactive Options menu (~#1264).
   * New option TabFont.
   * New option DimAsFont.
+  * Change default setting BoldAsFont=yes.
 
 ### 3.7.1 (24 February 2024) ###
 
