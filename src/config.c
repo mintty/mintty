@@ -1,5 +1,5 @@
 // config.c (part of mintty)
-// Copyright 2008-2023 Andy Koppe, 2015-2023 Thomas Wolff
+// Copyright 2008-2023 Andy Koppe, 2015-2024 Thomas Wolff
 // Based on code from PuTTY-0.60 by Simon Tatham and team.
 // Licensed under the terms of the GNU General Public License v3 or later.
 
@@ -87,6 +87,7 @@ const config default_cfg = {
   .show_hidden_fonts = false,
   .font_smoothing = FS_DEFAULT,
   .font_render = FR_UNISCRIBE,
+  .dim_as_font = true,
   .bold_as_font = false,
   .bold_as_colour = true,
   .allow_blinking = false,
@@ -379,6 +380,7 @@ options[] = {
   {"FontIsBold", OPT_BOOL, offcfg(font.isbold)},
   {"ShowHiddenFonts", OPT_BOOL, offcfg(show_hidden_fonts)},
   {"FontSmoothing", OPT_FONTSMOOTH, offcfg(font_smoothing)},
+  {"DimAsFont", OPT_BOOL, offcfg(dim_as_font)},
   {"BoldAsFont", OPT_BOOL, offcfg(bold_as_font)},
   {"BoldAsColour", OPT_BOOL, offcfg(bold_as_colour)},
   {"AllowBlinking", OPT_BOOL, offcfg(allow_blinking)},

@@ -1,5 +1,5 @@
 // wintext.c (part of mintty)
-// Copyright 2008-22 Andy Koppe, 2015-2022 Thomas Wolff
+// Copyright 2008-22 Andy Koppe, 2015-2024 Thomas Wolff
 // Adapted from code from PuTTY-0.60 by Simon Tatham and team.
 // Licensed under the terms of the GNU General Public License v3 or later.
 
@@ -31,10 +31,12 @@ enum {
   FONT_ZOOMFULL  = 0x20,
   FONT_ZOOMSMALL = 0x40,
   FONT_ZOOMDOWN  = 0x80,
-  FONT_WIDE      = 0x100,
+  FONT_DIM       = 0x100,
+  // keep these last:
+  FONT_WIDE      = 0x200,
 #ifdef narrow_via_font
 #warning narrowing via font is deprecated
-  FONT_NARROW    = 0x200,
+  FONT_NARROW    = 0x400,
   FONT_MAXNO     = FONT_WIDE + FONT_NARROW
 #else
   FONT_NARROW    = 0,	// disabled narrowing via font
@@ -108,6 +110,7 @@ bool font_ambig_wide;
 
 
 typedef enum {BOLD_SHADOW, BOLD_FONT} BOLD_MODE;
+typedef enum {DIM_DIM, DIM_FONT} DIM_MODE;
 typedef enum {UND_LINE, UND_FONT} UND_MODE;
 
 struct charpropcache {
@@ -132,6 +135,7 @@ struct fontfam {
   int fw_norm;
   int fw_bold;
   BOLD_MODE bold_mode;
+  DIM_MODE dim_mode;
   UND_MODE und_mode;
   int row_spacing, col_spacing;
   int descent;
@@ -417,6 +421,7 @@ struct data_adjust_font_weights {
   struct fontfam *ff;
   int fw_norm_0, fw_bold_0, fw_norm_1, fw_bold_1, default_charset;
   bool font_found, ansi_found, cs_found;
+  bool light_found;
 };
 
 static int CALLBACK
@@ -427,7 +432,8 @@ enum_fonts_adjust_font_weights(const LOGFONTW * lfp, const TEXTMETRICW * tmp, DW
   (void)fontType;
 
 #if defined(debug_fonts) && debug_fonts > 1
-  trace_font(("%ls %dx%d %d it %d cs %d %s\n", lfp->lfFaceName, (int)lfp->lfWidth, (int)lfp->lfHeight, (int)lfp->lfWeight, lfp->lfItalic, lfp->lfCharSet, (lfp->lfPitchAndFamily & 3) == FIXED_PITCH ? "fixed" : ""));
+  if (!lfp->lfCharSet)
+    trace_font(("%ls %dx%d weight %d it %d cs %d %s\n", lfp->lfFaceName, (int)lfp->lfWidth, (int)lfp->lfHeight, (int)lfp->lfWeight, lfp->lfItalic, lfp->lfCharSet, (lfp->lfPitchAndFamily & 3) == FIXED_PITCH ? "fixed" : ""));
 #endif
 
   data->font_found = true;
@@ -447,6 +453,41 @@ enum_fonts_adjust_font_weights(const LOGFONTW * lfp, const TEXTMETRICW * tmp, DW
 
   return 1;  // continue
 }
+
+#define find_light_font_automatically
+
+#ifdef find_light_font_automatically
+static int CALLBACK
+enum_font_variants(const LOGFONTW * lfp, const TEXTMETRICW * tmp, DWORD fontType, LPARAM lParam)
+{
+  struct data_adjust_font_weights *data = (struct data_adjust_font_weights *)lParam;
+  (void)tmp;
+  (void)fontType;
+
+  if (lfp->lfCharSet == data->default_charset || lfp->lfCharSet == DEFAULT_CHARSET) {
+    int nlen = wcslen(data->ff->name);
+    if (0 == wcsncmp(lfp->lfFaceName, data->ff->name, nlen)
+     && (0 == wcscmp(lfp->lfFaceName + nlen + 1, W("Light"))
+//     && (wcsstr(lfp->lfFaceName + nlen, W("Light"))
+//      || wcsstr(lfp->lfFaceName + nlen, W("Thin"))
+        )
+       )
+    {
+#if defined(debug_fonts) && debug_fonts > 1
+      trace_font(("<%ls %dx%d weight %d it %d cs %d %s\n", lfp->lfFaceName, (int)lfp->lfWidth, (int)lfp->lfHeight, (int)lfp->lfWeight, lfp->lfItalic, lfp->lfCharSet, (lfp->lfPitchAndFamily & 3) == FIXED_PITCH ? "fixed" : ""));
+#endif
+      // for later activation in another_font,
+      // choose one of Thin, ExtraLight, Ultra Light, Light
+      // (maybe according to common preference...) -
+      // for now, let's just pick Light if available,
+      // and set a flag in data to later set data->ff->dim_mode = DIM_FONT
+      data->light_found = true;
+    }
+  }
+
+  return 1;  // continue
+}
+#endif
 
 static void
 adjust_font_weights(struct fontfam * ff, int findex)
@@ -472,6 +513,7 @@ adjust_font_weights(struct fontfam * ff, int findex)
     .default_charset = default_charset,
     .font_found = false,
     .ansi_found = false,
+    .light_found = false,
     .cs_found = default_charset == DEFAULT_CHARSET
   };
 
@@ -486,6 +528,13 @@ adjust_font_weights(struct fontfam * ff, int findex)
   HDC dc = GetDC(0);
   EnumFontFamiliesExW(dc, &lf, enum_fonts_adjust_font_weights, (LPARAM)&data, 0);
   trace_font(("font width (%d)%d(%d)/(%d)%d(%d)", data.fw_norm_0, ff->fw_norm, data.fw_norm_1, data.fw_bold_0, ff->fw_bold, data.fw_bold_1));
+#ifdef find_light_font_automatically
+  if (cfg.dim_as_font) {
+    trace_font(("\n"));
+    lf.lfFaceName[0] = 0;  // clear font family name
+    EnumFontFamiliesExW(dc, &lf, enum_font_variants, (LPARAM)&data, 0);
+  }
+#endif
   ReleaseDC(0, dc);
 
   // check if no font found
@@ -507,6 +556,10 @@ adjust_font_weights(struct fontfam * ff, int findex)
     else
       font_warning(ff, _("Font has limited support for character ranges"));
   }
+
+  // set dim mode usage of Light font variation if it exists and shall be used
+  if (data.light_found && cfg.dim_as_font)
+    ff->dim_mode = DIM_FONT;
 
   // find available widths closest to selected widths
   if (abs(ff->fw_norm - data.fw_norm_0) <= abs(ff->fw_norm - data.fw_norm_1) && data.fw_norm_0 > 0)
@@ -604,6 +657,9 @@ win_init_fontfamily(HDC dc, int findex)
 
   // if initialized as BOLD_SHADOW then real bold is never attempted
   ff->bold_mode = BOLD_FONT;
+
+  // dim attribute implemented as dimmed colour by default
+  ff->dim_mode = DIM_DIM;
 
   ff->und_mode = UND_FONT;
   if (cfg.underl_manual || cfg.underl_colour != (colour)-1)
@@ -916,13 +972,13 @@ wcscasestr(wstring in, wstring find)
 }
 
 static int CALLBACK
-enum_fonts(const LOGFONTW * lfp, const TEXTMETRICW * tmp, DWORD fontType, LPARAM lParam)
+enum_fonts_find_Fraktur(const LOGFONTW * lfp, const TEXTMETRICW * tmp, DWORD fontType, LPARAM lParam)
 {
   (void)tmp;
   (void)fontType;
   wstring * fnp = (wstring *)lParam;
 
-#if defined(debug_fonts) && debug_fonts > 1
+#if defined(debug_fonts) && debug_fonts > 2
   trace_font(("%ls %dx%d %d it %d cs %d %s\n", lfp->lfFaceName, (int)lfp->lfWidth, (int)lfp->lfHeight, (int)lfp->lfWeight, lfp->lfItalic, lfp->lfCharSet, (lfp->lfPitchAndFamily & 3) == FIXED_PITCH ? "fixed" : ""));
 #endif
   if ((lfp->lfPitchAndFamily & 3) == FIXED_PITCH
@@ -951,7 +1007,7 @@ findFraktur(wstring * fnp)
   lf.lfCharSet = ANSI_CHARSET;   // report only ANSI character range
 
   HDC dc = GetDC(0);
-  EnumFontFamiliesExW(dc, 0, enum_fonts, (LPARAM)fnp, 0);
+  EnumFontFamiliesExW(dc, 0, enum_fonts_find_Fraktur, (LPARAM)fnp, 0);
   ReleaseDC(0, dc);
 }
 
@@ -1690,10 +1746,20 @@ another_font(struct fontfam * ff, int fontno)
 	fontno & FONT_ZOOMFULL ? " zf" : "",
 	x, w, i, u, s);
 #endif
-  ff->fonts[fontno] =
-    CreateFontW(y, x, 0, 0, w, i, u, s,
-                DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
-                get_font_quality(), FIXED_PITCH | FF_DONTCARE, ff->name);
+  if (fontno & FONT_DIM) {
+    wchar name[wcslen(ff->name) + 7];
+    wcscpy(name, ff->name);
+    wcscat(name, W(" Light"));
+    ff->fonts[fontno] =
+      CreateFontW(y, x, 0, 0, w, i, u, s,
+                  DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
+                  get_font_quality(), FIXED_PITCH | FF_DONTCARE, name);
+  }
+  else
+    ff->fonts[fontno] =
+      CreateFontW(y, x, 0, 0, w, i, u, s,
+                  DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
+                  get_font_quality(), FIXED_PITCH | FF_DONTCARE, ff->name);
 
   ff->fontflag[fontno] = true;
 }
@@ -3041,6 +3107,8 @@ win_text(int tx, int ty, wchar *text, int len, cattr attr, cattr *textattr, usho
     wscale_narrow_50 = true;
   }
 
+  bool dim_font = ff->dim_mode == DIM_FONT && attr.attr & ATTR_DIM;
+
   bool default_bg = (attr.attr & ATTR_BGMASK) >> ATTR_BGSHIFT == BG_COLOUR_I;
   if (attr.attr & ATTR_REVERSE)
     default_bg = false;
@@ -3113,13 +3181,16 @@ win_text(int tx, int ty, wchar *text, int len, cattr attr, cattr *textattr, usho
     }
   }
 
- /* Now that attributes are sorted out, select proper font */
+ /* Now that attributes are (almost) sorted out, select proper font */
   uint nfont;
   switch (lattr) {
     when LATTR_NORM: nfont = 0;
     when LATTR_WIDE: nfont = FONT_WIDE;
     otherwise:       nfont = FONT_WIDE + FONT_HIGH;
   }
+
+  if (dim_font)
+    nfont |= FONT_DIM;
 
   int wscale = 100;
 
