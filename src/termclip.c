@@ -1,5 +1,5 @@
 // termclip.c (part of mintty)
-// Copyright 2008-23 Andy Koppe, 2018 Thomas Wolff
+// Copyright 2008-23 Andy Koppe, 2024 Thomas Wolff
 // Adapted from code from PuTTY-0.60 by Simon Tatham and team.
 // Licensed under the terms of the GNU General Public License v3 or later.
 
@@ -20,10 +20,11 @@ typedef struct {
 } clip_workbuf;
 
 static void
-destroy_clip_workbuf(clip_workbuf * b)
+destroy_clip_workbuf(clip_workbuf * b, bool with_text)
 {
   assert(b && b->capacity); // we're only called after get_selection, which always allocates
-  free(b->text);
+  if (with_text)
+    free(b->text);
   if (b->with_attrs)
     // the attributes part of the buffer was only filled as requested
     free(b->cattrs);
@@ -236,7 +237,7 @@ get_sel_str(pos start, pos end, bool rect, bool allinline, bool with_tabs)
 {
   clip_workbuf * buf = get_selection(false, start, end, rect, allinline, with_tabs);
   wchar * selstr = buf->text;
-  free(buf);
+  destroy_clip_workbuf(buf, false);
   return selstr;
 }
 
@@ -254,7 +255,7 @@ term_copy_as(char what)
   // for CopyAsHTML, get_selection will be called another time
   // but with different parameters
   win_copy_as(buf->text, buf->cattrs, buf->len, what);
-  destroy_clip_workbuf(buf);
+  destroy_clip_workbuf(buf, true);
 }
 
 void
@@ -1208,7 +1209,7 @@ term_create_html(FILE * hf, int level)
       lattr = LATTR_NORM;
     }
   }
-  destroy_clip_workbuf(buf);
+  destroy_clip_workbuf(buf, true);
 
   hprintf(hf, "</pre>\n");
   hprintf(hf, "  </div>\n");
@@ -1271,6 +1272,6 @@ print_screen(void)
   clip_workbuf * buf = get_selection(false, start, end, rect, false, false);
   printer_wwrite(buf->text, buf->len);
   printer_finish_job();
-  destroy_clip_workbuf(buf);
+  destroy_clip_workbuf(buf, true);
 }
 
