@@ -79,6 +79,7 @@ clip_addchar(clip_workbuf * b, wchar chr, cattr * ca, bool tabs, ulong sizehint)
   }
 
   cattr copattr = ca ? *ca : CATTR_DEFAULT;
+  //printf("setting clipbuf[%ld] = %02X\n", b->len, chr);
   if (copattr.attr & TATTR_CLEAR) {
     copattr.attr &= ~(ATTR_BOLD | ATTR_DIM | TATTR_CLEAR);
   }
@@ -97,6 +98,8 @@ get_selection(bool attrs, pos start, pos end, bool rect, bool allinline, bool wi
 {
   //printf("get_selection attrs %d all %d tabs %d\n", attrs, allinline, with_tabs);
 
+  if (with_tabs)
+    attrs = true;  // ensure we can check expanded TABs (#1269)
   clip_workbuf *buf = newn(clip_workbuf, 1);
   *buf = (clip_workbuf){.with_attrs = attrs,
                         .capacity = 0, .len = 0, .text = 0, .cattrs = 0};
