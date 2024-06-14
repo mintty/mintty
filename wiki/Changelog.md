@@ -27,6 +27,7 @@ Configuration
   * Drop AllowSetSelection from interactive Options menu (~#1264).
   * New option TabFont.
   * New option DimAsFont.
+  * Add "Show dim as font" to options dialog.
   * Change default setting BoldAsFont=yes.
 
 ### 3.7.1 (24 February 2024) ###
