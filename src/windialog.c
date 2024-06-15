@@ -1001,3 +1001,10 @@ win_show_warning(char * msg)
   message_box(0, msg, null, MB_ICONWARNING, 0);
 }
 
+bool
+win_confirm_text(wchar * text, wchar * caption)
+{
+  int ret = message_box_w(0, text, caption, MB_OKCANCEL | MB_DEFBUTTON2, 0);
+  return ret == IDOK;
+}
+

@@ -2449,6 +2449,15 @@ If enabled, ask for confirmation when a terminal reset is requested
 interactively via \fIAlt+F8\fP or from the menu.
 
 .TQ
+\fBPrompt when pasting multi-line contents\fP (ConfirmMultiLinePasting=no)
+If multi-line clipboard contents is about to be pasted (and lineends 
+are not filtered via \fBFilterPasteControls\fP), mintty prompts for 
+confirmation of the pasting. This is a security measure against 
+pasting malicious contents on the command line.
+Note that shells often implement a similar feature which result in 
+double confirmation prompting.
+
+.TQ
 \fBSuppress properties and features controlled by escape sequences\fP
 Using these options, the listed feature numbers are suppressed.
 Each option may contain a comma-separated list of respective numbers.

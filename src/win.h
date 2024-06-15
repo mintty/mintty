@@ -101,6 +101,7 @@ extern void win_show_error(char * msg);
 extern void win_show_warning(char * msg);
 extern int message_box(HWND parwnd, char * wtext, char * wcaption, int type, wstring ok);
 extern int message_box_w(HWND parwnd, wchar * wtext, wchar * wcaption, int type, wstring ok);
+extern bool win_confirm_text(wchar * text, wchar * caption);
 
 extern bool win_is_glass_available(void);
 
