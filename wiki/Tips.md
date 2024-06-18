@@ -334,6 +334,24 @@ As a workaround on older versions of Cygwin or Windows, you can use
 [winpty](https://github.com/rprichard/winpty) as a wrapper to invoke 
 the Windows program.
 
+### Text attribute handling from WSL and other Windows programs ###
+
+When running native Windows programs, like `wsl` access program to WSL, 
+or `cmd` and `powershell`, the `conhost` console layer of Windows interferes 
+with escape sequence controls; even for WSL, it does not pass them through 
+transparently but imposes its own idea of terminal capabilities, mangling 
+basic controls like bold and reverse attributes, so bold text is enforced 
+to appear white. This broken behaviour was fixed for Windows 11 but not 
+back-ported to Windows 10.
+
+You can however fix the issue by updating your conhost layer to its update 
+as distributed with the Windows Terminal project.
+From the [release area](https://github.com/microsoft/terminal/releases), 
+among the Assets, download the WindowsTerminalPreview zip file of your 
+architecture, extract its `OpenConsole.exe`, rename it to `conhost.exe` 
+and replace the conhost program in your Windows System32 folder with it.
+(Do **not** copy conhost.exe from Windows 11 into Windows 10.)
+
 ### Signal processing with alien programs ###
 
 The same workaround handles interrupt signals, particularly Control+C, 
