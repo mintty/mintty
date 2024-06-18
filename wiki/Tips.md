@@ -1212,7 +1212,7 @@ all-users deployment of the emojis listed at Unicode.org and the flags emojis:
 You may also use the scripts for deployment in your preferred config directory.
 
 To deploy in your personal local resource folder:
-* `mkdir -p ~/.config//mintty/emojis; cd ~/.config/mintty/emojis`
+* `mkdir -p ~/.config/mintty/emojis; cd ~/.config/mintty/emojis`
 * `/usr/share/mintty/emojis/getemojis -d`
 * `/usr/share/mintty/emojis/getflags -de`
 

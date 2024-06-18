@@ -520,7 +520,7 @@ it changes the font that is currently selected (and keeps that setting).
 Like OSC 50 for font style, this sequence can change the emojis style.
 For values, see setting `Emojis` in the manual.
 
-> `^[]7750;_emojis-style_`^G`
+> `^[]7750;`_emojis-style_`^G`
 
 
 ## Background image ##
