@@ -756,6 +756,10 @@ Mintty also provides the command-line script ```mintheme``` which can
 display the themes available in the mintty configuration directories or 
 activate one of them in the current mintty window.
 
+Note that some theme files also define foreground/background or cursor colours, 
+which overrides manually changed settings of those. If you do not want that, 
+simply make a copy of the theme file with those settings removed.
+
 ### Background image ###
 
 As an alternative to a background colour, mintty also supports graphic 
