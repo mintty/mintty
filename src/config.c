@@ -4460,10 +4460,10 @@ setup_config_box(controlbox * b)
   );
 
   s = ctrl_new_set(b, _("Window"), null, null);
-  ctrl_columns(s, 2, 66, 34);
+  ctrl_columns(s, 2, 80, 20);
   ctrl_editbox(
     //__ Options - Window:
-    s, _("Scroll&back lines"), 50,
+    s, _("Scroll&back lines"), 40,
     dlg_stdintbox_handler, &new_cfg.scrollback_lines
   )->column = 0;
   ctrl_radiobuttons(

@@ -15,7 +15,8 @@
                    // +20 per titled single-line set of radio buttons
                    // +31 per titled double-line set of radio buttons
 
-#define DIALOG_WIDTH 256
+//#define DIALOG_WIDTH 256
+#define DIALOG_WIDTH 266
 //#define DIALOG_WIDTH 310  // for CJK localisation
 
 #define DIALOG_TITLE "Options"

@@ -20,6 +20,7 @@ Misc
   * Support fallback to legacy wslbridge for old Windows versions (mintty/wsltty#350).
   * Fix CopyTab=yes crash condition (#1269).
   * Optional confirmation for pasting multi-line clipboard contents (#1268).
+  * Unsqueeze the Options dialog slightly.
 
 Desktop integration
   * Avoid taskbar icon width twitching in Windows 11 (#1263).
