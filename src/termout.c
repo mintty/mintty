@@ -4987,6 +4987,10 @@ term_do_write(const char *buf, uint len, bool fix_status)
 
         cattrflags asav = term.curs.attr.attr;
 
+        uchar cf = scriptfont(wc);
+        if (cf && cf <= 10 && !(asav & FONTFAM_MASK))
+            term.curs.attr.attr = asav | ((cattrflags)cf << ATTR_FONTFAM_SHIFT);
+
         switch (cset) {
           when CSET_VT52DRW:  // VT52 "graphics" mode
             if (0x5E <= wc && wc <= 0x7E) {
