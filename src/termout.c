@@ -1248,6 +1248,18 @@ write_ucschar(wchar hwc, wchar wc, int width)
   if (cf && cf <= 10 && !(attr & FONTFAM_MASK))
     term.curs.attr.attr = attr | ((cattrflags)cf << ATTR_FONTFAM_SHIFT);
 
+  // Auto-expanded glyphs
+  if (width == 2
+      // && wcschr(W("〈〉《》「」『』【】〔〕〖〗〘〙〚〛"), wc)
+      && wc >= 0x3008 && wc <= 0x301B
+      && (wc | 1) != 0x3013  // exclude 〒〓 from the range
+      && win_char_width(wc, term.curs.attr.attr) < 2
+      // ensure symmetric handling of matching brackets
+      && win_char_width(wc ^ 1, term.curs.attr.attr) < 2)
+  {
+    term.curs.attr.attr |= TATTR_EXPAND;
+  }
+
   if (hwc) {
     if (width == 1
         && (cfg.charwidth == 10 || cs_single_forced)
@@ -4987,10 +4999,6 @@ term_do_write(const char *buf, uint len, bool fix_status)
 
         cattrflags asav = term.curs.attr.attr;
 
-        uchar cf = scriptfont(wc);
-        if (cf && cf <= 10 && !(asav & FONTFAM_MASK))
-            term.curs.attr.attr = asav | ((cattrflags)cf << ATTR_FONTFAM_SHIFT);
-
         switch (cset) {
           when CSET_VT52DRW:  // VT52 "graphics" mode
             if (0x5E <= wc && wc <= 0x7E) {
@@ -5221,17 +5229,6 @@ term_do_write(const char *buf, uint len, bool fix_status)
             width = 1;
           else if (wc < ' ' && cfg.printable_controls > 1)
             width = 1;
-        }
-
-        // Auto-expanded glyphs
-        if (width == 2
-            // && wcschr(W("〈〉《》「」『』【】〒〓〔〕〖〗〘〙〚〛"), wc)
-            && wc >= 0x3008 && wc <= 0x301B && (wc | 1) != 0x3013
-            && win_char_width(wc, term.curs.attr.attr) < 2
-            // ensure symmetric handling of matching brackets
-            && win_char_width(wc ^ 1, term.curs.attr.attr) < 2)
-        {
-          term.curs.attr.attr |= TATTR_EXPAND;
         }
 
         // Control characters
