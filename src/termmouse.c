@@ -1,5 +1,5 @@
 // termmouse.c (part of mintty)
-// Copyright 2008-23 Andy Koppe, 2017-20 Thomas Wolff
+// Copyright 2008-2023 Andy Koppe, 2017-2024 Thomas Wolff
 // Based on code from PuTTY-0.60 by Simon Tatham and team.
 // Licensed under the terms of the GNU General Public License v3 or later.
 
@@ -957,6 +957,16 @@ term_mouse_wheel(bool horizontal, int delta, int lines_per_notch, mod_keys mods,
         accu -= NOTCH_DELTA * zoom;
         win_zoom_font(zoom, mods & MDK_SHIFT);
       }
+    }
+  }
+  else if ((mods & ~(MDK_SHIFT | MDK_CTRL)) == MDK_WIN) {
+    // yes, some copy/paste here for more clarity of the conditions
+    if (strstr(cfg.suppress_wheel, "zoom"))
+      return;
+    int zoom = accu / NOTCH_DELTA;
+    if (zoom) {
+      accu -= NOTCH_DELTA * zoom;
+      win_zoom_font(zoom, mods & MDK_SHIFT);
     }
   }
   else if (!(mods & ~(MDK_SHIFT | MDK_CTRL | MDK_ALT))) {
