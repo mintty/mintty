@@ -46,12 +46,16 @@
 
 // needed for mintty -V and Options... - About...
 #ifdef VERSION_SUFFIX
+#define VERSION_APPENDIX " (" STRINGIFY(TARGET) ") " STRINGIFY(VERSION_SUFFIX)
 #define VERSION_TEXT \
   APPNAME " " VERSION " (" STRINGIFY(TARGET) ") " STRINGIFY(VERSION_SUFFIX)
 #else
+#define VERSION_APPENDIX " (" STRINGIFY(TARGET) ")"
 #define VERSION_TEXT \
   APPNAME " " VERSION " (" STRINGIFY(TARGET) ")"
 #endif
+#undef VERSION_TEXT
+#define VERSION_TEXT version()
 
 #define LICENSE_TEXT \
   "License GPLv3+: GNU GPL version 3 or later"

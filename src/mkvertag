@@ -1,0 +1,39 @@
+#! /bin/sh
+
+# parameter: version extraced from source
+version="$*"
+# time stamp
+date=`date +%Y-%m-%d_%H:%M`
+
+# if building inside git, derive build tag from git status
+if git rev-parse	# --git-dir or --is-inside-work-tree, not needed
+then
+	# get last git tag
+	lasttag=`git log -n 1 --decorate=short --tags 2> /dev/null | head -1`
+	gittag=`echo "$lasttag" |
+		sed -e "s,^commit .*tag: *\([^)]*\)),\1," -e t -e d`
+	# get last git commit:
+	#	if tagged, only the tag
+	#	if untagged, previous tag plus last commit
+	#	if neither, last resort
+	lastcom=`git log -n 1 --decorate=short 2> /dev/null | head -1`
+	gitver=`echo "$lastcom" |
+		sed -e "s,^commit .*tag: *\([^)]*\)),\1," -e t \
+		    -e "s,^commit *\(........\).*,$gittag \1," -e t \
+		    -e "s,.*,'$version' $date,"`
+	ver="$gitver"
+
+	# prepend version from source if different from git version ?
+	if false && [ -n "$version" -a "$version" != "$gitver" ]
+	then	ver="'$version' $ver"
+	fi
+	# append time stamp if source differs from git version
+	if git status -suno | sed -e "s,^..,," | grep ".*\.[hc]" > /dev/null
+	then	ver="$ver $date"
+	fi
+else
+	# if building outside git: version from source plus time stamp
+	ver="'$version' $date"
+fi
+
+echo "$ver"

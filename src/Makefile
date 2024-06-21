@@ -158,6 +158,9 @@ $(BINDIR)/term.o: term.c emojibase.t emojiseqs.t
 $(BINDIR)/wintext.o: wintext.c
 	$(CC) -c $(DEPOPT) $(CCFLAGS) -O0 $(CPPFLAGS) -fstack-check $< -o $(BINDIR)/wintext.o
 
+$(BINDIR)/appinfo.o: appinfo.?
+	$(CC) -c $(DEPOPT) -O0 $(CPPFLAGS) -fstack-check $< -o $(BINDIR)/appinfo.o
+
 $(BINDIR)/%.o: %.c
 	$(CC) -c $(DEPOPT) $(CCFLAGS) $(CPPFLAGS) -fstack-check $< -o $(BINDIR)/$*.o
 
@@ -167,6 +170,10 @@ $(BINDIR)/%.o: %.rc %.h %.mft
 	$(CC) -E -xc -DRC_INVOKED $(DEPOPT) $(CPPFLAGS) $< | $(RC) -c 65001 -o $(BINDIR)/$*.o
 	-mv $*.d $(BINDIR)/
 
+stamp:
+	echo "#define VERSION_STAMP \"$(shell ./mkvertag "$(version)")\"" > appinfo.n
+	cmp appinfo.n appinfo.t && rm -f appinfo.n || /bin/mv appinfo.n appinfo.t
+
 exe := $(NAME).exe
 exe: $(exe)
 $(exe): $(objs)
@@ -174,7 +181,7 @@ $(exe): $(objs)
 	#-du -b $@
 
 bin := $(BINDIR)/$(NAME).exe
-bin: $(BINDIR) $(bin)
+bin: stamp $(BINDIR) $(bin)
 $(BINDIR):
 	mkdir -p $(BINDIR)
 $(bin): $(bins)
@@ -446,6 +453,7 @@ ver:
 	echo "$(call getappinfo,COMMA_VERSION)"
 	echo "$(call getappinfo,DECIMAL_VERSION)"
 	echo version $(version)
+	echo version_stamp $(shell ./mkvertag "$(version)")
 
 #############################################################################
 # end

@@ -94,6 +94,8 @@ extern int lines_scrolled;
 extern bool kb_input;
 extern uint kb_trace;
 
+extern char * version(void);
+
 extern void win_update_now(void);
 
 extern bool fill_background(HDC dc, RECT * boxp);
