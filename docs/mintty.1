@@ -4,7 +4,7 @@
 
 .SH NAME
 
-mintty \(en Cygwin terminal emulator
+mintty \(en Cygwin Terminal Emulator
 
 .SH SYNOPSIS
 
@@ -423,7 +423,7 @@ Mintty uses Windows Uniscribe font rendering to display a wider range
 of characters; the TextOut API is automatically used instead if suitable.
 
 .TQ
-\fBFont integration\fP
+.B Font integration
 Fonts in the resource subdirectory \fIfonts\fP of the config directory 
 are installed dynamically and can be used for configured or interactively 
 changed font selection. This is especially useful for a portable installation.
@@ -506,7 +506,7 @@ are enabled, copy & paste functions are assigned to plain (unshifted)
 like in Windows.
 
 .TQ
-\fBElastic text selection\fP
+.B Elastic text selection
 The traditional selection behaviour of cell-based terminals is that a 
 character touched with the mouse is included in the selection.
 With option \fBElasticMouse\fP, text selection can be changed to include 
@@ -542,7 +542,7 @@ screen oriented applications), \fBCtrl+Shift+click\fP can be used to
 override it.
 
 .TQ
-\fBHovering files, directories and URLs\fP
+.B Hovering files, directories and URLs
 The file names and links subject to opening are indicated by underlining 
 when mouse-hovering over them (i.e. when moving the mouse) while the 
 Control key is pressed. The colour used for hovering underlines 
@@ -726,7 +726,7 @@ while moving the window, and (since 3.6.5) to support transparency
 in case a tab gets terminated irregularly.
 
 .TQ
-\fBTabbar	\fP
+.B Tabbar	
 With setting \fBTabBar\fP, an interactive tabbar complements the 
 virtual tabs mechanism. (It works like the session switcher available 
 via extended context menu or title bar menu.)
@@ -808,7 +808,7 @@ entered after a configurable Compose key.
 Visual feedback displays numeric or composing input modes and their input.
 
 .TQ
-\fBAlt codes\fP
+.B Alt codes
 
 The Windows Alt+Numpad method for entering character codes is supported,
 whereby the Alt key has to be held while entering the character code.
@@ -834,14 +834,14 @@ If it doesn't fit into one byte, it is sent as multiple bytes, with
 the most significant non-zero byte first.
 
 .TQ
-\fBUnicode input\fP
+.B Unicode input
 With user-definable function \fBunicode\-char\fP (Ctrl+Shift+U by default), 
 input of a hexadecimal Unicode character code is started.
 (In UTF-8 terminal mode, the result is the same as hexadecimal Alt code 
 input described above.)
 
 .TQ
-\fBCompose key\fP
+.B Compose key
 Mintty supports a Compose key like on some traditional keyboards, using 
 compose character sequences from X11.
 It can be assigned to a modifier key in the Options menu, section Keys, 
@@ -855,7 +855,7 @@ This section gives an overview of all the keyboard shortcuts.
 See also the final subsection on user-defined shortcuts.
 
 .TQ
-\fBAlt modifier key\fP
+.B Alt modifier key
 Note that \fBAlt+\fP in this description refers to the left Alt key. 
 For keyboards that have two Alt keys, the right Alt key is not generally 
 supported as an Alt modifier. The reason is that it cannot be safely 
@@ -864,7 +864,7 @@ to generate specific additional characters in various keyboard layouts
 and can therefore not be used as a generic modifier.
 
 .TQ
-\fBScrollback and Selection via keyboard\fP
+.B Scrollback and Selection via keyboard
 .br
 \(en \fBShift+Up\fP: Line up
 .br
@@ -904,7 +904,7 @@ Once keyboard selecting mode is entered, the following keys are applied:
 \(en \fBDelete\fP or \fBESC\fP: Exit selection mode
 
 .TQ
-\fBCopy and paste\fP
+.B Copy and paste
 .br
 \(en \fBCtrl+Ins\fP: Copy
 .br
@@ -913,7 +913,7 @@ Once keyboard selecting mode is entered, the following keys are applied:
 \(en \fBCtrl+Shift+Ins\fP: Copy and paste
 
 .TQ
-\fBWindow commands\fP
+.B Window commands
 .br
 \(en \fBAlt+F2\fP: New (clone window/tab at current size); see notes below
 .br
@@ -976,7 +976,7 @@ monitors are not arranged in a regular grid.
 Note also that this feature is overridden by option \fBSessionGeomSync\fP.
 
 .TQ
-\fBFont zoom\fP
+.B Font zoom
 .br
 \(en \fBCtrl+(keypad-)plus\fP: Zoom font in
 .br
@@ -989,7 +989,7 @@ Note also that this feature is overridden by option \fBSessionGeomSync\fP.
 \(en \fBCtrl+zero\fP: Back to configured font size
 
 .TQ
-\fBCtrl+Shift+letter shortcuts\fP
+.B Ctrl+Shift+letter shortcuts
 
 An alternative set of shortcuts for clipboard and window commands using
 \fBCtrl+Shift+letter\fP combinations is available.  These can be enabled on the
@@ -1032,13 +1032,13 @@ If OpaqueWhenFocused is set, opaqueness is temporarily disabled to
 provide visible feedback for the changes.
 
 .TQ
-\fBUser-defined shortcuts\fP
+.B User-defined shortcuts
 Function keys, special keys, and Ctrl+Shift+key combinations 
 can be redefined to generate user-defined input or invoke functions.
 See option \fBKeyFunctions\fP for details.
 
 .TQ
-\fBStartup hotkey ("quake mode")\fP
+.B Startup hotkey ("quake mode")
 In a Windows shortcut (desktop or Start menu), a "Shortcut key" with 
 modifiers can be defined as a system hotkey to start an application or 
 bring it to the front. Mintty detects if activated via hotkey and will 
@@ -1060,7 +1060,7 @@ GNUTERM=sixel gnuplot \-e "splot [x=\-3:3] [y=\-3:3] sin(x) * cos(y)"
 in order to prevent Windows handle resource exhaustion.
 
 .TQ
-\fBImage support\fP
+.B Image support
 In addition to the legacy Sixel feature, mintty supports graphic image display 
 (using iTerm2 controls). Image formats supported comprise
 PNG, JPEG, GIF, TIFF, BMP, Exif.
@@ -1135,7 +1135,7 @@ See the Control Sequences wiki page \fIhttps://github.com/mintty/mintty/wiki/Ctr
 .SS Diagnostic support
 
 .TQ
-\fBScreen logging\fP
+.B Screen logging
 A couple of options are available to enable logging initially 
 (\fBLog=...\fP or \fB\-l ...\fP on the command line), or to specify 
 a log file name for later logging (\fBLog=...\fP combined with \fBLogging=no\fP, 
@@ -1143,7 +1143,7 @@ or \fB\-\-logfile ...\fP on the command line).
 In either case, logging can be toggled from the extended context menu.
 
 .TQ
-\fBCharacter information display\fP
+.B Character information display
 Diagnostic display of current character information can be toggled 
 from the extended context menu.
 .br
@@ -1230,7 +1230,7 @@ no GUI configuration facility for that option
 Settings affecting mintty's appearance.
 
 .TQ
-\fBColours\fP
+.B Colours
 Clicking on one of the buttons here opens the colour selection dialog.
 .br
 In the settings (config file or command-line options), colours are 
@@ -1335,7 +1335,7 @@ The settings are bitmasks, adding the following values:
 Settings controlling text display.
 
 .TQ
-\fBFont selection\fP
+.B Font selection
 Clicking on the \fBSelect\fP button opens a dialog where the font and its
 properties can be chosen.  Font styles other than \fBBold\fP are ignored.
 In the config file, this corresponds to the following entries:
@@ -1558,7 +1558,7 @@ If both are false, xterm default behaviour is applied.
 See \fBBold Behaviour\fP for an overview.
 
 .TQ
-\fBShow bold like xterm default\fP
+.B Show bold like xterm default
 With this interactive option, you can choose xterm default boldening behaviour 
 by switching both bold as font and colour off. It can be switched off by 
 switching one of the other options on.
@@ -1588,7 +1588,7 @@ This hidden option displays the bold attribute by underlaying special
 background. Overrides BoldAsFont. This is a fun option, use at your own risk.
 
 .TQ
-\fBNote: Bold Behaviour\fP
+.B Note: Bold Behaviour
 When the bold text attribute is set, mintty distinguishes three classes of colours:
 .br
 \(en \fBDefault\fP: The default terminal foreground colour.
@@ -1641,7 +1641,7 @@ Select the rendering system used for text display:
 \(en \fBuniscribe\fP: Use the Windows Uniscribe API.
 
 .TQ
-\fBLigatures support\fP
+.B Ligatures support
 These options affect support for ligatures.
 They are not capable of disabling ligatures, however, as those are 
 applied by Windows font handling. Setting \fIFontRender=textout\fP 
@@ -2106,7 +2106,7 @@ Default width of the window, in character cells.
 Default height of the window, in character cells.
 
 .TQ
-\fBCurrent size\fP
+.B Current size
 Pressing this button sets the default width and height to the window's
 current size.
 
@@ -2341,7 +2341,7 @@ Note that this feature is considered a security risk as malicious software
 could spy on your clipboard.
 
 .TQ
-\fBBell		\fP
+.B Bell		
 The options here determine what effects the bell character \fB^G\fP has.
 Default beep and taskbar highlighting are enabled by default.
 Mintty can also play wave sounds or frequency beeps.
@@ -2459,7 +2459,7 @@ Note that shells often implement a similar feature which result in
 double confirmation prompting.
 
 .TQ
-\fBSuppress properties and features controlled by escape sequences\fP
+.B Suppress properties and features controlled by escape sequences
 Using these options, the listed feature numbers are suppressed.
 Each option may contain a comma-separated list of respective numbers.
 Usage of these options is discouraged; users are not entitled to 
@@ -2968,7 +2968,7 @@ Key_Break=2 would turn the Break key into an Insert key
 Key_Break=_BRK_ would assign the simulated terminal line Break function
 
 .TQ
-\fBUser-defined shortcuts (KeyFunctions=)\fP
+.B User-defined shortcuts (KeyFunctions=)
 With this setting, function keys, modified function keys, and 
 Ctrl+Shift+key and other modified combinations of plain character keys 
 can be mapped to invoke specific functions or generate user-defined input.
@@ -3376,7 +3376,7 @@ The setting is a RGB triplet such as 255,0,0 for bright red.
 By default, this is unset, which means that the cursor colour does not change.
 
 .TQ
-\fBANSI colours\fP
+.B ANSI colours
 The sixteen ANSI colours can be chosen with the settings below. Colours are
 represented as comma-separated RGB triples with decimal 8-bit values ranging
 from 0 to 255.
@@ -3425,7 +3425,7 @@ For the default values, please see the 'helmholtz' theme in directory
 \(en \fBBoldWhite\fP=
 
 .TQ
-\fBTektronix mode colours\fP
+.B Tektronix mode colours
 For Tektronix 4014 emulation, colours can be overridden;
 \fBTekWriteThruColour\fP and \fBTekDefocusedColour\fP can be used 
 to visualize Write-Thru and Defocused modes.
@@ -3468,7 +3468,7 @@ See the Tips wiki page \fIhttps://github.com/mintty/mintty/wiki/Tips#using\-colo
 about this mechanism.
 
 .TQ
-\fBSelection highlight colours\fP
+.B Selection highlight colours
 The highlighting colours of selected text can be configured.
 .br
 \(en \fBHighlightBackgroundColour\fP= selected text background 
@@ -3479,7 +3479,7 @@ The highlighting colours of selected text can be configured.
 with \fBhighlightColorMode\fP); only effective if both are configured
 
 .TQ
-\fBScrollback search colours\fP
+.B Scrollback search colours
 The highlighting colours of search matches can be configured.
 .br
 \(en \fBSearchForegroundColour\fP=\fIblack\fP
@@ -3911,7 +3911,7 @@ Examples:
 \fINote:\fP Control characters need to be embedded verbatim; there is no escape notation.
 
 .TQ
-\fBMenu configuration\fP
+.B Menu configuration
 These settings allow to customize the context menu as opened in various ways.
 .br
 \(en \fBMouse\fP (MenuMouse=b); the normal mouse-right-click context menu
@@ -3999,7 +3999,7 @@ discouraged as a configuration setting; command-line option
 \fB\-\-newtabs\fP does the same per invocation.
 
 .TQ
-\fBTabbar highlighting\fP
+.B Tabbar highlighting
 With these settings, colour highlighting of the active tab in the tabbar 
 can be configured.
 .br
