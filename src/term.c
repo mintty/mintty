@@ -1,5 +1,5 @@
 // term.c (part of mintty)
-// Copyright 2008-23 Andy Koppe, 2016-2020 Thomas Wolff
+// Copyright 2008-2023 Andy Koppe, 2016-2024 Thomas Wolff
 // Adapted from code from PuTTY-0.60 by Simon Tatham and team.
 // Licensed under the terms of the GNU General Public License v3 or later.
 
@@ -3560,6 +3560,10 @@ term_paint(void)
            )
         {
           //printf("[%d:%d] narrow? %04X..%04X\n", i, j, tchar, chars[j + 1].chr);
+
+          // mark for later win_text parameter clearpad (#1179)
+          tattr.attr |= TATTR_OVERHANG;
+
           if (
               // do not narrow various symbol ranges;
               // this is a bit redundant with Symbol overhang below

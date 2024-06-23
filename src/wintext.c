@@ -4933,6 +4933,7 @@ win_char_width(xchar c, cattrflags attr)
       if (ff->cpcache[font4index][i].ch == c) {
         if (ff->cpcache[font4index][i].width) {
           ReleaseDC(wnd, dc);
+          //printf(" win_char_width %04X (cache) -> %d\n", c, ff->cpcache[font4index][i].width);
           return ff->cpcache[font4index][i].width;
         }
         else {

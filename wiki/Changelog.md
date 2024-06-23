@@ -12,6 +12,7 @@ Text rendering
   * Render dim attribute as a Light font variation if available.
   * Tentatively changing default bold rendering as bold font.
   * Fix CJK quote marks auto-expansion for FontChoice-set fonts (#1271).
+  * Fix artefacts from auto-narrowing end-of-line overhang (#1179).
 
 Keyboard handling
   * Revise AltGr handling to support flexible right-Alt+left-Ctrl combinations (#1266).
