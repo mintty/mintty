@@ -81,9 +81,9 @@ ifndef RELEASE
   endif
 endif
 
-version := \
+srcversion := \
   $(shell echo $(shell echo VERSION | cpp -P $(CPPFLAGS) --include appinfo.h))
-name_ver := $(NAME)-$(version)
+name_ver := $(NAME)-$(srcversion)
 
 #############################################################################
 # compilation parameters
@@ -170,8 +170,10 @@ $(BINDIR)/%.o: %.rc %.h %.mft
 	$(CC) -E -xc -DRC_INVOKED $(DEPOPT) $(CPPFLAGS) $< | $(RC) -c 65001 -o $(BINDIR)/$*.o
 	-mv $*.d $(BINDIR)/
 
+gitversion := $(shell ./mkvertag "$(srcversion)")
+
 stamp:
-	echo "#define VERSION_STAMP \"$(shell ./mkvertag "$(version)")\"" > appinfo.n
+	echo "#define VERSION_STAMP \"$(gitversion)\"" > appinfo.n
 	cmp appinfo.n appinfo.t && rm -f appinfo.n || /bin/mv appinfo.n appinfo.t
 
 exe := $(NAME).exe
@@ -333,7 +335,7 @@ emojiseqs.t:	# emoji-sequences.txt emoji-zwj-sequences.txt emoji-test.txt
 composed.t:	# $(compose_list) $(keysymdefs)
 	sh ./mkcomposedt > composed.t
 
-XGETTEXT_OPTS=--package-name=mintty #--package-version=$(version)
+XGETTEXT_OPTS=--package-name=mintty #--package-version=$(srcversion)
 XGETTEXT_OPTS+=--msgid-bugs-address=https://github.com/mintty/mintty/issues/700
 
 _:	localization checkloc
@@ -452,8 +454,8 @@ ver:
 	echo "$(call getappinfo,POINT_VERSION)"
 	echo "$(call getappinfo,COMMA_VERSION)"
 	echo "$(call getappinfo,DECIMAL_VERSION)"
-	echo version $(version)
-	echo version_stamp $(shell ./mkvertag "$(version)")
+	echo src version $(srcversion)
+	echo version_stamp $(gitversion)
 
 #############################################################################
 # end
