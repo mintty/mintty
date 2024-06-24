@@ -1362,7 +1362,7 @@ If a font family has no bold weight but boldness was requested, mintty
 does not adhere to this scheme but enforces bold font selection; however, 
 in this case the bold attribute may not be effective.
 
-\(en \fBAlternative fonts\fP (Font1= ... Font10= , Font1Weight= ... Font10Weight=):
+\(en \fBAlternative fonts\fP \%(Font1= ... Font10=) and their weights \%(Font1Weight= ... Font10Weight=):
 With these settings, up to 10 alternative fonts (and optionally weights) 
 can be configured which would then be selectable via ECMA-48 SGR character attributes 
 (see Tips wiki page \fIhttps://github.com/mintty/mintty/wiki/Tips#text\-attributes\-and\-rendering\fP).
@@ -1380,7 +1380,7 @@ Fraktur or Blackletter font (ECMA-48 "Gothic").
 control sequence to select the VGA character set, which would thus be disabled. 
 Configuring alternative font 1 is therefore discouraged.
 
-\(en \fBRight-to-left fallback font\fP (FontRTL=Courier New, FontRTLWeight=400):
+\(en \fBRight-to-left fallback font\fP \%(FontRTL=Courier\ New) and weight \%(FontRTLWeight=400):
 Fallback font in case the selected font does not include right-to-left scripts, 
 as mintty does not make use of Windows font substitution in this case.
 For RTL scripts, this is superior to a workaround using the FontChoice 
@@ -1849,7 +1849,7 @@ With this option, some delay in milliseconds (suggested 16 or 20) can be
 allowed to detect a Ctrl+Menu sequence as AltGr.
 
 .TQ
-\fBFormat of escape sequences for encoding modified keys\fP (FormatOtherKeys=1)
+\fBFormat of escape sequences for encoding modified keys\fP \%(FormatOtherKeys=1)
 This setting selects the escape sequence format for encoded modified 
 keys in modifyOtherKeys mode.
 (Corresponds to the xterm resource \fBformatOtherKeys\fP.)
@@ -3358,8 +3358,8 @@ scroll feature is activated (no-scroll or scroll-mode), the ScrollLock
 indication shall indicate the current state of the terminal window. The 
 ScrollLock light is restored to its previous state if the terminal window 
 gets out of focus or terminates.
-This setting can disable LED management for ScrollLock (ManageLEDs=3) or 
-for all modifiers (ManageLEDs=0).
+This setting can disable LED management for ScrollLock \%(ManageLEDs=3) or 
+for all modifiers \%(ManageLEDs=0).
 
 .TQ
 \fBUse system colours\fP (UseSystemColours=no)
@@ -3610,7 +3610,7 @@ Dynamic pathnames as used in escape sequences can access arbitrary files.
 These settings guard the respective functions against network file access.
 The value is a bitmask, adding the following values:
 .br
-\(en \fB1\fP guard background image (OSC 11), sound (OSC 440), icon (OSC I)
+\(en \fB1\fP guard background image (OSC 11), sound (OSC 440), icon (OSC\ I)
 .br
 \(en \fB2\fP guard set directory (OCS 7) for window cloning (Alt+F2)
 .br
