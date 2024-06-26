@@ -42,14 +42,17 @@ version := \
 name_ver := $(NAME)-$(version)
 
 changelogversion := $(shell sed -e '1 s,^\#* *\([0-9.]*\).*,\1,' -e t -e d wiki/Changelog.md)
+gitversion := $(shell src/mkvertag)
 
 ver:
-	echo checking same version in changelog and source
+	echo checking same version in changelog, source, and git
 	test "$(version)" = "$(changelogversion)"
+	test "$(version)" = "$(gitversion)"
 	echo $(version) > VERSION
 
 tag:
 	git tag $(version)
+	#git push --tags
 
 DIST := release
 TARUSER := --owner=root --group=root --owner=mintty --group=cygwin
