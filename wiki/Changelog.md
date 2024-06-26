@@ -1,3 +1,8 @@
+### 3.7.3 (27 June 2024) ###
+
+Misc
+  * Fix version tag and package building problems.
+
 ### 3.7.2 (27 June 2024) ###
 
 Terminal features
