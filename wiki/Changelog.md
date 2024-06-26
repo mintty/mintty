@@ -1,3 +1,5 @@
+### 3.7.2 (27 June 2024) ###
+
 Terminal features
   * Restore wrap modes on return from VT52 mode.
   * Fix scrolling artefacts at overhanging emojis with setting EmojiPlacement=full (#1261).
