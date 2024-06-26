@@ -1039,7 +1039,7 @@ msgstr "が利用可能"
 #. __ Options: dialog width scale factor (80...200)
 #: windialog.c:760
 msgid "100"
-msgstr "121"
+msgstr "126"
 
 #: windialog.c:901 windialog.c:928
 msgid "Error"

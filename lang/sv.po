@@ -461,7 +461,7 @@ msgstr "&Blinka"
 #. __ Options - Text:
 #: config.c:3905 config.c:4009
 msgid "Show dim as font"
-msgstr "Visa dim som typsnitt"
+msgstr "Visa dim som teckensnitt"
 
 #. __ Options - Text:
 #: config.c:3923 config.c:3956 config.c:3991
