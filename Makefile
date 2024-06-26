@@ -76,7 +76,7 @@ tar: $(generated) $(src)
 $(src): $(arch_files)
 	mkdir -p $(DIST)
 	rm -rf $(name_ver)
-	mkdir $(name_ver)
+	mkdir -p $(name_ver)
 	#cp -ax --parents $^ $(name_ver)
 	cp -dl --parents $^ $(name_ver)
 	rm -f $@
@@ -90,10 +90,10 @@ committed:
 	if git status -suno | sed -e "s,^..,," | grep .; then false; fi
 
 $(DIST):
-	mkdir $(DIST)
+	mkdir -p $(DIST)
 release: $(DIST) ver check-x11 cop check _ tar
 cygport := $(name_ver)-$(REL).cygport
-pkg: release commited tag srcpkg binpkg
+pkg: release committed tag srcpkg binpkg
 
 check:
 	cd src; $(MAKE) check
