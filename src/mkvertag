@@ -24,7 +24,7 @@ then
 	ver="$gitver"
 
 	# prepend version from source if different from git version ?
-	if true && [ -n "$version" -a "$version" != "$gitver" ]
+	if true && [ -n "$version" -a "$version" != "$gittag" ]
 	then	ver="'$version' $ver"
 	fi
 	# append time stamp if source differs from git version
