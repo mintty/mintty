@@ -48,6 +48,9 @@ ver:
 	test "$(version)" = "$(changelogversion)"
 	echo $(version) > VERSION
 
+tag:
+	git tag $(version)
+
 DIST := release
 TARUSER := --owner=root --group=root --owner=mintty --group=cygwin
 
@@ -83,10 +86,14 @@ $(src): $(arch_files)
 REL := 1
 arch := $(shell uname -m)
 
-cygport := $(name_ver)-$(REL).cygport
-pkg: $(DIST) ver check-x11 cop tar check _ srcpkg binpkg
+committed:
+	if git status -suno | sed -e "s,^..,," | grep .; then false; fi
+
 $(DIST):
 	mkdir $(DIST)
+release: $(DIST) ver check-x11 cop check _ tar
+cygport := $(name_ver)-$(REL).cygport
+pkg: release commited tag srcpkg binpkg
 
 check:
 	cd src; $(MAKE) check
