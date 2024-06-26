@@ -94,9 +94,9 @@ committed:
 
 $(DIST):
 	mkdir -p $(DIST)
-release: $(DIST) ver check-x11 cop check _ tar
+release: $(DIST) check-x11 cop check _ committed tag ver tar
 cygport := $(name_ver)-$(REL).cygport
-pkg: release committed tag srcpkg binpkg
+pkg: release srcpkg binpkg
 
 check:
 	cd src; $(MAKE) check
