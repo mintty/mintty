@@ -55,7 +55,8 @@ version := \
 name_ver := $(NAME)-$(version)
 
 changelogversion := $(shell sed -e '1 s,^\#* *\([0-9.]*\).*,\1,' -e t -e d wiki/Changelog.md)
-gitversion := $(shell src/mkvertag)
+# must not set gitversion via := (would be version before tagging)
+gitversion=$(shell src/mkvertag)
 
 ver:
 	echo checking same version in changelog, source, and git
