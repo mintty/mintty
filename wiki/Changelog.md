@@ -1,4 +1,4 @@
-### 3.7.3 (27 June 2024) ###
+### 3.7.3 (28 June 2024) ###
 
 Misc
   * Fix version tag and package building problems.
