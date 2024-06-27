@@ -51,7 +51,7 @@ ver:
 	echo $(version) > VERSION
 
 tag:
-	git tag $(version)
+	git tag -f $(version)
 	#git push --tags
 
 DIST := release
