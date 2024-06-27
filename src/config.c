@@ -1584,6 +1584,10 @@ load_config(string filename, int to_save)
   if (access(filename, R_OK) == 0 && access(filename, W_OK) < 0)
     to_save = false;
 
+  // prevent saving to /etc/minttyrc
+  if (strstr(filename, "/etc/") == filename)
+    to_save = false;
+
   FILE * file = fopen(filename, "r");
   //printf("load_config <%s> ok %d save %d\n", filename, !!file, to_save);
   if (report_config && file)

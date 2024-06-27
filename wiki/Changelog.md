@@ -3,6 +3,9 @@
 Misc
   * Fix version tag and package building problems.
 
+Configuration
+  * Prevent saving changed settings to /etc/minttyrc.
+
 ### 3.7.2 (27 June 2024) ###
 
 Terminal features
