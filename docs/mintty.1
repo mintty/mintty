@@ -17,8 +17,20 @@
 .de en
 .IP \(en 2
 ..
+.de dd
+.IP \~ 2
+..
 .de dt
 .TP 2
+..
+.de ex
+.ad l
+.ft 3
+.ft 7
+..
+.de ee
+.ad b
+.ft 1
 ..
 .TH mintty 1 mintty
 
@@ -1339,7 +1351,7 @@ Window transparency level, with the following choices:
 .en
 \fBHigh\fP
 .en
-\fBGlass\fP
+\fBGlass\fP \fI\(en deprecated\fP
 ./ul
 
 The \fBGlass\fP option is deprecated as it was only supported in Windows Vista 
@@ -1494,26 +1506,28 @@ To align secondary font size with the main font size visually, the
 respective alternative font specification can be preceded with "+".
 
 Examples:
+.ex
 .br
-  \fBFontChoice=Hebrew:6;Arabic:7;CJK:5;Han:8;Hangul:9\fP
+  FontChoice=Hebrew:6;Arabic:7;CJK:5;Han:8;Hangul:9
 .br
-  \fBFont6=David\fP
+  Font6=David
 .br
-  \fBFont7=Simplified Arabic Fixed\fP
+  Font7=Simplified Arabic Fixed
 .br
-  \fBFont5=+SimSun Regular\fP
+  Font5=+SimSun Regular
 .br
-  \fBFont8=FangSong\fP
+  Font8=FangSong
 .br
-  \fBFont9=MingLiU\fP
+  Font9=MingLiU
 .br
-  \fBFontChoice=PictoSymbols:2;Private:3\fP
+  FontChoice=PictoSymbols:2;Private:3
 .br
-  \fBFont2=DejaVu Sans Mono\fP
+  Font2=DejaVu Sans Mono
 .br
-  \fBFont3=MesloLGS NF\fP
+  Font3=MesloLGS NF
 .br
-  \fBFontChoice=Greek:3;|Greek Extended:4\fP
+  FontChoice=Greek:3;|Greek Extended:4
+.ee
 .en
 \fBFont sample text\fP (FontSample=):
 This hidden setting overrides the text for the "Sample" box in the Font chooser dialog.
@@ -2031,7 +2045,6 @@ The modifier key selected here will have the function of a \fICompose key\fP.
 Pressing and releasing the key, following by a sequence of composing keys, 
 will enter a composition of them, according to X11 compose key data.
 .br
-The \fBOff\fP setting disables the Compose key.
 .ul
 .en
 \fBShift\fP
@@ -2044,7 +2057,7 @@ The \fBOff\fP setting disables the Compose key.
 .en
 \fBHyper\fP
 .en
-\fBOff\fP
+\fBOff\fP \fI\(en disables the Compose key\fP
 ./ul
 
 .SS Mouse
@@ -2158,7 +2171,6 @@ application mouse mode.
 With the default settings, clicks are sent to the application and Shift needs
 to be held to trigger window actions instead.
 .br
-The \fBOff\fP setting disables overriding.
 .ul
 .en
 \fBShift\fP
@@ -2169,7 +2181,7 @@ The \fBOff\fP setting disables overriding.
 .en
 \fBWin\fP
 .en
-\fBOff\fP
+\fBOff\fP \fI\(en disables overriding\fP
 ./ul
 
 .TQ
@@ -2284,8 +2296,8 @@ The modifier key that needs to be pressed together with the arrow-up/down,
 PgUp/PgDn, Home/End, or arrow-left/right keys to access the scrollback buffer.
 .br
 The default is \fBShift\fP.
-The \fBOff\fP setting disables scrolling with keyboard shortcuts. 
 A combined numeric value selects the respective combination of modifier keys.
+The \fBOff\fP setting disables scrolling with keyboard shortcuts. 
 .ul
 .en
 \fBShift\fP (1)
@@ -2492,17 +2504,16 @@ The sound is also played when it is changed.
 \fBFlash style\fP (BellFlashStyle=4): Tune the style to flash the 
 terminal or window; this is a bitmask composed of the following values:
 .RS
-.bu
 \fB1\fP: Flash the window frame (using Windows)
-.bu
+.br
 \fB2\fP: Flash the outer character cells; not recommended;
    will look ragged with double-width characters
-.bu
+.br
 \fB4\fP: Flash the whole terminal pane (all character cells)
-.bu
+.br
 \fB8\fP: cell flash briefly inverts foreground and background;
    default is to moderately brighten the background colour
-.bu
+.br
 \fB12\fP: (combining 4 and 8) classic bright full flash
 .RE
 .en
@@ -2667,8 +2678,8 @@ pattern; note that this is likely to fail if a placeholder expands with
 "/" (%D).
 Example:
 .ul
-.en
-\fBLog=\(ti/mintty.%Y\-%m\-%d_%H\-%M\-%S\fP.log
+.ex
+Log=\(ti/mintty.%Y\-%m\-%d_%H\-%M\-%S.log
 ./ul
 
 If the log file name is a relative path name, it is relative from the 
@@ -2698,12 +2709,15 @@ logging can be enabled (and toggled) from the extended context menu.
 This setting selects the location and filename pattern (which is expanded 
 with the strftime(3) function) for .html and .png screen dumps.
 An initial home prefix or environment variable prefix is expanded (POSIX 
-path and variable syntax needs to be used in this case). Examples:
+path and variable syntax needs to be used in this case).
+Examples:
 .ul
-.en
-\fBSaveFilename=\(ti/mintty.%Y\-%m\-%d_%H\-%M\-%S\fP
-.en
-\fBSaveFilename=$USERPROFILE/Pictures/mintty/%Y\-%m\-%d_%H\-%M\-%S\fP
+.dd
+.ex
+SaveFilename=\(ti/mintty.%Y\-%m\-%d_%H\-%M\-%S
+.dd
+.ex
+SaveFilename=$USERPROFILE/Pictures/mintty/%Y\-%m\-%d_%H\-%M\-%S
 ./ul
 
 Note that if the filename pattern is a relative pathname (as is the default),
@@ -2984,7 +2998,10 @@ started from a desktop shortcut, the icon in the AppLaunchCmd should
 be consistent with that one, respectively).
 
 Example:
+.br
+.ex
 mintty \-o AppID=Mintty.PinTest.1 \-o AppName=Mintty.PinTest \-o AppLaunchCmd="C:\\cygwin\\bin\\mintty \-i /cygdrive/c/Windows/System32/calc.exe \-" \-i C:\\Windows\\System32\\calc.exe,0 \-\-store\-taskbar\-properties \-
+.ee
 
 \fBWarning:\fP Once made persistent, the stored properties associated with 
 a specific AppID cannot be removed or even modified again with normal means.
@@ -3098,11 +3115,20 @@ Break function.
 
 Examples:
 .br
-\fBKey_Menu=29\fP would make the Menu key send the same escape sequence as in xterm
+.ex
+Key_Menu=29
+.ee
+would make the Menu key send the same escape sequence as in xterm
 .br
-\fBKey_Break=2\fP would turn the Break key into an Insert key
+.ex
+Key_Break=2
+.ee
+would turn the Break key into an Insert key
 .br
-\fBKey_Break=_BRK_\fP would assign the simulated terminal line Break function
+.ex
+Key_Break=_BRK_
+.ee
+would assign the simulated terminal line Break function
 
 .TQ
 .B User-defined shortcuts (KeyFunctions=)
@@ -3426,60 +3452,104 @@ is defined, mintty will compensate for its implicit state change effect.
 Examples:
 .ul
 .en
-\fBKeyFunctions=d:\`echo \-n \`date\`\`;A+F4:;CA+F12:break;\-:"minus"\fP
+.ex
+KeyFunctions=d:\`echo \-n \`date\`\`;A+F4:;CA+F12:break;\-:"minus"
+.ee
 will input the current date on Ctrl+Shift+d, disable window closing with Alt+F4,
 send a BRK on Ctrl+Alt+F12, but likely not input "minus" on Ctrl+Shift+minus 
 because Shift+minus is an underline on many keyboard layouts which has a 
 Ctrl+_ assignment already
 .en
-\fBKeyFunctions=C+F2:new\-tab\-cwd;AC+F2:new\-window\-cwd\fP will open 
+.ex
+KeyFunctions=C+F2:new\-tab\-cwd;AC+F2:new\-window\-cwd
+.ee
+will open 
 a new tab in same directory as current process on Control+F2, or as a 
 new window on Alt+Control+F2
 .en
-\fBKeyFunctions=Alt:\(ha[\fP will make Alt send the Esc keycode when it is
+.ex
+KeyFunctions=Alt:\(ha[
+.ee
+will make Alt send the Esc keycode when it is
 pressed and released on its own, for when the Esc key seems too far away from
 the home row
 .en
-\fBKeyFunctions=Alt:menu\-text\fP will make Alt open the context menu
+.ex
+KeyFunctions=Alt:menu\-text
+.ee
+will make Alt open the context menu
 .en
-\fBKeyFunctions=c:copy;v:paste\fP in combination with setting 
-\fB\-o\ CtrlExchangeShift=true\fP will assign copy/paste to ^C and ^V 
+.ex
+KeyFunctions=c:copy;v:paste
+.ee
+in combination with setting 
+.ex
+\-o\ CtrlExchangeShift=true
+.ee
+will assign copy/paste to ^C and ^V 
 for Windows addicts
 .en
-\fBKeyFunctions=C+v:paste\fP in combination with setting 
-\fB\%\-o\ ShootFoot=on\fP will assign paste to ^V for Windows addicts
+.ex
+KeyFunctions=C+v:paste
+.ee
+in combination with setting 
+.ex
+\%\-o\ ShootFoot=on
+.ee
+will assign paste to ^V for Windows addicts
 .en
-\fBKeyFunctions=U+s:"super"\fP will assign the text "super" to Super+s
+.ex
+KeyFunctions=U+s:"super"
+.ee
+will assign the text "super" to Super+s
 .en
-\fBKeyFunctions=*CapsLock:super\fP assigns the Super modifier to 
+.ex
+KeyFunctions=*CapsLock:super
+.ee
+assigns the Super modifier to 
 the CapsLock key
 .en
-\fBKeyFunctions=*Menu:29\fP turns the Menu key into an F16 function key 
+.ex
+KeyFunctions=*Menu:29
+.ee
+turns the Menu key into an F16 function key 
 (xterm default) and applies all modifiers to it
 .en
-\fBKeyFunctions=AS+Insert:paste\-path;AS+KP_Insert:paste\-path\fP
+.ex
+KeyFunctions=AS+Insert:paste\-path;AS+KP_Insert:paste\-path
+.ee
 will always try to convert pasted paths to POSIX syntax on Alt+Shift+Insert
 .en
-\fBKeyFunctions=A+Enter:void;A+KP_Enter:\fP will disable zooming 
+.ex
+KeyFunctions=A+Enter:void;A+KP_Enter:
+.ee
+will disable zooming 
 on Alt+Enter and also disable it on Alt+keypad-Enter but enter ESC Return 
 in the latter case
 .en
-\fBKeyFunctions=A+Left:switch\-prev;A+C+Left:switch\-visible\-prev;\\
-	A+Right:switch\-next;A+C+Right:switch\-visible\-next\fP
-.br
+.ex
+KeyFunctions=A+Left:switch\-prev;A+C+Left:switch\-visible\-prev;\\
+	A+Right:switch\-next;A+C+Right:switch\-visible\-next
+.ee
 enables window switching with [Ctrl+]Alt+Left/Right keys on the 
 "editing keypad" (prefix KP_ for the numeric keypad)
 .en
-\fBKeyFunctions=S+KP_Prior:scroll_pgup;C+KP_Prior:scroll_pgup;\\
-	C+KP_Next:scroll_pgdn;S+KP_Next:scroll_pgdn\fP 
-.br
+.ex
+KeyFunctions=S+KP_Prior:scroll_pgup;C+KP_Prior:scroll_pgup;\\
+	C+KP_Next:scroll_pgdn;S+KP_Next:scroll_pgdn
+.ee
 enables scrollback scrolling with either of Shift or Control modifiers
 .en
-\fBKeyFunctions=ScrollLock:toggle\-no\-scroll\fP enables NoScroll key
+.ex
+KeyFunctions=ScrollLock:toggle\-no\-scroll
+.ee
+enables NoScroll key
 .en
-\fBKeyFunctions=C+Left:hor\-left\-1;C+Right:hor\-right\-1;\\
+.ex
+KeyFunctions=C+Left:hor\-left\-1;C+Right:hor\-right\-1;\\
 	CS+Left:hor\-out\-1;CS+Right:hor\-in\-1;\\
-	S+Left:hor\-narrow\-1;S+Right:hor\-wide\-1\fP
+	S+Left:hor\-narrow\-1;S+Right:hor\-wide\-1
+.ee
 .br
 enables horizontal scrolling support via modified cursor keys on the 
 "editing keypad" (prefix KP_ for the numeric keypad)
@@ -3813,11 +3883,14 @@ to reduce the risk of injecting commands via tricky filenames.
 Examples:
 .ul
 .en
-\fBDropCommands=bash:cd \(aq%s\(aq^M;mined:^[fo^M%s^M;vim:^[:e %s^M\fP
+.ex
+DropCommands=bash:cd \(aq%s\(aq^M;mined:^[fo^M%s^M;vim:^[:e %s^M
 .en
-\fBDropCommands=^_bash:cd \(aq%s\(aq;echo $PWD^M^_vim:^[:e %s^M^_\fP
+.ex
+DropCommands=^_bash:cd \(aq%s\(aq;echo $PWD^M^_vim:^[:e %s^M^_
 .en
-\fBDropCommands=cmd:cd /D %W^M\fP
+.ex
+DropCommands=cmd:cd /D %W^M
 ./ul
 
 \fINote:\fP An "Enter" key has to be specified with the CR character code, 
@@ -3857,7 +3930,8 @@ Be careful what strings you configure!
 Example:
 .ul
 .en
-\fBExitCommands=bash:exit^M;mined:^[q;emacs:^X^C\fP
+.ex
+ExitCommands=bash:exit^M;mined:^[q;emacs:^X^C
 ./ul
 
 \fINote:\fP An "Enter" key has to be specified with the CR character code, 
@@ -3928,9 +4002,11 @@ in order to avoid the risk of injecting commands via tricky selected text.
 Examples:
 .ul
 .en
-\fBUserCommands=Paste capital:echo \-n "$MINTTY_SELECT" | tr \(aqa\-z\(aq \(aqA\-Z\(aq;Paste small:echo \-n "$MINTTY_SELECT" | tr \(aqA\-Z\(aq \(aqa\-z\(aq\fP
+.ex
+UserCommands=Paste capital:echo \-n "$MINTTY_SELECT" | tr \(aqa\-z\(aq \(aqA\-Z\(aq;Paste small:echo \-n "$MINTTY_SELECT" | tr \(aqA\-Z\(aq \(aqa\-z\(aq
 .en
-\fBUserCommands=google:cygstart https://www.google.de/search?q="$MINTTY_SELECT"\fP
+.ex
+UserCommands=google:cygstart https://www.google.de/search?q="$MINTTY_SELECT"
 ./ul
 
 \fINote:\fP Control characters need to be embedded verbatim; there is no escape notation.
@@ -3998,7 +4074,8 @@ of a \fB&\fP marker which indicates a key shortcut for menu item selection.
 Examples:
 .ul
 .en
-\fBSysMenuFunctions=&Lock Title:lock\-title;Copy &Title:copy\-title;&Options...:options;Ne&w:new\-window\fP
+.ex
+SysMenuFunctions=&Lock Title:lock\-title;Copy &Title:copy\-title;&Options...:options;Ne&w:new\-window
 ./ul
 
 .TQ
@@ -4025,9 +4102,11 @@ added to the localization file of the selected UI localization language
 Examples:
 .ul
 .en
-\fBSessionCommands=big:\-w max;Ubuntu:\-\-WSL=Ubuntu;mybox:ssh mybox\fP
+.ex
+SessionCommands=big:\-w max;Ubuntu:\-\-WSL=Ubuntu;mybox:ssh mybox
 .en
-\fBSessionCommands=mycolours:\-C \(ti/.minttyrc.mycolours\fP
+.ex
+SessionCommands=mycolours:\-C \(ti/.minttyrc.mycolours
 ./ul
 
 \fINote:\fP Control characters need to be embedded verbatim; there is no escape notation.
@@ -4074,9 +4153,11 @@ or from the WSLtty package if installed.
 Examples:
 .ul
 .en
-\fBTaskCommands=big:\-w max;Ubuntu:\-\-WSL=Ubuntu;mybox:ssh mybox\fP
+.ex
+TaskCommands=big:\-w max;Ubuntu:\-\-WSL=Ubuntu;mybox:ssh mybox
 .en
-\fBTaskCommands=mycolours:\-C \(ti/.minttyrc.mycolours\fP
+.ex
+TaskCommands=mycolours:\-C \(ti/.minttyrc.mycolours
 ./ul
 
 \fINote:\fP Control characters need to be embedded verbatim; there is no escape notation.

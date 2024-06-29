@@ -379,7 +379,7 @@ $(zip): $(exe) $(zip_files)
 pdf := $(DIST)/$(name_ver).pdf
 pdf: $(pdf)
 $(pdf): ../docs/$(NAME).1
-	groff -t -man -Tps $< | ps2pdf - $@
+	(echo .fp 5 CR; echo .fp 7 CB; cat $<) | groff -t -man -Tps | ps2pdf - $@
 
 html := ../docs/$(NAME).1.html
 html: $(html)
