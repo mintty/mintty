@@ -1920,6 +1920,9 @@ compose_clear(void)
 void
 win_key_reset(void)
 {
+  is_lctrl = 0;
+  is_ralt = false;
+  is_altgr = false;
   alt_state = ALT_NONE;
   compose_clear();
 }
@@ -2593,8 +2596,8 @@ C	M	>C	=C	>M	=M
 ---------------------------------------------
 0	0	+C	?	+M	?
 C	0	2C	-	C+MA	-1C+MA
-0	M	+C	+A	-	-
-C	M	+C	+A	-	-
+0	M	+C	+A	"	"
+C	M	+C	+A	"	"
 */
     if (key == VK_CONTROL && !extended) {
       lctrl_time = GetMessageTime();
@@ -2605,18 +2608,18 @@ C	M	+C	+A	-	-
           is_lctrl = 2;
         else
           is_lctrl = true;
+      //printf("-> is_lctrl %d\n", is_lctrl);
     }
     else if (key == VK_MENU && extended) {
       ralt_time = GetMessageTime();
-      if (!is_ralt) {
-        is_ralt = true;
-        if (is_lctrl) {
-          is_altgr = true;
-          if (is_ralt && ralt_time - lctrl_time <= cfg.ctrl_alt_delay_altgr)
-            if (is_lctrl)
-              is_lctrl -= 1;
-        }
+      is_ralt = true;
+      if (is_lctrl) {
+        is_altgr = true;
+        if (ralt_time - lctrl_time <= cfg.ctrl_alt_delay_altgr)
+          if (is_lctrl)
+            is_lctrl -= 1;
       }
+      //printf("-> is_ralt %d\n", is_ralt);
     }
     lctrl = is_lctrl;
     //printf("-- is_lctrl %d is_ralt %d is_altgr %d\n", is_lctrl, is_ralt, is_altgr);
@@ -3929,10 +3932,12 @@ win_key_up(WPARAM wp, LPARAM lp)
   if (key == VK_CONTROL && !extended) {
     is_lctrl = 0;
     is_altgr = false;
+    //printf("-- clear is_lctrl %d\n", is_lctrl);
   }
   if (key == VK_MENU && extended) {
     is_ralt = false;
     is_altgr = false;
+    //printf("-- clear is_ralt %d\n", is_ralt);
   }
 
   if (key == VK_CANCEL) {
