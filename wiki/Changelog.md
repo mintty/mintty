@@ -1,3 +1,4 @@
+### 3.7.4 (03 July 2024) ###
 
 Keyboard handling
   * Tweak revised AltGr handling to avoid sticky Ctrl state (#1273, ~#1266).
