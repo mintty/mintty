@@ -59,10 +59,12 @@ changelogversion := $(shell sed -e '1 s,^\#* *\([0-9.]*\).*,\1,' -e t -e d wiki/
 gitversion=$(shell src/mkvertag)
 
 ver:
+	echo $(version) > VERSION
+
+checkver:
 	echo checking same version in changelog, source, and git
 	test "$(version)" = "$(changelogversion)"
 	test "$(version)" = "$(gitversion)"
-	echo $(version) > VERSION
 
 tag:
 	git tag -f $(version)
@@ -73,9 +75,10 @@ committed:
 
 $(DIST):
 	mkdir -p $(DIST)
-release: $(DIST) check-x11 cop check _ committed tag ver tar
+release: $(DIST) check-x11 cop check _ ver
+checkrelease: committed tag checkver tar
 cygport := $(name_ver)-$(REL).cygport
-pkg: release srcpkg binpkg binver
+pkg: release checkrelease srcpkg binpkg binver
 
 binver:
 	$(DIST)/$(name_ver)-$(REL).$(arch)/inst/usr/bin/mintty -V | grep "mintty $(version) "
