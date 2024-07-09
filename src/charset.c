@@ -1,5 +1,5 @@
 // charset.c (part of mintty)
-// Copyright 2008-11 Andy Koppe, 2017 Thomas Wolff
+// Copyright 2008-11 Andy Koppe, 2024 Thomas Wolff
 // Based on code from PuTTY-0.60 by Simon Tatham and team.
 // Licensed under the terms of the GNU General Public License v3 or later.
 
@@ -957,7 +957,14 @@ wchar
 cs_btowc_glyph(char c)
 {
   wchar wc = 0;
-  MultiByteToWideChar(codepage, MB_USEGLYPHCHARS, &c, 1, &wc, 1);
+  DWORD glyphopt = MB_USEGLYPHCHARS;
+  if (codepage == 54936) {
+    // Windows API description says for UTF-8 and GB18030 the 
+    // flags parameter should be zero; however, for UTF-8 the function 
+    // works anyway while for GB18030 it only returns 0...
+    glyphopt = 0;
+  }
+  MultiByteToWideChar(codepage, glyphopt, &c, 1, &wc, 1);
   return wc;
 }
 
@@ -1165,7 +1172,7 @@ path_posix_to_win_w(const char * p)
   char ap[MAX_PATH];
   cygwin_conv_to_win32_path(p, ap);
   wchar * wp = newn(wchar, MAX_PATH);
-  MultiByteToWideChar(0, 0, ap, -1, wp, MAX_PATH);
+  MultiByteToWideChar(codepage, 0, ap, -1, wp, MAX_PATH);
   wp = renewn(wp, wcslen(wp) + 1);
   return wp;
 }

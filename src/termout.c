@@ -1,5 +1,5 @@
 // termout.c (part of mintty)
-// Copyright 2008-23 Andy Koppe, 2017-22 Thomas Wolff
+// Copyright 2008-23 Andy Koppe, 2017-2024 Thomas Wolff
 // Adapted from code from PuTTY-0.60 by Simon Tatham and team.
 // Licensed under the terms of the GNU General Public License v3 or later.
 
@@ -4882,6 +4882,8 @@ term_do_write(const char *buf, uint len, bool fix_status)
         if (term.curs.oem_acs && !memchr("\e\n\r\b", c, 4)) {
           if (term.curs.oem_acs == 2)
             c |= 0x80;
+          // with codepage set to 437, function cs_btowc_glyph 
+          // maps VGA characters to their glyphs
           write_ucschar(0, cs_btowc_glyph(c), 1);
           continue;
         }
@@ -5234,6 +5236,7 @@ term_do_write(const char *buf, uint len, bool fix_status)
         // Control characters
         if (wc < 0x20 || wc == 0x7F) {
           if (!do_ctrl(wc) && c == wc) {
+            // the rôle of function cs_btowc_glyph in this case is unclear
             wc = cs_btowc_glyph(c);
             if (wc != c)
               write_ucschar(0, wc, 1);
