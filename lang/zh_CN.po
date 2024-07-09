@@ -873,7 +873,7 @@ msgstr "终端类型(&T)"
 #. __ Options - Terminal: answerback string for ^E request
 #: config.c:4561
 msgid "&Answerback"
-msgstr "应答(&A)"
+msgstr "应答字符串(&A)"
 
 #. __ Options - Terminal: section title
 #: config.c:4566
