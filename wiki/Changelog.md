@@ -1,3 +1,6 @@
+Character encoding
+  * Disable GB18030 workaround for cygwin since 3.5 which supports it natively.
+
 ### 3.7.4 (03 July 2024) ###
 
 Keyboard handling

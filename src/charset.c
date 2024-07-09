@@ -112,6 +112,7 @@ cs_descs[] = {
   {   20866, "Russian"},
   {   21866, "Ukrainian"},
   {     936, "Chinese"},
+  {   54936, "Chinese"},
   {     950, "Chinese"},
   {     932, "Japanese"},
 #if HAS_LOCALES
@@ -269,7 +270,7 @@ get_cp_info(void)
 static void
 fallback_charset()
 {
-  if (0 == strcasecmp(cfg.charset, "GB18030")) {
+  if (!cygver_ge(3,5) && 0 == strcasecmp(cfg.charset, "GB18030")) {
 #if HAS_LOCALES
     if (!setlocale(LC_CTYPE, config_locale))
 #endif
@@ -516,7 +517,7 @@ update_locale(void)
   trace_locale("update_locale", locale);
 
   gb18030 = false;
-  if (!set_locale && strcasecmp(charset, "GB18030") == 0) {
+  if (!set_locale && !cygver_ge(3,5) && strcasecmp(charset, "GB18030") == 0) {
     charset = "GBK";
     char * locgbk = strdup(locale);
     char * dot = strchr(locgbk, '.');
@@ -599,7 +600,7 @@ update_locale(void)
   default_codepage = cs_codepage(charset);
   default_locale = asform("C.%u", default_codepage);
   cs_ambig_wide = charwidth == 2 || font_ambig_wide;
-  gb18030 = 0 == strcasecmp(cfg.charset, "GB18030");
+  gb18030 = !cygver_ge(3,5) && 0 == strcasecmp(cfg.charset, "GB18030");
 #endif
 
   update_mode();
@@ -814,9 +815,12 @@ char *
 cs__wcstombs(const wchar * ws)
 {
   char defchar = '?';
-  char * defcharpoi = (codepage == CP_UTF8 ? 0 : &defchar);
+  char * defcharpoi = ((codepage == CP_UTF8 || codepage == 54936) ? 0 : &defchar);
   int size1 = WideCharToMultiByte(codepage, WC_OPT, ws, -1, 0, 0, 0, 0);
   char * s = malloc(size1);  // includes terminating NUL
+  // defcharpoi needs to be 0 also for GB18030 or it will fail 
+  // (which is NOT documented for the Windows API, unlike a similar 
+  // restriction for the flags parameter)
   WideCharToMultiByte(codepage, WC_OPT, ws, -1, s, size1, defcharpoi, 0);
   return s;
 }
@@ -825,10 +829,11 @@ char *
 cs__wcstombs_dropill(const wchar * ws)
 {
   char defchar = '\0';
-  char * defcharpoi = (codepage == CP_UTF8 ? 0 : &defchar);
+  char * defcharpoi = ((codepage == CP_UTF8 || codepage == 54936) ? 0 : &defchar);
   int illegal = 0;
   int size1 = WideCharToMultiByte(codepage, WC_OPT, ws, -1, 0, 0, 0, 0);
   char * s = malloc(size1);  // includes terminating NUL
+  // defcharpoi needs to be 0 also for GB18030 (see above)
   WideCharToMultiByte(codepage, WC_OPT, ws, -1, s, size1, defcharpoi, &illegal);
   if (illegal) {
     int i = 0;
