@@ -1,6 +1,12 @@
 Character encoding
   * Disable GB18030 workaround for cygwin since 3.5 which supports it natively.
 
+Mouse and menu handling
+  * Allow disabling of mouse menus by clearing Menu* (#1279).
+
+Configuration
+  * Setting options Menu* to empty value disables the respective menu (#1279).
+
 ### 3.7.4 (03 July 2024) ###
 
 Keyboard handling
