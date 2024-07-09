@@ -2,7 +2,7 @@
 # Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the mintty package.
 # Gore Liu <goreliu@126.com>, 2017.
-# GeekDuanLian <dl@pbstu.com>, 2022.
+# GeekDuanLian <dl@pbstu.com>, 2024.
 #
 msgid ""
 msgstr ""
@@ -463,7 +463,7 @@ msgstr "允许闪烁(&A)"
 #. __ Options - Text:
 #: config.c:3909 config.c:4013
 msgid "Show dim as font"
-msgstr "显示淡的字形(&W)"
+msgstr "显示半隐字形(&W)"
 
 #. __ Options - Text:
 #: config.c:3927 config.c:3960 config.c:3995
@@ -542,7 +542,7 @@ msgstr "删除键发送 DEL (&D)"
 #. __ Options - Keys:
 #: config.c:4076
 msgid "Ctrl+LeftAlt is Alt&Gr"
-msgstr "将 Ctrl+左Alt 设置为 Alt&Gr"
+msgstr "将 Ctrl+左Alt 设置为 AltGr (&G)"
 
 #. __ Options - Keys:
 #: config.c:4081
@@ -552,7 +552,7 @@ msgstr "将 AltGr 也视为 Alt"
 #. __ Options - Keys:
 #: config.c:4086
 msgid "&Esc/Enter reset IME to alphanumeric"
-msgstr ""
+msgstr "Esc/Enter 重置输入法为英文(&E)"
 
 #. __ Options - Keys: section title
 #: config.c:4092
