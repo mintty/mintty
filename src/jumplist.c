@@ -1,8 +1,6 @@
 
 #if CYGWIN_VERSION_API_MINOR >= 74
 
-#undef WINVER
-#define WINVER 0x0601
 #include "std.h"
 //#undef NTDDI_VERSION
 //#define NTDDI_VERSION NTDDI_WIN7
@@ -15,6 +13,8 @@ typedef struct _PROCESSOR_NUMBER {
 } PROCESSOR_NUMBER, *PPROCESSOR_NUMBER;
 #endif
 
+#undef WINVER
+#define WINVER 0x0601
 #include <shlobj.h>
 #include <propkey.h>  // PKEY_Title
 
@@ -241,7 +241,7 @@ HRESULT
 setup_jumplist(wstring appid, int n, wstring titles[], wstring cmds[], wstring icons[], int ii[])
 {
   (void)appid; (void)n; (void)titles; (void)cmds; (void)icons; (void)ii;
-  return S_OK;
+  return 0;
 }
 
 #endif

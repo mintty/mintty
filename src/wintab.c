@@ -92,7 +92,9 @@ tabbar_update()
   ReleaseDC(tab_wnd, tabdc);
 }
 
-#if CYGWIN_VERSION_API_MINOR >= 74
+#define unflicker
+
+#ifdef unflicker
 // To prevent heavy flickers.
 static LRESULT CALLBACK
 tab_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp, UINT_PTR uid, DWORD_PTR data)
@@ -187,7 +189,7 @@ container_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
   else if (msg == WM_CREATE) {
     //printf("tabbar con_proc WM_CREATE\n");
     tab_wnd = CreateWindowExA(0, WC_TABCONTROLA, "", WS_CHILD | TCS_FIXEDWIDTH | TCS_OWNERDRAWFIXED, 0, 0, 0, 0, hwnd, 0, inst, NULL);
-#if CYGWIN_VERSION_API_MINOR >= 74
+#ifdef unflicker
     SetWindowSubclass(tab_wnd, tab_proc, 0, 0);
 #endif
     create_tabbar_font();
