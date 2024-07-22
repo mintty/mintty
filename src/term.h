@@ -587,6 +587,7 @@ struct term {
   uchar vt52_mode;
   bool save_autowrap;
   bool save_rev_wrap;
+  bool emoji_width;
 
   uint csi_argc;
   uint csi_argv[32];

@@ -207,10 +207,8 @@ can be disabled per line, usable for example for prompt lines.
 |:----------------|:---------------------|
 | `^[[?7723l`     | disabled             |
 | `^[[?7723h`     | enabled (default)    |
-| `^[[?2027l` (*) | disabled             |
-| `^[[?2027h` (*) | enabled (default)    |
 
-Note: 2027 is DEPRECATED as some other terminals meanwhile use it differently.
+Note: Previous alternative mode 2027 was DEPRECATED and now dropped.
 
 
 ## Scrollbar hiding ##
@@ -521,6 +519,39 @@ Like OSC 50 for font style, this sequence can change the emojis style.
 For values, see setting `Emojis` in the manual.
 
 > `^[]7750;`_emojis-style_`^G`
+
+
+## Emoji width mode ##
+
+— EXPERIMENTAL —
+
+By default, mintty displays emojis, particularly emoji sequences, in a 
+grid cell width as defined by the locale function wcswidth. This can yield 
+wide emoji display in up to 8 cells for sequences composed of as many components.
+An application can choose to display emojis always in 2-cell width, matching 
+the appearance of emoji graphics, but compromising system-defined string width.
+
+| **sequence**  | **emoji width** |
+|:--------------|:----------------|
+| `^[[?7769l`   | wcswidth        |
+| `^[[?7769h`   | 2-cell          |
+
+The following rules describe the character sequences to be handled as 
+2-cell emojis:
+1. Appending variation selector U+FE0F as a combining character changes any 
+   character to double-width.
+2. Appending a zero-width joiner U+200D or a Fitzpatrick modifier 
+   or a TAG (U+E0020..U+E007F) also forces any character to double-width.
+3. Fitzpatrick modifiers have zero width except at line beginning.
+4. The zero-width joiner U+200D forces the subsequent character to 
+   also be treated like a combining character, thus not add any width.
+
+Note that these rules need to be applied to any character sequence 
+depending on the respective pattern, 
+regardless of whether it has a Unicode emoji definition, and 
+regardless of whether it has a glyph in the current glyph set.
+Otherwise screen width would be unpredictable and hardly manageable 
+by applications with respect to changing definitions and configurations.
 
 
 ## Background image ##
