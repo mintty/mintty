@@ -10,6 +10,7 @@ Mouse and menu handling
 
 Configuration
   * Setting options Menu* to empty value disables the respective menu (#1279).
+  * Skip config files in $HOME if $HOME does not exist (mintty/wsltty#351).
 
 ### 3.7.4 (03 July 2024) ###
 
