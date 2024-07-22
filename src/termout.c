@@ -995,9 +995,6 @@ write_char(wchar c, int width)
     }
   }
 
-  if (term.insert && width > 0)
-    insert_char(width);
-
   // check whether to continue an emoji joined sequence
   if (term.emoji_width && curs->x > 0) {
     // find previous character position
@@ -1011,6 +1008,13 @@ write_char(wchar c, int width)
       //printf("@:%d (%04X) %04X prev joiner\n", x, line->chars[x].chr, c),
       width = 0;
   }
+
+  // in insert mode, shift rest of line before insertion;
+  // do this after width trimming of ZWJ-joined characters,
+  // the case of subsequent widening of single-width characters 
+  // needs to be tuned later
+  if (term.insert && width > 0)
+    insert_char(width);
 
   switch (width) {
     when 1:  // Normal character.
@@ -1152,6 +1156,11 @@ write_char(wchar c, int width)
             }
             else {
               //printf("%d:%d (:%d %04X) %04X make wide\n", curs->y, curs->x, x, line->chars[x].chr, c),
+              // if we widen the previous position:
+              // in insert mode, shift rest of line by 1 more cell
+              if (term.insert)
+                insert_char(1);
+
               // seen a single-width char before current position,
               // so cursor is at the right half of the newly wide position,
               // so unlike above, put UCSWIDE here, then forward position
