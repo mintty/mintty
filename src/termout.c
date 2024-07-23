@@ -2488,7 +2488,7 @@ set_modes(bool state)
           }
         when 7723: /* Reflow mode; 2027 is dropped */
           term.curs.rewrap_on_resize = state;
-        when 7769: /* Emoji 2-cell width mode */
+        when 2027 or 7769: /* Emoji 2-cell width mode */
           term.emoji_width = state;
       }
     }
@@ -2659,7 +2659,7 @@ get_mode(bool privatemode, int arg)
         return 2 - !(term.curs.bidimode & LATTR_BIDISEL);
       when 7723: /* Reflow mode; 2027 is dropped */
         return 2 - term.curs.rewrap_on_resize;
-      when 7769: /* Emoji 2-cell width mode */
+      when 2027 or 7769: /* Emoji 2-cell width mode */
         return 2 - term.emoji_width;
       otherwise:
         return 0;

@@ -1,6 +1,6 @@
 Terminal features
-  * Emoji width mode (DECSET 7769) to always render emojis in 2-cell width.
-  * Dropped deprecated DECSET mode 2027.
+  * Emoji width mode (DECSET 2027) to always render emojis in 2-cell width.
+  * Dropped deprecated DECSET mode 2027 for terminal reflow.
 
 Character encoding
   * Disable GB18030 workaround for cygwin since 3.5 which supports it natively.

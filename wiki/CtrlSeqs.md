@@ -531,13 +531,20 @@ wide emoji display in up to 8 cells for sequences composed of as many components
 An application can choose to display emojis always in 2-cell width, matching 
 the appearance of emoji graphics, but compromising system-defined string width.
 
-| **sequence**  | **emoji width** |
-|:--------------|:----------------|
-| `^[[?7769l`   | wcswidth        |
-| `^[[?7769h`   | 2-cell          |
+| **sequence**  | **emoji width**                          |
+|:--------------|:-----------------------------------------|
+| `^[[?2027l`   | wcwidth/wcswidth                         |
+| `^[[?2027h`   | 2-cell (mode setting of other terminals) |
+| `^[[?7769l`   | wcwidth/wcswidth                         |
+| `^[[?7769h`   | 2-cell (mintty mode setting)             |
 
 The following rules describe the character sequences to be handled as 
 2-cell emojis:
+
+0. The rules below need to be applied to any character sequence 
+   depending on the respective pattern only, 
+   regardless of whether it has a Unicode emoji definition, and 
+   regardless of whether it has a glyph in the current glyph set.
 1. Appending variation selector U+FE0F as a combining character changes any 
    character to double-width.
 2. Appending a zero-width joiner U+200D or a Fitzpatrick modifier 
@@ -546,12 +553,13 @@ The following rules describe the character sequences to be handled as
 4. The zero-width joiner U+200D forces the subsequent character to 
    also be treated like a combining character, thus not add any width.
 
-Note that these rules need to be applied to any character sequence 
-depending on the respective pattern, 
-regardless of whether it has a Unicode emoji definition, and 
-regardless of whether it has a glyph in the current glyph set.
-Otherwise screen width would be unpredictable and hardly manageable 
-by applications with respect to changing definitions and configurations.
+Note that rule 0 is important to keep screen width predictable for 
+applications; otherwise screen positiong would be hardly manageable 
+with respect to changing Unicode versions and emoji graphic resources.
+
+Note that other terminals support a “Unicode width” mode which may deviate 
+from the rules applied by mintty; a common specification is not yet agreed.
+For this reason, there are currently 2 mode setting sequences.
 
 
 ## Background image ##
