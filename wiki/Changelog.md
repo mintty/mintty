@@ -5,6 +5,9 @@ Terminal features
 Character encoding
   * Disable GB18030 workaround for cygwin since 3.5 which supports it natively.
 
+Font rendering
+  * Fix and enable rendering for geometric Powerline symbols (#979, #943).
+
 Mouse and menu handling
   * Allow disabling of mouse menus by clearing Menu* (#1279).
 
