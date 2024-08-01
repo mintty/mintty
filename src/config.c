@@ -1197,7 +1197,7 @@ init_config_dirs(void)
     sprintf(appdata, "%s/mintty", getenv("APPDATA"));
     config_dirs[++last_config_dir] = appdata;
   }
-  if (!support_wsl) {
+  if (!support_wsl && access(home, X_OK) == 0) {
     char * xdgconf = newn(char, strlen(home) + 16);
     sprintf(xdgconf, "%s/.config/mintty", home);
     config_dirs[++last_config_dir] = xdgconf;
