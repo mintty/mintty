@@ -14,7 +14,6 @@ Further sounds are selected from a contribution of “naknak”, with some instr
 [how to make bell sounds](https://github.com/mintty/mintty/issues/711#issuecomment-483074839) 
 from sound sources that may be useful to others.
 The sounds are provided under the creative commons license.
-See the subfolder `archive` in the mintty repository for the complete set.
 
 Suitable Windows sounds may be `Windows Default.wav`, `Windows Ding.wav`, 
 `Windows Critical Stop.wav`, from the Windows subfolder `Media`.
