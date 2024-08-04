@@ -109,7 +109,7 @@ Keyboard auto-repeat can also be disabled with DECSET 8 (DECARM).
 | **sequence**   | **comment**         |
 |:---------------|:--------------------|
 | `^[[`_cps_`-p` | max 30              |
-| `^[[-p       ` | unlimited           |
+| `^[[-p`        | unlimited           |
 | `^[[?8l`       | disable auto-repeat |
 | `^[[?8h`       | enable auto-repeat  |
 
@@ -460,6 +460,8 @@ with one extension:
 | `^[[22 Z`    | zoom down to single-cell display (like setting `Charwidth=single`) |
 | `^[[2;2 Z`   | like `^[[22 Z`                                |
 
+Note: There is one space character before the `Z`.
+
 
 ## Overstrike ##
 
@@ -619,7 +621,7 @@ This sequence is disabled by default setting `AllowSetSelection=no`.
 The following _OSC_ ("operating system command") sequence can be used to 
 set the window title (alternatively to OSC 2):
 
-> `^[]l;1^G`
+> `^[]l;`_title_`^G`
 
 
 ## Window icon ##
@@ -627,7 +629,7 @@ set the window title (alternatively to OSC 2):
 The following _OSC_ ("operating system command") sequence can be used to 
 set the window icon from the given file and optional icon index:
 
-> `^[]I;icon_file,index^G`
+> `^[]I;` _icon_file_ [ `,` _index_ ] `^G`
 
 
 ## Working directory ##
@@ -825,9 +827,9 @@ can be used to control cursor type (shape) and blinking.
 It takes an optional second parameter (proprietary extension) to set the 
 blinking interval in milliseconds.
 
-> `^[[` _arg_ _SP_ `q`
+> `^[[` _arg_ SP `q`
 
-> `^[[` _arg_ `;` _blink_ _SP_ `q`
+> `^[[` _arg_ `;` _blink_ SP `q`
 
 | **arg** | **shape**    | **blink** |
 |:--------|:-------------|:----------|
@@ -840,6 +842,8 @@ blinking interval in milliseconds.
 | **6**   | line         | no        |
 | **7**   | box          | yes       |
 | **8**   | box          | no        |
+
+Note: There is one space character before the `q`.
 
 Furthermore, the following Linux console sequence can be used to set the 
 size of the active underscore cursor.
