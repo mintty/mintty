@@ -179,6 +179,8 @@ typedef struct {
   bool confirm_exit;
   bool confirm_reset;
   bool confirm_multi_line_pasting;
+  bool status_line;
+  int status_debug;
   // Command line
   wstring class;
   char hold;
@@ -241,6 +243,7 @@ typedef struct {
   int padding;
   int ligatures;
   int ligatures_support;
+  bool box_drawing;
   int handle_dpichanged;
   int check_version_update;
   string word_chars;
@@ -259,8 +262,6 @@ typedef struct {
   int options_fontsize;
   string old_options;
   bool dim_margins;
-  bool status_line;
-  int status_debug;
   bool old_xbuttons;
   // Legacy
   bool use_system_colours;

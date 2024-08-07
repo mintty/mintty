@@ -1893,7 +1893,9 @@ gpcheck(char * tag, GpStatus s)
     "PropertyNotSupported",
     "ProfileNotFound",
   };
+#if debug_gdiplus <= 1
   if (s)
+#endif
     printf("[%s] %d %s\n", tag, s, s >= 0 && s < lengthof(gps) ? gps[s] : "?");
 }
 #else
@@ -2215,7 +2217,7 @@ fill_rect(HDC dc, RECT * boxp, GpBrush * br)
 void
 win_flush_background(bool clearbg)
 {
-#ifdef debug_gdiplus
+#if defined(debug_gdiplus) && debug_gdiplus > 2
   printf("flush background bmp %d img %d gr %d (tiled %d)\n", !!bgbrush_bmp, !!bgbrush_img, !!bg_graphics, tiled);
 #endif
   w = 0; h = 0;
@@ -3041,6 +3043,9 @@ win_text(int tx, int ty, wchar *text, int len, cattr attr, cattr *textattr, usho
       graph <<= 4;
     else if (findex == 13 && graph == 15) { // Private: geometric Powerline
       graph = 0;
+      boxpower = true;
+    }
+    else if (findex == 13 && graph == 0) { // Unicode Box Drawing
       boxpower = true;
     }
     else if (findex == 13) { // VT52 scanlines
@@ -4040,6 +4045,9 @@ skip_drawing:;
     }
   }
   else if ((graph >= 0x80 && !graph_vt52) || boxpower) {  // drawn graphics
+    // Box Drawing (U+2500-U+257F)
+    // ─━│┃┄┅┆┇┈┉┊┋┌┍┎┏┐┑┒┓└┕┖┗┘┙┚┛├┝┞┟┠┡┢┣┤┥┦┧┨┩┪┫┬┭┮┯┰┱┲┳┴┵┶┷┸┹┺┻┼┽┾┿
+    // ╀╁╂╃╄╅╆╇╈╉╊╋╌╍╎╏═║╒╓╔╕╖╗╘╙╚╛╜╝╞╟╠╡╢╣╤╥╦╧╨╩╪╫╬╭╮╯╰╱╲╳╴╵╶╷╸╹╺╻╼╽╾╿
     // Block Elements (U+2580-U+259F)
     // ▀▁▂▃▄▅▆▇█▉▊▋▌▍▎▏▐░▒▓▔▕▖▗▘▙▚▛▜▝▞▟
     // Private Use geometric Powerline symbols (U+E0B0-U+E0BF, not 5, 7)
@@ -4052,7 +4060,7 @@ skip_drawing:;
     if (lattr == LATTR_BOT)
       y0 -= cell_height;
     int xi = x;
-    //printf("x %d y %d w %d h %d cw %d \n", x, y, cell_width, cell_height, char_width);
+    //printf("@%d/%d char %d×%d cell %d×%d\n", x, y, char_width, char_height, cell_width, cell_height);
 
     /*
        Mix fg at mix/8 with bg.
@@ -4214,9 +4222,117 @@ skip_drawing:;
       rectdraw(l, t, r, b, sol, fg);
     }
 
+    // prepare Box Drawing resources
+    int penwidth = line_width;
+    int penheavywidth = penwidth + 2;
+    HPEN pen = CreatePen(PS_SOLID, penwidth, fg);
+    HPEN oldpen = SelectObject(dc, pen);
+    HBRUSH br = CreateSolidBrush(fg);
+
+#define dl 0x40
+#define dh 0x41
+
+    void boxlines(bool heavy, char x1, char y1, char x2, char y2, char x3, char y3)
+    {
+      int boxscale(int ref, char val)
+      {
+        if (val >= dl) {
+          if (val > dl)
+            return ref / 2 + line_width;
+          else
+            return ref / 2 - line_width;
+        }
+        else {
+          return ref * val / 24;
+        }
+      }
+      int _x1 = boxscale(char_width, x1);
+      int _y1 = boxscale(char_height, y1);
+      int _x2 = boxscale(char_width, x2);
+      int _y2 = boxscale(char_height, y2);
+      int _x3 = boxscale(char_width, x3);
+      int _y3 = boxscale(char_height, y3);
+
+      void boxline(int x1, int y1, int x2, int y2)
+      {
+        if (y3 == -2) {
+          // for slanted lines in ╲ ╳ ╱, use LineTo
+          // draw the line back again to compensate for the missing endpoint
+          // - these do not occur as heavy
+          //Polyline(dc, (POINT[]){{x1, y1}, {x2, y2}, {x1, y1}}, 3);
+          MoveToEx(dc, x1, y1, null);
+          LineTo(dc, x2, y2);
+          LineTo(dc, x1, y1);
+        }
+        else {
+          // apply pen width
+          int w = penwidth;
+          if (heavy)
+            w = penheavywidth;
+          x1 -= w / 2;
+          x2 += w - w / 2;
+          y1 -= w / 2;
+          y2 += w - w / 2;
+          // use FillRect rather than LineTo in order to get sharp edges
+          FillRect(dc, &(RECT){x1, y1, x2, y2}, br);
+        }
+      }
+      boxline(xi + _x1, y0 + _y1, xi + _x2, y0 + _y2);
+      if (y3 >= 0)
+        boxline(xi + _x2, y0 + _y2, xi + _x3, y0 + _y3);
+    }
+    void boxcurve(char q)
+    {
+      int x1, y1, x2, y2, xc, yc, a;
+      int r = 5;
+      // adjust endpoint by 1 to compensate for the missing endpoint
+      switch (q) {
+        when 1:  // upper right quarter ╰ lower left border arc
+          x1 = char_width / 2;
+          y1 = 0;
+          x2 = char_width + 1;
+          y2 = char_height / 2;
+          xc = char_width / 2 + r;
+          yc = char_height / 2 - r;
+          a = 180;
+        when 2:  // lower right quarter ╭ upper left border arc
+          x1 = char_width;
+          y1 = char_height / 2;
+          x2 = char_width / 2;
+          y2 = char_height + 1;
+          xc = char_width / 2 + r;
+          yc = char_height / 2 + r;
+          a = 90;
+        when 3:  // lower left quarter ╮ upper right border arc
+          x1 = char_width / 2;
+          y1 = char_height;
+          x2 = -1;
+          y2 = char_height / 2;
+          xc = char_width / 2 - r;
+          yc = char_height / 2 + r;
+          a = 0;
+        when 4:  // upper left quarter ╯ lower right border arc
+          x1 = 0;
+          y1 = char_height / 2;
+          x2 = char_width / 2;
+          y2 = -1;
+          xc = char_width / 2 - r;
+          yc = char_height / 2 - r;
+          a = 270;
+      }
+      MoveToEx(dc, xi + x1, y0 + y1, null);
+      AngleArc(dc, xi + xc, y0 + yc, r, a, 90);
+      LineTo(dc, xi + x2, y0 + y2);
+    }
+
     for (int i = 0; i < ulen; i++) {
       if (boxpower && origtext) switch (origtext[i]) {
-        // Powerline symbols
+        // Box Drawing (U+2500-U+257F)
+#include "boxdrawing.t"
+
+        // Private Use geometric Powerline symbols (U+E0B0-U+E0BF, not 5, 7)
+        // 
+        //      - -
         when 0xE0B0:
           triangle(0, 0, 8, 4, 0, 8);
         when 0xE0B1:
@@ -4280,6 +4396,11 @@ skip_drawing:;
 
       xi += char_width;
     }
+
+    // remove Box Drawing resources
+    SelectObject(dc, oldpen);
+    DeleteObject(pen);
+    DeleteObject(br);
   }
   else if (graph >> 4) {  // VT100/VT52 horizontal "scanlines"
     int parts = graph_vt52 ? 8 : 5;

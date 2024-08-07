@@ -5100,7 +5100,7 @@ term_do_write(const char *buf, uint len, bool fix_status)
           continue;
         }
 
-        // Everything else
+        // NRCS matching function
         wchar NRC(wchar * map)
         {
           static char * rpl = "#@[\\]^_`{|}~";
@@ -5113,6 +5113,35 @@ term_do_write(const char *buf, uint len, bool fix_status)
 
         cattrflags asav = term.curs.attr.attr;
 
+        // Some more special graphic renderings
+        // Do these before the NRCS switch below as that transforms 
+        // some characters into this range which would then get 
+        // doubly-transformed
+        if (wc >= 0x2580 && wc <= 0x259F) {
+          // Block Elements (U+2580-U+259F)
+          // ▀▁▂▃▄▅▆▇█▉▊▋▌▍▎▏▐░▒▓▔▕▖▗▘▙▚▛▜▝▞▟
+          term.curs.attr.attr |= ((cattrflags)(wc & 0xF)) << ATTR_GRAPH_SHIFT;
+          uchar gcode = 14 + ((wc >> 4) & 1);
+          // extend graph encoding with unused font numbers
+          term.curs.attr.attr &= ~FONTFAM_MASK;
+          term.curs.attr.attr |= (cattrflags)gcode << ATTR_FONTFAM_SHIFT;
+        }
+        else if (cfg.box_drawing && wc >= 0x2500 && wc <= 0x257F) {
+          // Box Drawing (U+2500-U+257F)
+          // ─━│┃┄┅┆┇┈┉┊┋┌┍┎┏┐┑┒┓└┕┖┗┘┙┚┛├┝┞┟┠┡┢┣┤┥┦┧┨┩┪┫┬┭┮┯┰┱┲┳┴┵┶┷┸┹┺┻┼┽┾┿
+          // ╀╁╂╃╄╅╆╇╈╉╊╋╌╍╎╏═║╒╓╔╕╖╗╘╙╚╛╜╝╞╟╠╡╢╣╤╥╦╧╨╩╪╫╬╭╮╯╰╱╲╳╴╵╶╷╸╹╺╻╼╽╾╿
+          term.curs.attr.attr &= ~FONTFAM_MASK;
+          term.curs.attr.attr |= (cattrflags)13 << ATTR_FONTFAM_SHIFT;
+        }
+        else if (wc >= 0xE0B0 && wc <= 0xE0BF && wc != 0xE0B5 && wc != 0xE0B7) {
+          // draw geometric full-cell Powerline symbols,
+          // to avoid artefacts at their borders (#943)
+          term.curs.attr.attr &= ~FONTFAM_MASK;
+          term.curs.attr.attr |= (cattrflags)13 << ATTR_FONTFAM_SHIFT;
+          term.curs.attr.attr |= (cattrflags)15 << ATTR_GRAPH_SHIFT;
+        }
+        else
+        // Everything else
         switch (cset) {
           when CSET_VT52DRW:  // VT52 "graphics" mode
             if (0x5E <= wc && wc <= 0x7E) {
@@ -5284,29 +5313,6 @@ term_do_write(const char *buf, uint len, bool fix_status)
             }
           otherwise: ;
         }
-
-        // Some more special graphic renderings
-        if (wc >= 0x2580 && wc <= 0x259F) {
-          // Block Elements (U+2580-U+259F)
-          // ▀▁▂▃▄▅▆▇█▉▊▋▌▍▎▏▐░▒▓▔▕▖▗▘▙▚▛▜▝▞▟
-          term.curs.attr.attr |= ((cattrflags)(wc & 0xF)) << ATTR_GRAPH_SHIFT;
-          uchar gcode = 14 + ((wc >> 4) & 1);
-          // extend graph encoding with unused font numbers
-          term.curs.attr.attr &= ~FONTFAM_MASK;
-          term.curs.attr.attr |= (cattrflags)gcode << ATTR_FONTFAM_SHIFT;
-        }
-#define draw_powerline_geometric_symbols
-#ifdef draw_powerline_geometric_symbols
-// don't remember why this was not enabled...
-//#warning graphical results of this approach are unpleasant; not enabled
-        else if (wc >= 0xE0B0 && wc <= 0xE0BF && wc != 0xE0B5 && wc != 0xE0B7) {
-          // draw geometric full-cell Powerline symbols,
-          // to avoid artefacts at their borders (#943)
-          term.curs.attr.attr &= ~FONTFAM_MASK;
-          term.curs.attr.attr |= (cattrflags)13 << ATTR_FONTFAM_SHIFT;
-          term.curs.attr.attr |= (cattrflags)15 << ATTR_GRAPH_SHIFT;
-        }
-#endif
 
         // Determine width of character to be rendered
         int width;
