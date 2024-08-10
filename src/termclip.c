@@ -81,7 +81,8 @@ clip_addchar(clip_workbuf * b, wchar chr, cattr * ca, bool tabs, ulong sizehint)
   cattr copattr = ca ? *ca : CATTR_DEFAULT;
   //printf("setting clipbuf[%ld] = %02X\n", b->len, chr);
   if (copattr.attr & TATTR_CLEAR) {
-    copattr.attr &= ~(ATTR_BOLD | ATTR_DIM | TATTR_CLEAR);
+    if (!tabs)
+      copattr.attr &= ~(ATTR_BOLD | ATTR_DIM | TATTR_CLEAR);
   }
 
   b->text[b->len] = chr;
