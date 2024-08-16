@@ -10,7 +10,7 @@ Sections:\
 </div>
 
 s,<b>,<b class=h3>,
-s,<b>,<br><b class=h4>,
+/^<h2>USAGE/,$ s,<b>,<br 1><b class=h4>,
 t
-s,,<br>,
-
+/^<h2>USAGE/,$ s,,<br 2>,
+t
