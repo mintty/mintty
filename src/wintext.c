@@ -3025,6 +3025,7 @@ win_text(int tx, int ty, wchar *text, int len, cattr attr, cattr *textattr, usho
   int graph = (attr.attr & GRAPH_MASK) >> ATTR_GRAPH_SHIFT;
   bool graph_vt52 = false;
   bool boxpower = false;  // Box Drawing or Powerline symbols
+  bool boxdraw = false;  // Box Drawing
   int findex = (attr.attr & FONTFAM_MASK) >> ATTR_FONTFAM_SHIFT;
   // in order to save attributes bits, special graphic handling is encoded 
   // in a compact form, combined with unused values of the font number;
@@ -3047,6 +3048,7 @@ win_text(int tx, int ty, wchar *text, int len, cattr attr, cattr *textattr, usho
     }
     else if (findex == 13 && graph == 0) { // Unicode Box Drawing
       boxpower = true;
+      boxdraw = true;
     }
     else if (findex == 13) { // VT52 scanlines
       graph <<= 4;
@@ -4224,10 +4226,12 @@ skip_drawing:;
 
     // prepare Box Drawing resources
     int penwidth = line_width;
-    int penheavywidth = penwidth + 2;
+    int heavypenwidth = penwidth + 2;
     HPEN pen = CreatePen(PS_SOLID, penwidth, fg);
-    HPEN oldpen = SelectObject(dc, pen);
+    HPEN heavypen = CreatePen(PS_SOLID, heavypenwidth, fg);
     HBRUSH br = CreateSolidBrush(fg);
+    // preload default pen for some performance
+    HPEN oldpen = SelectObject(dc, pen);
 
 #define dl 0x40
 #define dh 0x41
@@ -4255,36 +4259,63 @@ skip_drawing:;
 
       void boxline(int x1, int y1, int x2, int y2)
       {
-        if (y3 == -2) {
-          // for slanted lines in ╲ ╳ ╱, use LineTo
-          // draw the line back again to compensate for the missing endpoint
-          // - these do not occur as heavy
-          //Polyline(dc, (POINT[]){{x1, y1}, {x2, y2}, {x1, y1}}, 3);
-          MoveToEx(dc, x1, y1, null);
-          LineTo(dc, x2, y2);
-          LineTo(dc, x1, y1);
-        }
-        else {
+printf("boxline %d/%d..%d/%d\n", x1, y1, x2, y2);
+#ifdef use_FillRect
+        if (y3 != -2) {  // for slanted lines in ╲ ╳ ╱, rather use LineTo
           // apply pen width
           int w = penwidth;
           if (heavy)
-            w = penheavywidth;
-          x1 -= w / 2;
-          x2 += w - w / 2;
-          y1 -= w / 2;
-          y2 += w - w / 2;
-          // use FillRect rather than LineTo in order to get sharp edges
-          FillRect(dc, &(RECT){x1, y1, x2, y2}, br);
+            w = heavypenwidth;
+
+          // normalise
+          if (x1 > x2) {
+            x1 ^= x2; x2 ^= x1; x1 ^= x2;
+          }
+          if (y1 > y2) {
+            y1 ^= y2; y2 ^= y1; y1 ^= y2;
+          }
+          // for vertical line, apply horizontal pen width
+          if (x1 == x2) {
+            x1 -= w / 2;
+            x2 += w - w / 2;
+          }
+          // for horizontal line, apply vertical pen width
+          if (y1 == y2) {
+            y1 -= w / 2;
+            y2 += w - w / 2;
+          }
+          // ??? use FillRect rather than LineTo in order to get sharp edges
+          //printf("fillrect %d/%d..%d/%d\n", x1, y1, x2, y2);
+          // ? add 1 to compensate for the missing right/bottom borders
+          FillRect(dc, &(RECT){xi + x1, y0 + y1, xi + x2, y0 + y2}, br);
         }
+        return;
+#endif
+        y1 += y0;
+        y2 += y0;
+        x1 += xi;
+        x2 += xi;
+        if (heavy)
+          SelectObject(dc, heavypen);
+        // draw the line back again to compensate for the missing endpoint
+        //Polyline(dc, (POINT[]){{x1, y1}, {x2, y2}, {x1, y1}}, 3);
+        MoveToEx(dc, x1, y1, null);
+        LineTo(dc, x2, y2);
+        // draw the line back again to compensate for the missing endpoint
+        LineTo(dc, x1, y1);
+        if (heavy)
+          SelectObject(dc, pen);
       }
-      boxline(xi + _x1, y0 + _y1, xi + _x2, y0 + _y2);
+
+      boxline(_x1, _y1, _x2, _y2);
       if (y3 >= 0)
-        boxline(xi + _x2, y0 + _y2, xi + _x3, y0 + _y3);
+        boxline(_x2, _y2, _x3, _y3);
     }
     void boxcurve(char q)
     {
       int x1, y1, x2, y2, xc, yc, a;
-      int r = 5;
+      //int r = 5;
+      int r = char_width / 2 + 1;
       // adjust endpoint by 1 to compensate for the missing endpoint
       switch (q) {
         when 1:  // upper right quarter ╰ lower left border arc
@@ -4326,6 +4357,11 @@ skip_drawing:;
     }
 
     for (int i = 0; i < ulen; i++) {
+      HRGN clipr;
+      if (boxdraw) {
+        clipr = CreateRectRgn(xi, y0, xi + char_width, y0 + char_height);
+        SelectClipRgn(dc, clipr);
+      }
       if (boxpower && origtext) switch (origtext[i]) {
         // Box Drawing (U+2500-U+257F)
 #include "boxdrawing.t"
@@ -4394,12 +4430,18 @@ skip_drawing:;
                    rectsolid(0, 4, 4, 8, 0x7);
       }
 
+      if (boxdraw) {
+        SelectClipRgn(dc, 0);
+        DeleteObject(clipr);
+      }
+
       xi += char_width;
     }
 
     // remove Box Drawing resources
     SelectObject(dc, oldpen);
     DeleteObject(pen);
+    DeleteObject(heavypen);
     DeleteObject(br);
   }
   else if (graph >> 4) {  // VT100/VT52 horizontal "scanlines"
