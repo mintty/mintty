@@ -4227,8 +4227,16 @@ skip_drawing:;
     // prepare Box Drawing resources
     int penwidth = line_width;
     int heavypenwidth = penwidth + 2;
+#define use_extpen
+#ifdef use_extpen
+    LOGBRUSH brush = (LOGBRUSH){BS_SOLID, fg, 0};
+    DWORD style = PS_GEOMETRIC | PS_SOLID | PS_ENDCAP_SQUARE;
+    HPEN pen = ExtCreatePen(style, penwidth, &brush, 0, 0);
+    HPEN heavypen = ExtCreatePen(style, heavypenwidth, &brush, 0, 0);
+#else
     HPEN pen = CreatePen(PS_SOLID, penwidth, fg);
     HPEN heavypen = CreatePen(PS_SOLID, heavypenwidth, fg);
+#endif
     HBRUSH br = CreateSolidBrush(fg);
     // preload default pen for some performance
     HPEN oldpen = SelectObject(dc, pen);
