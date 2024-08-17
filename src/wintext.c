@@ -4227,6 +4227,8 @@ skip_drawing:;
     // prepare Box Drawing resources
     int penwidth = line_width;
     int heavypenwidth = penwidth + 2;
+    // adjust heavy parts in mixed light/heavy boxes:
+    int heavydelta = min(line_width, 2);
 #define use_extpen
 #ifdef use_extpen
     LOGBRUSH brush = (LOGBRUSH){BS_SOLID, fg, 0};
@@ -4267,7 +4269,7 @@ skip_drawing:;
 
       void boxline(int x1, int y1, int x2, int y2)
       {
-printf("boxline %d/%d..%d/%d\n", x1, y1, x2, y2);
+printf("boxline %d/%d..%d/%d w %d\n", x1, y1, x2, y2, line_width);
 #ifdef use_FillRect
         if (y3 != -2) {  // for slanted lines in ╲ ╳ ╱, rather use LineTo
           // apply pen width

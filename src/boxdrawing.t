@@ -50,30 +50,36 @@
         when 0x250C:  // ┌ BOX DRAWINGS LIGHT DOWN AND RIGHT
           boxlines(false, 12, 24, 12, 12, 24, 12);
         when 0x250D:  // ┍ BOX DRAWINGS DOWN LIGHT AND RIGHT HEAVY
-          boxlines(true, 12, 12, 24, 12, -1, -1);
           boxlines(false, 12, 12, 12, 24, -1, -1);
+          //boxlines(true, 12, 12, 24, 12, -1, -1);
+          boxlines(true, 12 + heavydelta, 12, 24, 12, -1, -1);
         when 0x250E:  // ┎ BOX DRAWINGS DOWN HEAVY AND RIGHT LIGHT
+          //boxlines(true, 12, 12, 12, 24, -1, -1);
+          boxlines(true, 12, 12 + heavydelta, 12, 24, -1, -1);
           boxlines(false, 12, 12, 24, 12, -1, -1);
-          boxlines(true, 12, 12, 12, 24, -1, -1);
         when 0x250F:  // ┏ BOX DRAWINGS HEAVY DOWN AND RIGHT
           boxlines(true, 12, 24, 12, 12, 24, 12);
         when 0x2510:  // ┐ BOX DRAWINGS LIGHT DOWN AND LEFT
           boxlines(false, 0, 12, 12, 12, 12, 24);
         when 0x2511:  // ┑ BOX DRAWINGS DOWN LIGHT AND LEFT HEAVY
-          boxlines(true, 0, 12, 12, 12, -1, -1);
           boxlines(false, 12, 12, 12, 24, -1, -1);
+          //boxlines(true, 0, 12, 12, 12, -1, -1);
+          boxlines(true, 0, 12, 12 - heavydelta, 12, -1, -1);
         when 0x2512:  // ┒ BOX DRAWINGS DOWN HEAVY AND LEFT LIGHT
+          //boxlines(true, 12, 12, 12, 24, -1, -1);
+          boxlines(true, 12, 12 + heavydelta, 12, 24, -1, -1);
           boxlines(false, 0, 12, 12, 12, -1, -1);
-          boxlines(true, 12, 12, 12, 24, -1, -1);
         when 0x2513:  // ┓ BOX DRAWINGS HEAVY DOWN AND LEFT
           boxlines(true, 0, 12, 12, 12, 12, 24);
         when 0x2514:  // └ BOX DRAWINGS LIGHT UP AND RIGHT
           boxlines(false, 12, 0, 12, 12, 24, 12);
         when 0x2515:  // ┕ BOX DRAWINGS UP LIGHT AND RIGHT HEAVY
           boxlines(false, 12, 0, 12, 12, -1, -1);
-          boxlines(true, 12, 12, 24, 12, -1, -1);
+          //boxlines(true, 12, 12, 24, 12, -1, -1);
+          boxlines(true, 12 + heavydelta, 12, 24, 12, -1, -1);
         when 0x2516:  // ┖ BOX DRAWINGS UP HEAVY AND RIGHT LIGHT
-          boxlines(true, 12, 0, 12, 12, -1, -1);
+          //boxlines(true, 12, 0, 12, 12, -1, -1);
+          boxlines(true, 12, 0, 12, 12 - heavydelta, -1, -1);
           boxlines(false, 12, 12, 24, 12, -1, -1);
         when 0x2517:  // ┗ BOX DRAWINGS HEAVY UP AND RIGHT
           boxlines(true, 12, 0, 12, 12, 24, 12);
@@ -81,9 +87,11 @@
           boxlines(false, 12, 0, 12, 12, 0, 12);
         when 0x2519:  // ┙ BOX DRAWINGS UP LIGHT AND LEFT HEAVY
           boxlines(false, 12, 0, 12, 12, -1, -1);
-          boxlines(true, 0, 12, 12, 12, -1, -1);
+          //boxlines(true, 0, 12, 12, 12, -1, -1);
+          boxlines(true, 0, 12, 12 - heavydelta, 12, -1, -1);
         when 0x251A:  // ┚ BOX DRAWINGS UP HEAVY AND LEFT LIGHT
-          boxlines(true, 12, 0, 12, 12, -1, -1);
+          //boxlines(true, 12, 0, 12, 12, -1, -1);
+          boxlines(true, 12, 0, 12, 12 - heavydelta, -1, -1);
           boxlines(false, 0, 12, 12, 12, -1, -1);
         when 0x251B:  // ┛ BOX DRAWINGS HEAVY UP AND LEFT
           boxlines(true, 12, 0, 12, 12, 0, 12);
@@ -92,7 +100,8 @@
           boxlines(false, 12, 12, 24, 12, -1, -1);
         when 0x251D:  // ┝ BOX DRAWINGS VERTICAL LIGHT AND RIGHT HEAVY
           boxlines(false, 12, 0, 12, 24, -1, -1);
-          boxlines(true, 12, 12, 24, 12, -1, -1);
+          //boxlines(true, 12, 12, 24, 12, -1, -1);
+          boxlines(true, 12 + heavydelta, 12, 24, 12, -1, -1);
         when 0x251E:  // ┞ BOX DRAWINGS UP HEAVY AND RIGHT DOWN LIGHT
           boxlines(true, 12, 0, 12, 12, -1, -1);
           boxlines(false, 12, 24, 12, 12, 24, 12);
@@ -116,7 +125,8 @@
           boxlines(false, 0, 12, 12, 12, -1, -1);
         when 0x2525:  // ┥ BOX DRAWINGS VERTICAL LIGHT AND LEFT HEAVY
           boxlines(false, 12, 0, 12, 24, -1, -1);
-          boxlines(true, 0, 12, 12, 12, -1, -1);
+          //boxlines(true, 0, 12, 12, 12, -1, -1);
+          boxlines(true, 0, 12, 12 - heavydelta, 12, -1, -1);
         when 0x2526:  // ┦ BOX DRAWINGS UP HEAVY AND LEFT DOWN LIGHT
           boxlines(true, 12, 0, 12, 12, -1, -1);
           boxlines(false, 0, 12, 12, 12, 12, 24);
@@ -148,7 +158,8 @@
           boxlines(false, 12, 12, 12, 24, -1, -1);
           boxlines(true, 0, 12, 24, 12, -1, -1);
         when 0x2530:  // ┰ BOX DRAWINGS DOWN HEAVY AND HORIZONTAL LIGHT
-          boxlines(true, 12, 12, 12, 24, -1, -1);
+          //boxlines(true, 12, 12, 12, 24, -1, -1);
+          boxlines(true, 12, 12 + heavydelta, 12, 24, -1, -1);
           boxlines(false, 0, 12, 24, 12, -1, -1);
         when 0x2531:  // ┱ BOX DRAWINGS RIGHT LIGHT AND LEFT DOWN HEAVY
           boxlines(false, 12, 12, 24, 12, -1, -1);
@@ -172,7 +183,8 @@
           boxlines(false, 12, 0, 12, 12, -1, -1);
           boxlines(true, 0, 12, 24, 12, -1, -1);
         when 0x2538:  // ┸ BOX DRAWINGS UP HEAVY AND HORIZONTAL LIGHT
-          boxlines(true, 12, 0, 12, 12, -1, -1);
+          //boxlines(true, 12, 0, 12, 12, -1, -1);
+          boxlines(true, 12, 0, 12, 12 - heavydelta, -1, -1);
           boxlines(false, 0, 12, 24, 12, -1, -1);
         when 0x2539:  // ┹ BOX DRAWINGS RIGHT LIGHT AND LEFT UP HEAVY
           boxlines(false, 12, 12, 24, 12, -1, -1);
