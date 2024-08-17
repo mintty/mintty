@@ -92,7 +92,9 @@ tabbar_update()
   ReleaseDC(tab_wnd, tabdc);
 }
 
+#if CYGWIN_VERSION_API_MINOR >= 74
 #define unflicker
+#endif
 
 #ifdef unflicker
 // To prevent heavy flickers.
