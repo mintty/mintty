@@ -4243,8 +4243,8 @@ skip_drawing:;
     // preload default pen for some performance
     HPEN oldpen = SelectObject(dc, pen);
 
-#define dl 0x40
-#define dh 0x41
+#define dl 0x50
+#define dh 0x51
 
     void boxlines(bool heavy, char x1, char y1, char x2, char y2, char x3, char y3)
     {
@@ -4255,6 +4255,10 @@ skip_drawing:;
             return ref / 2 + line_width;
           else
             return ref / 2 - line_width;
+        }
+        else if (y3 < -3) {
+          // finer-tuned values for dashed lines
+          return ref * val / 72;
         }
         else {
           return ref * val / 24;
@@ -4269,9 +4273,12 @@ skip_drawing:;
 
       void boxline(int x1, int y1, int x2, int y2)
       {
-printf("boxline %d/%d..%d/%d w %d\n", x1, y1, x2, y2, line_width);
-#ifdef use_FillRect
-        if (y3 != -2) {  // for slanted lines in ╲ ╳ ╱, rather use LineTo
+        //printf("boxline %d/%d..%d/%d w %d\n", x1, y1, x2, y2, line_width);
+        // for dashed lines, use FillRect here
+        // for slanted lines ╲ ╳ ╱, use LineTo below
+        // for box border lines, use LineTo below
+        //if (y3 != -2) {  // for slanted lines in ╲ ╳ ╱, rather use LineTo
+        if (y3 < -2) {  // dashed lines
           // apply pen width
           int w = penwidth;
           if (heavy)
@@ -4294,27 +4301,31 @@ printf("boxline %d/%d..%d/%d w %d\n", x1, y1, x2, y2, line_width);
             y1 -= w / 2;
             y2 += w - w / 2;
           }
-          // ??? use FillRect rather than LineTo in order to get sharp edges
           //printf("fillrect %d/%d..%d/%d\n", x1, y1, x2, y2);
-          // ? add 1 to compensate for the missing right/bottom borders
           FillRect(dc, &(RECT){xi + x1, y0 + y1, xi + x2, y0 + y2}, br);
         }
-        return;
-#endif
-        y1 += y0;
-        y2 += y0;
-        x1 += xi;
-        x2 += xi;
-        if (heavy)
-          SelectObject(dc, heavypen);
-        // draw the line back again to compensate for the missing endpoint
-        //Polyline(dc, (POINT[]){{x1, y1}, {x2, y2}, {x1, y1}}, 3);
-        MoveToEx(dc, x1, y1, null);
-        LineTo(dc, x2, y2);
-        // draw the line back again to compensate for the missing endpoint
-        LineTo(dc, x1, y1);
-        if (heavy)
-          SelectObject(dc, pen);
+        else {
+          // for box border lines, we could use FillRect above 
+          // in order to get sharp edges;
+          // for use of LineTo, we use the PS_ENDCAP_SQUARE pen
+          y1 += y0;
+          y2 += y0;
+          x1 += xi;
+          x2 += xi;
+          if (heavy)
+            SelectObject(dc, heavypen);
+
+          // draw the line back again to compensate for the missing endpoint
+          //Polyline(dc, (POINT[]){{x1, y1}, {x2, y2}, {x1, y1}}, 3);
+          MoveToEx(dc, x1, y1, null);
+          LineTo(dc, x2, y2);
+          // draw the line back again to compensate for the missing endpoint
+          if (y3 > -3)  // skip for dashed line segments
+            LineTo(dc, x1, y1);
+
+          if (heavy)
+            SelectObject(dc, pen);
+          }
       }
 
       boxline(_x1, _y1, _x2, _y2);
@@ -4374,6 +4385,11 @@ printf("boxline %d/%d..%d/%d w %d\n", x1, y1, x2, y2, line_width);
       }
       if (boxpower && origtext) switch (origtext[i]) {
         // Box Drawing (U+2500-U+257F)
+// tune position and length of double/triple dash segments
+#define sub2 line_width
+#define add2 2 * line_width
+#define sub3 line_width
+#define add3 line_width
 #include "boxdrawing.t"
 
         // Private Use geometric Powerline symbols (U+E0B0-U+E0BF, not 5, 7)

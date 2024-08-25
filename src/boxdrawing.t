@@ -7,46 +7,41 @@
         when 0x2503:  // ┃ BOX DRAWINGS HEAVY VERTICAL
           boxlines(true, 12, 0, 12, 24, -1, -1);
         when 0x2504:  // ┄ BOX DRAWINGS LIGHT TRIPLE DASH HORIZONTAL
-          boxlines(false, 0, 12, 3, 12, -1, -1);
-          boxlines(false, 8, 12, 11, 12, -1, -1);
-          boxlines(false, 16, 12, 19, 12, -1, -1);
+          boxlines(false, 6 - sub3, 36, 18 + add3, 36, -4, -4);
+          boxlines(false, 30 - sub3, 36, 42 + add3, 36, -4, -4);
+          boxlines(false, 54 - sub3, 36, 66 + add3, 36, -4, -4);
         when 0x2505:  // ┅ BOX DRAWINGS HEAVY TRIPLE DASH HORIZONTAL
-          boxlines(true, 0, 12, 3, 12, -1, -1);
-          boxlines(true, 8, 12, 11, 12, -1, -1);
-          boxlines(true, 16, 12, 19, 12, -1, -1);
+          boxlines(true, 6 - sub3, 36, 18 + add3, 36, -4, -4);
+          boxlines(true, 30 - sub3, 36, 42 + add3, 36, -4, -4);
+          boxlines(true, 54 - sub3, 36, 66 + add3, 36, -4, -4);
         when 0x2506:  // ┆ BOX DRAWINGS LIGHT TRIPLE DASH VERTICAL
-          boxlines(false, 12, 0, 12, 3, -1, -1);
-          boxlines(false, 12, 8, 12, 11, -1, -1);
-          boxlines(false, 12, 16, 12, 19, -1, -1);
+          boxlines(false, 36, 6 - sub3, 36, 18 + add3, -4, -4);
+          boxlines(false, 36, 30 - sub3, 36, 42 + add3, -4, -4);
+          boxlines(false, 36, 54 - sub3, 36, 66 + add3, -4, -4);
         when 0x2507:  // ┇ BOX DRAWINGS HEAVY TRIPLE DASH VERTICAL
-          boxlines(true, 12, 0, 12, 3, -1, -1);
-          boxlines(true, 12, 8, 12, 11, -1, -1);
-          boxlines(true, 12, 16, 12, 19, -1, -1);
+          boxlines(true, 36, 6 - sub3, 36, 18 + add3, -4, -4);
+          boxlines(true, 36, 30 - sub3, 36, 42 + add3, -4, -4);
+          boxlines(true, 36, 54 - sub3, 36, 66 + add3, -4, -4);
         when 0x2508:  // ┈ BOX DRAWINGS LIGHT QUADRUPLE DASH HORIZONTAL
-          boxlines(false, 0, 12, 2, 12, -1, -1);
-          boxlines(false, 6, 12, 8, 12, -1, -1);
-          boxlines(false, 12, 12, 14, 12, -1, -1);
-          boxlines(false, 18, 12, 20, 12, -1, -1);
+          boxlines(false, 5, 36, 14, 36, -4, -4);
+          boxlines(false, 22, 36, 31, 36, -4, -4);
+          boxlines(false, 40, 36, 49, 36, -4, -4);
+          boxlines(false, 58, 36, 67, 36, -4, -4);
         when 0x2509:  // ┉ BOX DRAWINGS HEAVY QUADRUPLE DASH HORIZONTAL
-          //boxlines(true, 0, 12, 2, 12, -1, -1);
-          //boxlines(true, 6, 12, 8, 12, -1, -1);
-          //boxlines(true, 12, 12, 14, 12, -1, -1);
-          //boxlines(true, 18, 12, 20, 12, -1, -1);
-          // make the horizontal quarters shorter to compensate for heaviness
-          boxlines(true, 0, 12, 1, 12, -1, -1);
-          boxlines(true, 6, 12, 7, 12, -1, -1);
-          boxlines(true, 12, 12, 13, 12, -1, -1);
-          boxlines(true, 18, 12, 19, 12, -1, -1);
+          boxlines(true, 5, 36, 14, 36, -4, -4);
+          boxlines(true, 22, 36, 31, 36, -4, -4);
+          boxlines(true, 40, 36, 49, 36, -4, -4);
+          boxlines(true, 58, 36, 67, 36, -4, -4);
         when 0x250A:  // ┊ BOX DRAWINGS LIGHT QUADRUPLE DASH VERTICAL
-          boxlines(false, 12, 0, 12, 2, -1, -1);
-          boxlines(false, 12, 6, 12, 8, -1, -1);
-          boxlines(false, 12, 12, 12, 14, -1, -1);
-          boxlines(false, 12, 18, 12, 20, -1, -1);
+          boxlines(false, 36, 4, 36, 13, -4, -4);
+          boxlines(false, 36, 21, 36, 30, -4, -4);
+          boxlines(false, 36, 39, 36, 48, -4, -4);
+          boxlines(false, 36, 57, 36, 66, -4, -4);
         when 0x250B:  // ┋ BOX DRAWINGS HEAVY QUADRUPLE DASH VERTICAL
-          boxlines(true, 12, 0, 12, 2, -1, -1);
-          boxlines(true, 12, 6, 12, 8, -1, -1);
-          boxlines(true, 12, 12, 12, 14, -1, -1);
-          boxlines(true, 12, 18, 12, 20, -1, -1);
+          boxlines(true, 36, 4, 36, 13, -4, -4);
+          boxlines(true, 36, 21, 36, 30, -4, -4);
+          boxlines(true, 36, 39, 36, 48, -4, -4);
+          boxlines(true, 36, 57, 36, 66, -4, -4);
         when 0x250C:  // ┌ BOX DRAWINGS LIGHT DOWN AND RIGHT
           boxlines(false, 12, 24, 12, 12, 24, 12);
         when 0x250D:  // ┍ BOX DRAWINGS DOWN LIGHT AND RIGHT HEAVY
@@ -252,17 +247,17 @@
           boxlines(true, 0, 12, 24, 12, -1, -1);
           boxlines(true, 12, 0, 12, 24, -1, -1);
         when 0x254C:  // ╌ BOX DRAWINGS LIGHT DOUBLE DASH HORIZONTAL
-          boxlines(false, 0, 12, 6, 12, -1, -1);
-          boxlines(false, 12, 12, 18, 12, -1, -1);
+          boxlines(false, 9 - sub2, 36, 27 + add2, 36, -4, -4);
+          boxlines(false, 45 - sub2, 36, 63 + add2, 36, -4, -4);
         when 0x254D:  // ╍ BOX DRAWINGS HEAVY DOUBLE DASH HORIZONTAL
-          boxlines(true, 0, 12, 6, 12, -1, -1);
-          boxlines(true, 12, 12, 18, 12, -1, -1);
+          boxlines(true, 9 - sub2, 36, 27 + add2, 36, -4, -4);
+          boxlines(true, 45 - sub2, 36, 63 + add2, 36, -4, -4);
         when 0x254E:  // ╎ BOX DRAWINGS LIGHT DOUBLE DASH VERTICAL
-          boxlines(false, 12, 0, 12, 6, -1, -1);
-          boxlines(false, 12, 12, 12, 18, -1, -1);
+          boxlines(false, 36, 9 - sub2, 36, 27 + add2, -4, -4);
+          boxlines(false, 36, 45 - sub2, 36, 63 + add2, -4, -4);
         when 0x254F:  // ╏ BOX DRAWINGS HEAVY DOUBLE DASH VERTICAL
-          boxlines(true, 12, 0, 12, 6, -1, -1);
-          boxlines(true, 12, 12, 12, 18, -1, -1);
+          boxlines(true, 36, 9 - sub2, 36, 27 + add2, -4, -4);
+          boxlines(true, 36, 45 - sub2, 36, 63 + add2, -4, -4);
         when 0x2550:  // ═ BOX DRAWINGS DOUBLE HORIZONTAL
           boxlines(false, 0, dl, 24, dl, -1, -1);
           boxlines(false, 0, dh, 24, dh, -1, -1);
