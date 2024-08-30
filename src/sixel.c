@@ -403,14 +403,20 @@ sixel_parser_parse(sixel_state_t * st, unsigned char * p, int len)
             st->repeat_count = image->width - st->pos_x;
           }
 
-          if (st->repeat_count > 0 && st->pos_y - 5 < image->height) {
+          if (st->repeat_count > 0 && st->pos_y + 5 < image->height) {
             bits = *p - '?';
             if (bits != 0) {
+//#include <malloc.h>  // malloc_usable_size
+              int length = (size_t)(image->width * image->height);
+
               sixel_vertical_mask = 0x01;
               if (st->repeat_count <= 1) {
                 for (i = 0; i < 6; i++) {
                   if ((bits & sixel_vertical_mask) != 0) {
                     pos = image->width * (st->pos_y + i) + st->pos_x;
+                    //printf("pos %d length %ld/%d\n", pos, malloc_usable_size(image->data), length);
+                    if (pos >= length)
+                      return -1;
                     image->data[pos] = st->color_index;
                     if (st->max_x < st->pos_x) {
                       st->max_x = st->pos_x;
@@ -434,6 +440,9 @@ sixel_parser_parse(sixel_state_t * st, unsigned char * p, int len)
                     }
                     for (y = st->pos_y + i; y < st->pos_y + i + n; ++y) {
                       for (x = st->pos_x; x < st->pos_x + st->repeat_count; ++x) {
+                        //printf("idx %d length %ld/%d\n", image->width * y + x, malloc_usable_size(image->data), length);
+                        if (image->width * y + x >= length)
+                          return -1;
                         image->data[image->width * y + x] = st->color_index;
                       }
                     }
