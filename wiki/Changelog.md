@@ -12,6 +12,9 @@ Font rendering
 Mouse and menu handling
   * Allow disabling of mouse menus by clearing Menu* (#1279).
 
+Windows handling
+  * Tweak initial window display, mitigate bright flash (#1284).
+
 Configuration
   * Setting options Menu* to empty value disables the respective menu (#1279).
   * Skip config files in $HOME if $HOME does not exist (mintty/wsltty#351).

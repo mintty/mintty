@@ -7655,11 +7655,17 @@ static int dynfonts = 0;
     &(struct winsize){term_rows, term_cols, term_cols * cell_width, term_rows * cell_height}
   );
 
+#ifdef show_window_early
+  // This is now postponed to be aligned with hiding other windows 
+  // (in case of tabbed windows) 
+  // and to reduce initial white flickering (#1284).
   // Finally show the window.
   ShowWindow(wnd, show_cmd);
   // and grab focus again, just in case and for Windows 11
   // (https://github.com/mintty/mintty/issues/1113#issuecomment-1210278957)
   SetFocus(wnd);
+#endif
+
   // Cloning fullscreen window
   if (run_max == 2)
     win_maximise(2);
@@ -7845,6 +7851,17 @@ static int dynfonts = 0;
 #endif
 
   show_win_status("init", wnd);
+
+  // Finally show the window.
+  // This is now aligned with hiding other windows (if tabbed); 
+  // also to reduce initial white flickering (#1284), 
+  // we run an initial contents update before showing the window.
+  win_paint();
+  // Finally show the window.
+  ShowWindow(wnd, show_cmd);
+  // and grab focus again, just in case and for Windows 11
+  // (https://github.com/mintty/mintty/issues/1113#issuecomment-1210278957)
+  SetFocus(wnd);
 
   is_init = true;
   // tab management: secure transparency appearance by hiding other tabs
