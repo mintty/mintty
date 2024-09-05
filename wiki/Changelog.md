@@ -8,6 +8,7 @@ Character encoding
 
 Font rendering
   * Fix and enable rendering for geometric Powerline symbols (#979, #943).
+  * Avoid bottom padding artefacts of double-height self-drawn symbols.
 
 Mouse and menu handling
   * Allow disabling of mouse menus by clearing Menu* (#1279).

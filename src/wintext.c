@@ -3025,7 +3025,7 @@ win_text(int tx, int ty, wchar *text, int len, cattr attr, cattr *textattr, usho
   int graph = (attr.attr & GRAPH_MASK) >> ATTR_GRAPH_SHIFT;
   bool graph_vt52 = false;
   bool boxpower = false;  // Box Drawing or Powerline symbols
-  bool boxdraw = false;  // Box Drawing
+  //bool boxdraw = false;  // Box Drawing
   int findex = (attr.attr & FONTFAM_MASK) >> ATTR_FONTFAM_SHIFT;
   // in order to save attributes bits, special graphic handling is encoded 
   // in a compact form, combined with unused values of the font number;
@@ -3048,7 +3048,7 @@ win_text(int tx, int ty, wchar *text, int len, cattr attr, cattr *textattr, usho
     }
     else if (findex == 13 && graph == 0) { // Unicode Box Drawing
       boxpower = true;
-      boxdraw = true;
+      //boxdraw = true;
     }
     else if (findex == 13) { // VT52 scanlines
       graph <<= 4;
@@ -3935,12 +3935,28 @@ skip_drawing:;
 #define DRAW_DOWN  0x4
 #endif
 
+  HRGN clipr;
+  void setclipr(int x, int y)
+  {
+    int clip_height = cell_height 
+                      * (lattr >= LATTR_TOP && ty < term_allrows - 1 ? 2 : 1);
+    clipr = CreateRectRgn(x, y, x + char_width, y + clip_height);
+    SelectClipRgn(dc, clipr);
+  }
+  void clearclipr()
+  {
+    SelectClipRgn(dc, 0);
+    DeleteObject(clipr);
+  }
+
   if (graph >= 0xE0) {  // fix DEC Technical characters, draw VT52 fraction
     if ((graph & 0x0C) == 0x08) {
       // square bracket corners already repositioned above
     }
     else {  // Sum segments to be (partially) drawn, 
             // square root base, pointing triangles, VT52 fraction numerator
+      setclipr(x, y);
+
       int sum_width = line_width;
       int y0 = (lattr == LATTR_BOT) ? y - cell_height : y;
       int yoff = (cell_height - line_width) * 3 / 5;
@@ -4044,6 +4060,8 @@ skip_drawing:;
       }
       oldpen = SelectObject(dc, oldpen);
       DeleteObject(oldpen);
+
+      clearclipr();
     }
   }
   else if ((graph >= 0x80 && !graph_vt52) || boxpower) {  // drawn graphics
@@ -4059,6 +4077,7 @@ skip_drawing:;
     if (lattr >= LATTR_TOP)
       char_height *= 2;
     int y0 = y;
+    int yclip = y0;
     if (lattr == LATTR_BOT)
       y0 -= cell_height;
     int xi = x;
@@ -4378,11 +4397,8 @@ skip_drawing:;
     }
 
     for (int i = 0; i < ulen; i++) {
-      HRGN clipr;
-      if (boxdraw) {
-        clipr = CreateRectRgn(xi, y0, xi + char_width, y0 + char_height);
-        SelectClipRgn(dc, clipr);
-      }
+      setclipr(xi, yclip);
+
       if (boxpower && origtext) switch (origtext[i]) {
         // Box Drawing (U+2500-U+257F)
 // tune position and length of double/triple dash segments
@@ -4456,10 +4472,7 @@ skip_drawing:;
                    rectsolid(0, 4, 4, 8, 0x7);
       }
 
-      if (boxdraw) {
-        SelectClipRgn(dc, 0);
-        DeleteObject(clipr);
-      }
+      clearclipr();
 
       xi += char_width;
     }
@@ -4471,6 +4484,8 @@ skip_drawing:;
     DeleteObject(br);
   }
   else if (graph >> 4) {  // VT100/VT52 horizontal "scanlines"
+    setclipr(x, y);
+
     int parts = graph_vt52 ? 8 : 5;
     HPEN oldpen = SelectObject(dc, CreatePen(PS_SOLID, 0, fg));
     int yoff = (cell_height - line_width) * (graph >> 4) / parts;
@@ -4484,8 +4499,12 @@ skip_drawing:;
     }
     oldpen = SelectObject(dc, oldpen);
     DeleteObject(oldpen);
+
+    clearclipr();
   }
   else if (graph) {  // VT100 box drawing characters ┘┐┌└┼ ─ ├┤┴┬│
+    setclipr(x, y);
+
     HPEN oldpen = SelectObject(dc, CreatePen(PS_SOLID, 0, fg));
     int y0 = (lattr == LATTR_BOT) ? y - cell_height : y;
     int yoff = (cell_height - line_width) * 3 / 5;
@@ -4527,6 +4546,8 @@ skip_drawing:;
     }
     oldpen = SelectObject(dc, oldpen);
     DeleteObject(oldpen);
+
+    clearclipr();
   }
 
  /* Strikeout */
