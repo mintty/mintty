@@ -6,17 +6,19 @@ Terminal features
 Character encoding
   * Disable GB18030 workaround for cygwin since 3.5 which supports it natively.
 
-Font rendering
+Font and character rendering
   * Fix and enable rendering for geometric Powerline symbols (#979, #943).
   * Avoid bottom padding artefacts of double-height self-drawn symbols.
+  * Box Drawing characters (U+2500..U+257F) are self-drawn (#935, #1119).
 
 Mouse and menu handling
   * Allow disabling of mouse menus by clearing Menu* (#1279).
 
-Windows handling
+Window handling
   * Tweak initial window display, mitigate bright flash (#1284).
 
 Configuration
+  * New option BoxDrawing (#935, #1119).
   * Setting options Menu* to empty value disables the respective menu (#1279).
   * Skip config files in $HOME if $HOME does not exist (mintty/wsltty#351).
 

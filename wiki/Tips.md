@@ -910,6 +910,16 @@ specifications preceding over the more general script specifications.
 FontChoice=Greek:3;|Greek Extended:4
 ```
 
+For Box Drawing characters (U+2500..U+257F), most fonts do not provide 
+proper glyphs for seamless box drawing. The following font configuration 
+would fix that. However, option BoxDrawing (default on) overrides this 
+and lets mintty draw box drawing characters itself.
+```
+FontChoice=|Box Drawing:3
+Font3=DejaVu Sans Mono
+BoxDrawing=no
+```
+
 ### Dynamic fonts ###
 
 Mintty supports on-the-fly temporary font installation, especially for use 
