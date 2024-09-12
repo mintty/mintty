@@ -2682,7 +2682,7 @@ text_out(HDC hdc, int x, int y, UINT fuOptions, RECT *prc, LPCWSTR psz, int cch,
     return;
 #ifdef debug_text_out
   if (*psz >= 0x80) {
-    printf("@%3d (%3d):", x, y);
+    printf("%d@%3d/%3d:", cch, x, y);
     for (int i = 0; i < cch; i++)
       printf(" %04X<%d>", psz[i], dxs[i]);
     printf("\n");
@@ -3013,7 +3013,7 @@ apply_attr_colour(cattr a, attr_colour_mode mode)
    phase: overlay line display (italic right-to-left overhang handling)
  */
 void
-win_text(int tx, int ty, wchar *text, int len, cattr attr, cattr *textattr, ushort lattr, char has_rtl, bool clearpad, uchar phase)
+win_text(int tx, int ty, wchar *text, int len, cattr attr, cattr *textattr, ushort lattr, char has_rtl, char has_sea, bool clearpad, uchar phase)
 {
 #ifdef debug_wscale
   if (attr.attr & (TATTR_EXPAND | TATTR_NARROW | TATTR_WIDE))
@@ -3374,6 +3374,9 @@ win_text(int tx, int ty, wchar *text, int len, cattr attr, cattr *textattr, usho
     .top = y, .bottom = y + cell_height,
     .left = x, .right = min(x + width, cell_width * term.cols + PADDING)
   };
+  // extend bounding box for appended composed combining characters
+  if (has_sea & 2)
+    box.right += cell_width;
   RECT box0 = box;
   if (ldisp2) {  // e.g. attr.attr & ATTR_ITALIC
     box.right += cell_width;
@@ -3836,7 +3839,7 @@ draw:;
   text_out_start(dc, text, len, dxs);
 
   for (int xoff = 0; xoff < xwidth; xoff++) {
-    if (combining || combining_double) {
+    if ((combining || combining_double) && !has_sea) {
       // Workaround for mangled display of combining characters;
       // Arabic shaping should not be affected as the transformed 
       // presentation forms are not combining characters anymore at this point.

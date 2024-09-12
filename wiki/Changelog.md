@@ -7,6 +7,7 @@ Character encoding
   * Disable GB18030 workaround for cygwin since 3.5 which supports it natively.
 
 Font and character rendering
+  * Fix rendering of combined characters in South East Asian scripts (#1285).
   * Fix and enable rendering for geometric Powerline symbols (#979, #943).
   * Avoid bottom padding artefacts of double-height self-drawn symbols.
   * Box Drawing characters (U+2500..U+257F) are self-drawn (#935, #1119).
