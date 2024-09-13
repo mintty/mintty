@@ -1,3 +1,6 @@
+Unicode and Emoji data
+  * Unicode 16.0 update.
+
 Terminal features
   * Emoji width mode (DECSET 2027) to always render emojis in 2-cell width.
   * Dropped deprecated DECSET mode 2027 for terminal reflow.
