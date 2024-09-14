@@ -327,7 +327,10 @@ guardpath(string path, int level)
   else if (*path != '/' && !(*path && path[1] == ':')) {
     char * fgd = foreground_cwd();
     if (fgd) {
-      expath = asform("%s/%s", fgd, path);
+      if (0 == strcmp("/", fgd))
+        expath = asform("/%s", path);
+      else
+        expath = asform("%s/%s", fgd, path);
     }
     else
       return 0;
