@@ -21,11 +21,13 @@ Mouse and menu handling
 Window handling
   * Avoid interaction problem of tabbed/non-tabbed windows.
   * Tweak initial window display, mitigate bright flash (#1284).
+  * Border style can be set also via config file (#7).
 
 Configuration
   * New option BoxDrawing (#935, #1119).
   * Setting options Menu* to empty value disables the respective menu (#1279).
   * Skip config files in $HOME if $HOME does not exist (mintty/wsltty#351).
+  * New option BorderStyle (#7).
 
 ### 3.7.4 (03 July 2024) ###
 

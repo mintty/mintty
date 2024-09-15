@@ -14,6 +14,7 @@ enum { FS_DEFAULT, FS_PARTIAL, FS_NONE, FS_FULL };
 enum { FR_TEXTOUT, FR_UNISCRIBE };
 enum { MC_VOID, MC_PASTE, MC_EXTEND, MC_ENTER };
 enum { RC_MENU, RC_PASTE, RC_EXTEND, RC_ENTER };
+enum { BORDER_NORMAL, BORDER_FRAME, BORDER_VOID };
 enum { TR_OFF = 0, TR_LOW = 16, TR_MEDIUM = 32, TR_HIGH = 48, TR_GLASS = -1 };
 enum { FLASH_FRAME = 1, FLASH_BORDER = 2, FLASH_FULL = 4, FLASH_REVERSE = 8 };
 enum { EMOJIS_NONE = 0, EMOJIS_ONE = 1, EMOJIS_NOTO = 2, EMOJIS_APPLE = 3, 
@@ -155,6 +156,7 @@ typedef struct {
   int max_scrollback_lines;
   char scrollbar;
   char scroll_mod;
+  char border_style;
   bool pgupdn_scroll;
   wstring lang;
   wstring search_bar;

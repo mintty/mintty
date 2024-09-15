@@ -113,7 +113,6 @@ static bool focus_inhibit = false;
 
 // Options
 bool title_settable = true;
-static string border_style = 0;
 static string report_geom = 0;
 static bool report_moni = false;
 bool report_config = false;
@@ -2394,8 +2393,8 @@ clear_fullscreen(void)
 
  /* Reinstate the window furniture. */
   LONG style = GetWindowLong(wnd, GWL_STYLE);
-  if (border_style) {
-    if (strcmp(border_style, "void") != 0) {
+  if (cfg.border_style != BORDER_NORMAL) {
+    if (cfg.border_style == BORDER_VOID) {
       style |= WS_THICKFRAME;
     }
   }
@@ -3033,8 +3032,8 @@ win_adjust_borders(int t_width, int t_height)
   RECT cr = {0, 0, term_width + 2 * PADDING, term_height + OFFSET + 2 * PADDING};
   RECT wr = cr;
   window_style = WS_OVERLAPPEDWINDOW;
-  if (border_style) {
-    if (strcmp(border_style, "void") == 0)
+  if (cfg.border_style != BORDER_NORMAL) {
+    if (cfg.border_style == BORDER_VOID)
       window_style &= ~(WS_CAPTION | WS_BORDER | WS_THICKFRAME);
     else
       window_style &= ~(WS_CAPTION | WS_BORDER);
@@ -3240,7 +3239,7 @@ win_adapt_term_size(bool sync_size_with_font, bool scale_font_with_size)
 static int
 win_fix_taskbar_max(int show_cmd)
 {
-  if (border_style && show_cmd == SW_SHOWMAXIMIZED) {
+  if (cfg.border_style != BORDER_NORMAL && show_cmd == SW_SHOWMAXIMIZED) {
     // (SW_SHOWMAXIMIZED == SW_MAXIMIZE)
     // workaround for Windows failing to consider the taskbar properly 
     // when maximizing without WS_CAPTION in style (#732)
@@ -3318,8 +3317,8 @@ static uint normal_dpi;
 
      /* Reinstate the window furniture. */
       LONG style = GetWindowLong(wnd, GWL_STYLE);
-      if (border_style) {
-        if (strcmp(border_style, "void") != 0) {
+      if (cfg.border_style != BORDER_NORMAL) {
+        if (cfg.border_style == BORDER_VOID) {
           style |= WS_THICKFRAME;
         }
       }
@@ -6567,7 +6566,7 @@ main(int argc, char *argv[])
         set_arg_option("TabBar", strdup("1"));
         set_arg_option("SessionGeomSync", optarg ?: strdup("2"));
       when 'B':
-        border_style = strdup(optarg);
+        set_arg_option("Border", strdup(optarg));
       when 'R':
         switch (*optarg) {
           when 's' or 'o':
@@ -7385,7 +7384,7 @@ static int dynfonts = 0;
           // but window size hopefully adjusted already
 
           /* Note: this used to be guarded by
-             //if (border_style)
+             //if (cfg.border_style)
              but should be done always to avoid maxheight windows to 
              be covered by the taskbar
           */
@@ -7487,9 +7486,9 @@ static int dynfonts = 0;
   }
 
 
-  if (border_style) {
+  if (cfg.border_style != BORDER_NORMAL) {
     LONG style = GetWindowLong(wnd, GWL_STYLE);
-    if (strcmp(border_style, "void") == 0) {
+    if (cfg.border_style == BORDER_VOID) {
       style &= ~(WS_CAPTION | WS_BORDER | WS_THICKFRAME);
     }
     else {

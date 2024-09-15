@@ -163,6 +163,7 @@ const config default_cfg = {
   .scrollback_lines = 10000,
   .max_scrollback_lines = 250000,
   .scroll_mod = MDK_SHIFT,
+  .border_style = BORDER_NORMAL,
   .pgupdn_scroll = false,
   .lang = W(""),
   .search_bar = W(""),
@@ -314,7 +315,8 @@ config cfg, new_cfg, file_cfg;
 
 typedef enum {
   OPT_BOOL, OPT_MOD, OPT_TRANS, OPT_CURSOR, OPT_FONTSMOOTH, OPT_FONTRENDER,
-  OPT_MIDDLECLICK, OPT_RIGHTCLICK, OPT_SCROLLBAR, OPT_WINDOW, OPT_HOLD,
+  OPT_MIDDLECLICK, OPT_RIGHTCLICK, OPT_SCROLLBAR, OPT_BORDER, OPT_WINDOW,
+  OPT_HOLD,
   OPT_INT, OPT_COLOUR, OPT_COLOUR_PAIR, OPT_STRING, OPT_WSTRING,
   OPT_CHARWIDTH, OPT_EMOJIS, OPT_EMOJI_PLACEMENT,
   OPT_COMPOSE_KEY,
@@ -489,6 +491,7 @@ options[] = {
   {"MaxScrollbackLines", OPT_INT, offcfg(max_scrollback_lines)},
   {"Scrollbar", OPT_SCROLLBAR, offcfg(scrollbar)},
   {"ScrollMod", OPT_MOD, offcfg(scroll_mod)},
+  {"BorderStyle", OPT_BORDER, offcfg(border_style)},
   {"PgUpDnScroll", OPT_BOOL, offcfg(pgupdn_scroll)},
   {"Language", OPT_WSTRING, offcfg(lang)},
   {"SearchBar", OPT_WSTRING, offcfg(search_bar)},
@@ -756,6 +759,12 @@ static opt_val * const opt_vals[] = {
     {"left", -1},
     {"right", 1},
     {"none", 0},
+    {0, 0}
+  },
+  [OPT_BORDER] = (opt_val[]) {
+    {"normal", BORDER_NORMAL},
+    {"frame", BORDER_FRAME},
+    {"void", BORDER_VOID},
     {0, 0}
   },
   [OPT_WINDOW] = (opt_val[]){

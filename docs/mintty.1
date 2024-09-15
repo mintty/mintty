@@ -231,11 +231,11 @@ The title is not changeable by control sequences.
 This feature is only available on the command line.
 
 .TQ
-\fB\-B\fP, \fB\-\-Border\fP \fBframe\fP|\fBvoid\fP
+\fB\-B\fP, \fB\-\-Border\fP \fBnormal\fP|\fBframe\fP|\fBvoid\fP
+Like option \fBBorderStyle\fP:
 Suppress window title, display only a frame or no border.
-This feature is only available on the command line.
-Note that frame border operations are also disabled.
-However, a window move can also be done with Ctrl+Alt+click-drag.
+The system menu can still be opened with Alt+space.
+A window move can still be done with Ctrl+Alt+click-drag.
 
 .TQ
 \fB\-\-tabbar\fP[\fB=\fP\fIlevel\fP]
@@ -2320,6 +2320,13 @@ The \fBOff\fP setting disables scrolling with keyboard shortcuts.
 .en
 \fBOff\fP (0)
 ./ul
+
+.TQ
+\fBBorder style\fP (BorderStyle=normal)
+With settings \fBframe\fP or \fBvoid\fP, the window title is dropped, 
+displaying only a frame or no border.
+The system menu can still be opened with Alt+space.
+A window move can still be done with Ctrl+Alt+click-drag.
 
 .TQ
 \fBPgUp and PgDn scroll without modifier\fP (PgUpDnScroll=no)
