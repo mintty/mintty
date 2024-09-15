@@ -268,7 +268,7 @@ or hidden.
 Use \fICLASS\fP as the window class name of the main window.
 This allows window grouping or setup of different tab sets, 
 and it allows scripting tools to distinguish different mintty instances.
-The default is "mintty".
+The default is "mintty\fI_N\fP", including tabbed window sync level if > 1.
 
 .TQ
 \fB\-d\fP, \fB\-\-nodaemon\fP
@@ -2767,10 +2767,13 @@ Setting only one of X, Y is not supported.
 See command-line option \fB\-p\fP for further positioning options.
 
 .TQ
-\fBWindow class name\fP (Class=mintty)
+\fBWindow class name\fP (Class=mintty\fI_N\fP)
 The \fBClass\fP setting determines the name of the window class of the terminal window.
 It can be used to distinguish or group different mintty windows, or tab sets, e.g. for 
 the mintty session switcher, or for Windows scripting tools such as AutoHotKey.
+
+The default setting appends the tabbed window sync level (>1) to avoid 
+interaction issues between tabbed and non-tabbed windows.
 
 For a flexible grouping configuration, the Class option supports the 
 same \fB%s\fP placeholder parameters as the AppID option.

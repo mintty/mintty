@@ -769,6 +769,12 @@ win_hide_other_tabs(HWND to_top)
     if (class_atom == curr_wnd_info.atomWindowType) {
       //printf("[%p] hiding %p (unless top %p)\n", wnd, curr_wnd, to_top);
       if (curr_wnd != to_top && !IsIconic(curr_wnd)) {
+#ifdef debug_hiding
+        int len = GetWindowTextLengthW(curr_wnd);
+        wchar t[len + 1];
+        GetWindowTextW(curr_wnd, t, len + 1);
+        printf("hiding <%ls>\n", t);
+#endif
         // do not use either of 
         // ShowWindow(SW_HIDE) or SetWindowPos(SWP_HIDEWINDOW);
         // it is hard to restore from those states and window handling 
@@ -7089,6 +7095,15 @@ main(int argc, char *argv[])
   wstring wclass = W(APPNAME);
   if (*cfg.class)
     wclass = group_id(cfg.class);
+  if (cfg.geom_sync > 1) {
+    char * class = cs__wcstoutf(wclass);
+    char * syncclass = asform("%s_%d", class, cfg.geom_sync);
+    free(class);
+    set_arg_option("Class", syncclass);
+    wclass = cs__utftowcs(syncclass);
+    free(syncclass);
+  }
+
 #ifdef prevent_grouping_hidden_tabs
   // should an explicitly hidden window not be grouped with a "class" of tabs?
   if (!cfg.window)

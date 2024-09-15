@@ -19,6 +19,7 @@ Mouse and menu handling
   * Allow disabling of mouse menus by clearing Menu* (#1279).
 
 Window handling
+  * Avoid interaction problem of tabbed/non-tabbed windows.
   * Tweak initial window display, mitigate bright flash (#1284).
 
 Configuration
