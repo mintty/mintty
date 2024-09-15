@@ -310,6 +310,9 @@ guardpath(string path, int level)
   if (!path)
     return 0;
 
+  if (0 == strncmp(path, "file:", 5))
+    path += 5;
+
   // path transformations
   char * expath;
   if (support_wsl) {
@@ -336,7 +339,19 @@ guardpath(string path, int level)
     // use case level is not in configured guarding bitmask
     return expath;
 
-  wstring wpath = path_posix_to_win_w(expath);  // implies realpath()
+  wchar * wpath;
+
+  if ((expath[0] == '/' || expath[0] == '\\') && (expath[1] == '/' || expath[1] == '\\')) {
+    wpath = cs__mbstowcs(expath);
+    // transform network path to Windows syntax (\ separators)
+    for (wchar * p = wpath; *p; p++)
+      if (*p == '/')
+        *p = '\\';
+  }
+  else {
+    // transform cygwin path to Windows drive path
+    wpath = path_posix_to_win_w(expath);  // implies realpath()
+  }
   trace_guard(("guardpath <%s>\n       ex <%s>\n        w <%ls>\n", path, expath ?: "(null)", wpath ?: W("(null)")));
   if (!wpath) {
     free(expath);
