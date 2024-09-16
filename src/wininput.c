@@ -1766,6 +1766,8 @@ static struct function_def cmd_defs[] = {
   {"new-tab", {IDM_TAB}, 0},
   {"new-tab-cwd", {IDM_TAB_CWD}, 0},
   {"toggle-tabbar", {.fct = toggle_tabbar}, mflags_tabbar},
+  {"tab-left", {.fct = win_tab_left}, 0},
+  {"tab-right", {.fct = win_tab_right}, 0},
 
   {"hor-left-1", {.fct = hor_left_1}, 0},
   {"hor-right-1", {.fct = hor_right_1}, 0},

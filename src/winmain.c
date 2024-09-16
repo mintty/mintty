@@ -60,6 +60,7 @@ typedef UINT_PTR uintptr_t;
 #ifndef GWL_USERDATA
 #define GWL_USERDATA -21
 #endif
+#define GWL_TIMEMASK ~1
 
 
 char * home;
@@ -894,11 +895,12 @@ strip_title(wchar * title)
   To be used for tab bar display.
  */
 static void
-refresh_tab_titles(bool trace)
+refresh_tabinfo(bool trace)
 {
   BOOL CALLBACK wnd_enum_tabs(HWND curr_wnd, LPARAM lp)
   {
     bool trace = (bool)lp;
+    (void)trace;
 
     WINDOWINFO curr_wnd_info;
     curr_wnd_info.cbSize = sizeof(WINDOWINFO);
@@ -907,7 +909,7 @@ refresh_tab_titles(bool trace)
       int len = GetWindowTextLengthW(curr_wnd);
       if (!len) {
         // check whether already terminating
-        LONG fini = GetWindowLong(curr_wnd, GWL_USERDATA);
+        LONG fini = GetWindowLong(curr_wnd, GWL_USERDATA) & 1;
         if (fini) {
 #ifdef debug_tabbar
           printf("[%8p] get tab %8p: fini\n", wnd, curr_wnd);
@@ -922,33 +924,9 @@ refresh_tab_titles(bool trace)
       printf("[%8p] get tab %8p: <%ls>\n", wnd, curr_wnd, title);
 #endif
 
-      static bool sort_tabs_by_time = true;
-
-      if (sort_tabs_by_time) {
-        DWORD pid;
-        GetWindowThreadProcessId(curr_wnd, &pid);
-        HANDLE ph = OpenProcess(PROCESS_QUERY_INFORMATION, 0, pid);
-        // PROCESS_QUERY_LIMITED_INFORMATION ?
-        FILETIME cr_time, dummy;
-        if (GetProcessTimes(ph, &cr_time, &dummy, &dummy, &dummy)) {
-          unsigned long long crtime = ((unsigned long long)cr_time.dwHighDateTime << 32) | cr_time.dwLowDateTime;
-          add_tabinfo(crtime, curr_wnd, title);
-          if (trace) {
-#ifdef debug_tabbar
-            SYSTEMTIME start_time;
-            if (FileTimeToSystemTime(&cr_time, &start_time))
-              printf("  %04d-%02d-%02d_%02d:%02d:%02d.%03d\n",
-                     start_time.wYear, start_time.wMonth, start_time.wDay,
-                     start_time.wHour, start_time.wMinute, 
-                     start_time.wSecond, start_time.wMilliseconds);
-#endif
-          }
-        }
-        CloseHandle(ph);
-      }
-      else
-        add_tabinfo((unsigned long)curr_wnd, curr_wnd, title);
-
+      // tag tab with mark stored in userdata, for sorting the tabbar order
+      LONG crtime = GetWindowLong(curr_wnd, GWL_USERDATA) & GWL_TIMEMASK;
+      add_tabinfo(crtime, curr_wnd, title);
     }
     return true;
   }
@@ -986,12 +964,74 @@ update_tab_titles()
   }
   if (sync_level() || win_tabbar_visible()) {
     // update my own list
-    refresh_tab_titles(true);
+    refresh_tabinfo(true);
     // support tabbar
     win_update_tabbar();
     // tell the others to update theirs
     EnumWindows(wnd_enum_tabs, 0);
   }
+}
+
+void
+win_tab_left(void)
+{
+  for (int w = ntabinfo - 1; w > 0; w--)
+    if (tabinfo[w].wnd == wnd) {
+      HWND wnd1 = tabinfo[w - 1].wnd;
+      // prepare exchange of the two timestamps
+      LONG ud0 = GetWindowLong(wnd, GWL_USERDATA);
+      LONG cr0 = ud0 & GWL_TIMEMASK;
+      LONG _ud0 = ud0 & ~GWL_TIMEMASK;
+      LONG ud1 = GetWindowLong(wnd1, GWL_USERDATA);
+      LONG cr1 = ud1 & GWL_TIMEMASK;
+      LONG _ud1 = ud1 & ~GWL_TIMEMASK;
+      // exchange the two timestamps
+      LONG __ud0 = cr1 | _ud0;
+      LONG __ud1 = cr0 | _ud1;
+      SetWindowLong(wnd, GWL_USERDATA, __ud0);
+      SetWindowLong(wnd1, GWL_USERDATA, __ud1);
+
+      // update tabbar of current window
+      refresh_tabinfo(false);
+      win_update_tabbar();
+      break;
+    }
+
+  // update tabbar of other windows of tabset
+  for (int w = 0; w < ntabinfo; w++)
+    if (tabinfo[w].wnd != wnd)
+      PostMessage(tabinfo[w].wnd, WM_USER, 0, WIN_TITLE);
+}
+
+void
+win_tab_right(void)
+{
+  for (int w = 0; w < ntabinfo - 1; w++)
+    if (tabinfo[w].wnd == wnd) {
+      HWND wnd1 = tabinfo[w + 1].wnd;
+      // prepare exchange of the two timestamps
+      LONG ud0 = GetWindowLong(wnd, GWL_USERDATA);
+      LONG cr0 = ud0 & GWL_TIMEMASK;
+      LONG _ud0 = ud0 & ~GWL_TIMEMASK;
+      LONG ud1 = GetWindowLong(wnd1, GWL_USERDATA);
+      LONG cr1 = ud1 & GWL_TIMEMASK;
+      LONG _ud1 = ud1 & ~GWL_TIMEMASK;
+      // exchange the two timestamps
+      LONG __ud0 = cr1 | _ud0;
+      LONG __ud1 = cr0 | _ud1;
+      SetWindowLong(wnd, GWL_USERDATA, __ud0);
+      SetWindowLong(wnd1, GWL_USERDATA, __ud1);
+
+      // update tabbar of current window
+      refresh_tabinfo(false);
+      win_update_tabbar();
+      break;
+    }
+
+  // update tabbar of other windows of tabset
+  for (int w = 0; w < ntabinfo; w++)
+    if (tabinfo[w].wnd != wnd)
+      PostMessage(tabinfo[w].wnd, WM_USER, 0, WIN_TITLE);
 }
 
 
@@ -1418,7 +1458,7 @@ win_switch(bool back, bool alternate)
     win_to_top(first_wnd);
   }
 #else
-  refresh_tab_titles(false);
+  refresh_tabinfo(false);
 
   win_to_top(back ? get_prev_tab(alternate) : get_next_tab(alternate));
   // support tabbar
@@ -4084,7 +4124,7 @@ static struct {
 #endif
       else if (!wp && lp == WIN_TITLE) {
         if (sync_level() || win_tabbar_visible()) {
-          refresh_tab_titles(false);
+          refresh_tabinfo(false);
           // support tabbar
           win_update_tabbar();
         }
@@ -5405,7 +5445,8 @@ exit_mintty(void)
   // so we'd have to add a safeguard here...
   SetWindowTextA(wnd, "");
   // indicate "terminating"
-  SetWindowLong(wnd, GWL_USERDATA, -1);
+  LONG ud = GetWindowLong(wnd, GWL_USERDATA);
+  SetWindowLong(wnd, GWL_USERDATA, ud | 1);
   // flush properties cache
   SetWindowPos(wnd, null, 0, 0, 0, 0,
                SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER
@@ -7894,6 +7935,9 @@ static int dynfonts = 0;
   // and grab focus again, just in case and for Windows 11
   // (https://github.com/mintty/mintty/issues/1113#issuecomment-1210278957)
   SetFocus(wnd);
+
+  // mark userdata with timestamp, for initial tabbar ordering
+  SetWindowLong(wnd, GWL_USERDATA, mtime() & GWL_TIMEMASK);
 
   is_init = true;
   // tab management: secure transparency appearance by hiding other tabs

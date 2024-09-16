@@ -1373,6 +1373,14 @@ as the `AppID` option.
 Tabs can also be switched from a tabbar, activated with setting `Tabbar` to 
 a recommended value of 2 or more (use 4 or 9 for maximal tab synchronization).
 
+### Tab ordering ###
+
+Tabs can be reordered with user-definable functions tab-left, tab-right.
+For example to use keys Alt+Win+Left/Right:
+```
+KeyFunctions=AW+Left:tab-left;AW+Right:tab-right
+```
+
 
 ## Multi-monitor support ##
 
