@@ -3939,11 +3939,11 @@ skip_drawing:;
 #endif
 
   HRGN clipr;
-  void setclipr(int x, int y)
+  void setclipr(int x, int y, int n)
   {
     int clip_height = cell_height 
                       * (lattr >= LATTR_TOP && ty < term_allrows - 1 ? 2 : 1);
-    clipr = CreateRectRgn(x, y, x + char_width, y + clip_height);
+    clipr = CreateRectRgn(x, y, x + n * char_width, y + clip_height);
     SelectClipRgn(dc, clipr);
   }
   void clearclipr()
@@ -3958,7 +3958,7 @@ skip_drawing:;
     }
     else {  // Sum segments to be (partially) drawn, 
             // square root base, pointing triangles, VT52 fraction numerator
-      setclipr(x, y);
+      setclipr(x, y, ulen);
 
       int sum_width = line_width;
       int y0 = (lattr == LATTR_BOT) ? y - cell_height : y;
@@ -4400,7 +4400,7 @@ skip_drawing:;
     }
 
     for (int i = 0; i < ulen; i++) {
-      setclipr(xi, yclip);
+      setclipr(xi, yclip, 1);
 
       if (boxpower && origtext) switch (origtext[i]) {
         // Box Drawing (U+2500-U+257F)
@@ -4487,7 +4487,7 @@ skip_drawing:;
     DeleteObject(br);
   }
   else if (graph >> 4) {  // VT100/VT52 horizontal "scanlines"
-    setclipr(x, y);
+    setclipr(x, y, ulen);
 
     int parts = graph_vt52 ? 8 : 5;
     HPEN oldpen = SelectObject(dc, CreatePen(PS_SOLID, 0, fg));
@@ -4506,7 +4506,7 @@ skip_drawing:;
     clearclipr();
   }
   else if (graph) {  // VT100 box drawing characters ┘┐┌└┼ ─ ├┤┴┬│
-    setclipr(x, y);
+    setclipr(x, y, ulen);
 
     HPEN oldpen = SelectObject(dc, CreatePen(PS_SOLID, 0, fg));
     int y0 = (lattr == LATTR_BOT) ? y - cell_height : y;

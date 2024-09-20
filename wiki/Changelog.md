@@ -1,3 +1,6 @@
+Font and character rendering
+  * Fix rendering of repeated DEC graphics (#1288).
+
 Window handling
   * Tabs can be reordered interactively via drag-and-drop (#1283).
 
