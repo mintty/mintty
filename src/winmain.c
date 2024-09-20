@@ -972,8 +972,8 @@ update_tab_titles()
   }
 }
 
-void
-win_tab_left(void)
+static bool
+win_tabinfo_left(void)
 {
   for (int w = ntabinfo - 1; w > 0; w--)
     if (tabinfo[w].wnd == wnd) {
@@ -991,20 +991,16 @@ win_tab_left(void)
       SetWindowLong(wnd, GWL_USERDATA, __ud0);
       SetWindowLong(wnd1, GWL_USERDATA, __ud1);
 
-      // update tabbar of current window
+      // refresh every time to make win_tab_move(n) work
       refresh_tabinfo(false);
-      win_update_tabbar();
-      break;
-    }
 
-  // update tabbar of other windows of tabset
-  for (int w = 0; w < ntabinfo; w++)
-    if (tabinfo[w].wnd != wnd)
-      PostMessage(tabinfo[w].wnd, WM_USER, 0, WIN_TITLE);
+      return true;
+    }
+  return false;
 }
 
-void
-win_tab_right(void)
+static bool
+win_tabinfo_right(void)
 {
   for (int w = 0; w < ntabinfo - 1; w++)
     if (tabinfo[w].wnd == wnd) {
@@ -1022,16 +1018,53 @@ win_tab_right(void)
       SetWindowLong(wnd, GWL_USERDATA, __ud0);
       SetWindowLong(wnd1, GWL_USERDATA, __ud1);
 
-      // update tabbar of current window
       refresh_tabinfo(false);
-      win_update_tabbar();
-      break;
+      return true;
     }
+  return false;
+}
+
+static void
+win_update_tabset()
+{
+  // update tabbar of current window
+  //refresh_tabinfo(false);  // already done in win_tabinfo_*
+  win_update_tabbar();
 
   // update tabbar of other windows of tabset
   for (int w = 0; w < ntabinfo; w++)
     if (tabinfo[w].wnd != wnd)
       PostMessage(tabinfo[w].wnd, WM_USER, 0, WIN_TITLE);
+}
+
+void
+win_tab_left(void)
+{
+  if (win_tabinfo_left())
+    win_update_tabset();
+}
+
+void
+win_tab_right(void)
+{
+  if (win_tabinfo_right())
+    win_update_tabset();
+}
+
+void
+win_tab_move(int n)
+{
+  bool moved = false;
+  while (n < 0) {
+    moved |= win_tabinfo_left();
+    n ++;
+  }
+  while (n > 0) {
+    moved |= win_tabinfo_right();
+    n --;
+  }
+  if (moved)
+    win_update_tabset();
 }
 
 

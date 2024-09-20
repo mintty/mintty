@@ -1,3 +1,6 @@
+// visual tabbar implementation (part of mintty)
+// initially provided 2020 by Xiaohui Duan (#944)
+
 #include "winpriv.h"
 #include "wintab.h"
 #if CYGWIN_VERSION_API_MINOR < 74
@@ -17,6 +20,8 @@ static bool initialized = false;
 static const int max_tab_width = 300;
 static const int min_tab_width = 20;
 static int prev_tab_width = 0;
+static int curr_tab_width;
+static int xoff;
 
 #define TABFONTSCALE 9/10
 
@@ -67,6 +72,7 @@ tabbar_update()
   int tab_width = (win_width - 2 * tab_height) / ntabinfo;
   tab_width = min(tab_width, max_tab_width);
   tab_width = max(tab_width, min_tab_width);
+  curr_tab_width = tab_width;
   //printf("width: %d %d %d\n", win_width, tab_width, ntabinfo);
   SendMessage(tab_wnd, TCM_SETITEMSIZE, 0, tab_width | tab_height << 16);
   TCITEMW tie;
@@ -155,7 +161,89 @@ static LRESULT CALLBACK
 container_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 {
   //printf("tabbar con_proc %03X\n", msg);
-  if (msg == WM_NOTIFY) {
+static WORD dragmsg = 0;
+static int dragidx = -1;
+static int targidx = -1;
+
+  if (msg == WM_MOUSEACTIVATE) {
+    //printf("WM_MOUSEACTIVATE lo %02X hi %02X\n", LOWORD(lp), HIWORD(lp));
+    if (LOWORD(lp) == HTCLIENT && HIWORD(lp) == WM_LBUTTONDOWN) {
+      // begin drag-and-drop tab reordering
+#ifdef determine_tab_index_by_wnd_in_item
+      // get tab wnd from TCITEM lParam, lookup tab index (not implemented)
+      int isel = SendMessage(tab_wnd, TCM_GETCURSEL, 0, 0);
+      TCITEMW tie;
+      tie.mask = TCIF_PARAM;
+      SendMessage(tab_wnd, TCM_GETITEM, isel, (LPARAM)&tie);
+      //dragidx = index_in_tabinfo(tie.lParam);
+      for (int i = 0; i < ntabinfo; i ++)
+        if (tabinfo[i].wnd == (HWND)tie.lParam) {
+          dragidx = i;
+          break;
+        }
+      //printf("i %d lp %p drag %d\n", isel, (void*)tie.lParam, dragidx);
+#endif
+      // enquire cursor position; derive click-and-drag item index
+      POINT p;
+      if (GetCursorPos(&p) && ScreenToClient(hwnd, &p)) {
+        int x = p.x - xoff;
+        dragidx = x / curr_tab_width;
+        if (dragidx < ntabinfo)
+          dragmsg = HIWORD(lp);
+        else
+          dragidx = -1;
+        //printf("%d:%d (pw %d) x %d drag %d\n", (int)p.y, (int)p.x, curr_tab_width, x, dragidx);
+      }
+    }
+  }
+  else if (msg == WM_SETCURSOR && dragmsg && LOWORD(lp) == HTCLIENT) {
+    //printf("WM_SETCURSOR lo %02X hi %02X\n", LOWORD(lp), HIWORD(lp));
+    if (HIWORD(lp) == WM_MOUSEMOVE) {
+      // drag during tab reordering; display visual feedback
+
+      // cannot determine current cursor target tab via TCITEM
+      // (like #ifdef determine_tab_index_by_wnd_in_item above)
+      // as the index remains the click-and-drag tab
+
+      // enquire cursor position; derive drop target item index
+      POINT p;
+      if (GetCursorPos(&p) && ScreenToClient(hwnd, &p)) {
+        int x = p.x - xoff;
+        int dropidx = x / curr_tab_width;
+        //printf("%d:%d (pw %d) x %d drop %d\n", (int)p.y, (int)p.x, curr_tab_width, x, dropidx);
+        if (dropidx != targidx && targidx >= 0) {
+          // clear hover highlighting of previous drop target
+          
+          targidx = -1;
+        }
+        if (dropidx != dragidx) {
+          // visual indication of tab dragging: hover highlighting
+          
+          targidx = dropidx;
+        }
+      }
+    }
+    else if (HIWORD(lp) == WM_LBUTTONUP) {
+      // drop tab while dragging for tab reordering
+
+      // cannot determine current cursor target tab via TCITEM
+      // (like #ifdef determine_tab_index_by_wnd_in_item above)
+      // as the index remains the click-and-drag tab
+
+      // enquire cursor position; derive drop target item index
+      POINT p;
+      if (GetCursorPos(&p) && ScreenToClient(hwnd, &p)) {
+        int x = p.x - xoff;
+        int dropidx = x / curr_tab_width;
+        //printf("%d:%d (pw %d) x %d: drag %d -> drop %d\n", (int)p.y, (int)p.x, curr_tab_width, x, dragidx, dropidx);
+
+        // act on drop target item
+        win_tab_move(dropidx - dragidx);
+        dragmsg = 0;
+      }
+    }
+  }
+  else if (msg == WM_NOTIFY) {
     //printf("tabbar con_proc WM_NOTIFY\n");
     LPNMHDR lpnmhdr = (LPNMHDR)lp;
     //printf("notify %lld %d %d\n", lpnmhdr->idFrom, lpnmhdr->code, TCN_SELCHANGE);
@@ -165,8 +253,8 @@ container_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
       tie.mask = TCIF_PARAM;
       SendMessage(tab_wnd, TCM_GETITEM, isel, (LPARAM)&tie);
       //printf("%p\n", (void*)tie.lParam);
-      RECT rect_me;
-      GetWindowRect(wnd, &rect_me);
+      //RECT rect_me;
+      //GetWindowRect(wnd, &rect_me);
       //printf("%d %d %d %d\n", rect_me.left, rect_me.right, rect_me.top, rect_me.bottom);
       //ShowWindow((HWND)tie.lParam, SW_RESTORE);
       //ShowWindow((HWND)tie.lParam, SW_SHOW);
@@ -186,6 +274,12 @@ container_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
         if (tabinfo[i].wnd == wnd)
           SendMessage(tab_wnd, TCM_SETCURSEL, i, 0);
       }
+    }
+    else if (lpnmhdr->code == (uint)NM_CLICK) {
+      // clear tab dragging; the tab drop could be hooked here 
+      // but would not work if dropped in free space right of tabset
+      dragmsg = 0;
+      dragidx = -1;
     }
   }
   else if (msg == WM_CREATE) {
@@ -289,6 +383,12 @@ tabbar_init()
   bar_wnd = CreateWindowExA(WS_EX_STATICEDGE, TABBARCLASS, "",
                             WS_CHILD | WS_BORDER,
                             0, 0, 0, 0, wnd, 0, inst, NULL);
+  // determine tab margin/offset for tab position/index calculation
+  RECT wr;
+  GetWindowRect(tab_wnd, &wr);
+  xoff = wr.left;
+  GetWindowRect(bar_wnd, &wr);
+  xoff -= wr.left;
 
   initialized = true;
 }

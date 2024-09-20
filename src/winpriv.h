@@ -28,6 +28,7 @@ extern void clear_tabs(void);
 extern void add_tab(uint tabi, HWND wndi);
 extern void win_tab_left(void);
 extern void win_tab_right(void);
+extern void win_tab_move(int n);
 // Inter-window actions
 enum {
   WIN_MINIMIZE = 0,

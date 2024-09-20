@@ -1,3 +1,6 @@
+Window handling
+  * Tabs can be reordered interactively via drag-and-drop (#1283).
+
 ### 3.7.5 (17 September 2024) ###
 
 Unicode and Emoji data
