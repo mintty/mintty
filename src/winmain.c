@@ -6640,7 +6640,7 @@ main(int argc, char *argv[])
         set_arg_option("TabBar", strdup("1"));
         set_arg_option("SessionGeomSync", optarg ?: strdup("2"));
       when 'B':
-        set_arg_option("Border", strdup(optarg));
+        set_arg_option("BorderStyle", strdup(optarg));
       when 'R':
         switch (*optarg) {
           when 's' or 'o':

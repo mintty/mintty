@@ -3,6 +3,7 @@ Font and character rendering
 
 Window handling
   * Tabs can be reordered interactively via drag-and-drop (#1283).
+  * Fix command-line options -B and --Border (#7).
 
 ### 3.7.5 (17 September 2024) ###
 
