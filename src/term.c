@@ -3577,6 +3577,8 @@ term_paint(void)
             // && is_ambigwide(tchar) ? but then they will be clipped...
            )
         {
+          // auto-narrowing of glyphs that don't fit into the cell
+
           //printf("[%d:%d] narrow? %04X..%04X\n", i, j, tchar, chars[j + 1].chr);
 
           // mark for later win_text parameter clearpad (#1179)
