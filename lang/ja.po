@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: mintty\n"
 "Report-Msgid-Bugs-To: https://github.com/mintty/mintty/issues/700\n"
-"POT-Creation-Date: 2024-09-17 00:10+0200\n"
+"POT-Creation-Date: 2024-09-24 03:55+0200\n"
 "PO-Revision-Date: 2017-02-27 18:11+0900\n"
 "Last-Translator: Ken Takata <kentkt@csc.jp>\n"
 "Language-Team: \n"
@@ -16,7 +16,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: charset.c:228 charset.c:239 winmain.c:6389 winmain.c:6502 winmain.c:6509
+#: charset.c:228 charset.c:239 winmain.c:6422 winmain.c:6535 winmain.c:6542
 msgid "(Default)"
 msgstr "(既定)"
 
@@ -1248,36 +1248,36 @@ msgstr "[スクロール停止] "
 msgid "[SCROLL MODE] "
 msgstr "[スクロールモード] "
 
-#: winmain.c:3701
+#: winmain.c:3734
 msgid "Processes are running in session:"
 msgstr "セッションでプロセスが動作中です:"
 
-#: winmain.c:3702
+#: winmain.c:3735
 msgid "Close anyway?"
 msgstr "構わず閉じますか？"
 
-#: winmain.c:3726
+#: winmain.c:3759
 msgid "Reset terminal?"
 msgstr "端末をリセットしますか？"
 
-#: winmain.c:3928
+#: winmain.c:3961
 msgid "Try '--help' for more information"
 msgstr "さらなる情報には '--help' を試してください"
 
-#: winmain.c:3936
+#: winmain.c:3969
 msgid "Could not load icon"
 msgstr "アイコンをロードできません"
 
-#: winmain.c:6211
+#: winmain.c:6244
 msgid "Usage:"
 msgstr "使用法:"
 
-#: winmain.c:6212
+#: winmain.c:6245
 msgid "[OPTION]... [ PROGRAM [ARG]... | - ]"
 msgstr "[オプション]... [ プログラム [引数]... | - ]"
 
 #. __ help text (output of -H / --help), after initial line ("synopsis")
-#: winmain.c:6215
+#: winmain.c:6248
 msgid ""
 "Start a new terminal session running the specified program or the user's "
 "shell.\n"
@@ -1346,39 +1346,39 @@ msgstr ""
 "さらなるコマンドラインオプションと設定についてはマニュアルページを参照してく"
 "ださい。\n"
 
-#: winmain.c:6389 winmain.c:6502 winmain.c:6509
+#: winmain.c:6422 winmain.c:6535 winmain.c:6542
 msgid "WSL distribution '%s' not found"
 msgstr "WSL ディストリビューション '%s' が見つかりません"
 
-#: winmain.c:6540
+#: winmain.c:6573
 msgid "Duplicate option '%s'"
 msgstr "オプションが重複しています '%s'"
 
-#: winmain.c:6548 winmain.c:6636
+#: winmain.c:6581 winmain.c:6669
 msgid "Unknown option '%s'"
 msgstr "未知のオプションです '%s'"
 
-#: winmain.c:6550
+#: winmain.c:6583
 msgid "Option '%s' requires an argument"
 msgstr "オプション '%s' は引数が必要です"
 
-#: winmain.c:6577
+#: winmain.c:6610
 msgid "Syntax error in position argument '%s'"
 msgstr "position引数に文法エラーがあります '%s'"
 
-#: winmain.c:6588
+#: winmain.c:6621
 msgid "Syntax error in size argument '%s'"
 msgstr "size引数に文法エラーがあります '%s'"
 
-#: winmain.c:6745
+#: winmain.c:6778
 msgid "Syntax error in geometry argument '%s'"
 msgstr "geometry引数に文法エラーがあります '%s'"
 
-#: winmain.c:6842
+#: winmain.c:6875
 msgid "Mintty could not detach from caller, starting anyway"
 msgstr "minttyは呼び出し元からデタッチできません、とにかく起動します"
 
-#: winmain.c:7185
+#: winmain.c:7218
 msgid "Using default title due to invalid characters in program name"
 msgstr "プログラム名に不正な文字があるため既定のタイトルを使用します"
 

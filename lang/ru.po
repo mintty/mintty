@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: mintty\n"
 "Report-Msgid-Bugs-To: https://github.com/mintty/mintty/issues/700\n"
-"POT-Creation-Date: 2024-09-17 00:10+0200\n"
+"POT-Creation-Date: 2024-09-24 03:55+0200\n"
 "PO-Revision-Date: 2016-12-19 04:18+0500\n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -16,7 +16,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: charset.c:228 charset.c:239 winmain.c:6389 winmain.c:6502 winmain.c:6509
+#: charset.c:228 charset.c:239 winmain.c:6422 winmain.c:6535 winmain.c:6542
 msgid "(Default)"
 msgstr "(по умолчанию)"
 
@@ -1251,36 +1251,36 @@ msgstr ""
 msgid "[SCROLL MODE] "
 msgstr ""
 
-#: winmain.c:3701
+#: winmain.c:3734
 msgid "Processes are running in session:"
 msgstr "Имеются запущенные процессы:"
 
-#: winmain.c:3702
+#: winmain.c:3735
 msgid "Close anyway?"
 msgstr "Закрыть все равно?"
 
-#: winmain.c:3726
+#: winmain.c:3759
 msgid "Reset terminal?"
 msgstr "Сброс консоль?"
 
-#: winmain.c:3928
+#: winmain.c:3961
 msgid "Try '--help' for more information"
 msgstr "Используйте '--help' для получения дополнительной информации"
 
-#: winmain.c:3936
+#: winmain.c:3969
 msgid "Could not load icon"
 msgstr "Не удалось загрузить иконку"
 
-#: winmain.c:6211
+#: winmain.c:6244
 msgid "Usage:"
 msgstr "Применение:"
 
-#: winmain.c:6212
+#: winmain.c:6245
 msgid "[OPTION]... [ PROGRAM [ARG]... | - ]"
 msgstr "[ОПЦИЙ]... [ ПРОГРАММА [АРГУМЕНТЫ]... | - ]"
 
 #. __ help text (output of -H / --help), after initial line ("synopsis")
-#: winmain.c:6215
+#: winmain.c:6248
 msgid ""
 "Start a new terminal session running the specified program or the user's "
 "shell.\n"
@@ -1348,40 +1348,40 @@ msgstr ""
 "Смотрите страницу руководства для параметров командной строки и "
 "конфигурации.\n"
 
-#: winmain.c:6389 winmain.c:6502 winmain.c:6509
+#: winmain.c:6422 winmain.c:6535 winmain.c:6542
 msgid "WSL distribution '%s' not found"
 msgstr "Подсистема WSL '%s' не найдена"
 
-#: winmain.c:6540
+#: winmain.c:6573
 msgid "Duplicate option '%s'"
 msgstr "Дублирование параметра '%s'"
 
-#: winmain.c:6548 winmain.c:6636
+#: winmain.c:6581 winmain.c:6669
 msgid "Unknown option '%s'"
 msgstr "Неизвестный параметр '%s'"
 
-#: winmain.c:6550
+#: winmain.c:6583
 msgid "Option '%s' requires an argument"
 msgstr "Параметр '%s' требует аргумент"
 
-#: winmain.c:6577
+#: winmain.c:6610
 msgid "Syntax error in position argument '%s'"
 msgstr "Ошибка синтаксиса в позиции аргумента '%s'"
 
-#: winmain.c:6588
+#: winmain.c:6621
 msgid "Syntax error in size argument '%s'"
 msgstr "Ошибка синтаксиса в размере аргумента '%s'"
 
-#: winmain.c:6745
+#: winmain.c:6778
 msgid "Syntax error in geometry argument '%s'"
 msgstr "Ошибка синтаксиса в размере аргумента '%s'"
 
-#: winmain.c:6842
+#: winmain.c:6875
 msgid "Mintty could not detach from caller, starting anyway"
 msgstr ""
 "Mintty не может отключится от вызывающего метода, запуск в любом случае"
 
-#: winmain.c:7185
+#: winmain.c:7218
 msgid "Using default title due to invalid characters in program name"
 msgstr ""
 "Использование заголовка по умолчанию из-за недопустимых символов в имени "

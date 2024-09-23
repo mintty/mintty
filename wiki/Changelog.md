@@ -1,3 +1,5 @@
+### 3.7.6 (24 September 2024) ###
+
 Font and character rendering
   * Fix rendering of repeated DEC graphics (#1288).
 

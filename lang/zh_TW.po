@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: mintty\n"
 "Report-Msgid-Bugs-To: https://github.com/mintty/mintty/issues/700\n"
-"POT-Creation-Date: 2024-09-17 00:10+0200\n"
+"POT-Creation-Date: 2024-09-24 03:55+0200\n"
 "PO-Revision-Date: 2019-10-16 12:32+0800\n"
 "Last-Translator: lcy0321 <u900011@gmail.com>\n"
 "Language-Team: \n"
@@ -16,7 +16,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: charset.c:228 charset.c:239 winmain.c:6389 winmain.c:6502 winmain.c:6509
+#: charset.c:228 charset.c:239 winmain.c:6422 winmain.c:6535 winmain.c:6542
 msgid "(Default)"
 msgstr "（預設）"
 
@@ -1248,36 +1248,36 @@ msgstr "［停用捲動］"
 msgid "[SCROLL MODE] "
 msgstr "［捲動模式］"
 
-#: winmain.c:3701
+#: winmain.c:3734
 msgid "Processes are running in session:"
 msgstr "有程式正在執行於 Session："
 
-#: winmain.c:3702
+#: winmain.c:3735
 msgid "Close anyway?"
 msgstr "仍要關閉？"
 
-#: winmain.c:3726
+#: winmain.c:3759
 msgid "Reset terminal?"
 msgstr "重設 終端機？"
 
-#: winmain.c:3928
+#: winmain.c:3961
 msgid "Try '--help' for more information"
 msgstr "嘗試「--help」以獲得更多資訊"
 
-#: winmain.c:3936
+#: winmain.c:3969
 msgid "Could not load icon"
 msgstr "無法載入圖示"
 
-#: winmain.c:6211
+#: winmain.c:6244
 msgid "Usage:"
 msgstr "使用方式："
 
-#: winmain.c:6212
+#: winmain.c:6245
 msgid "[OPTION]... [ PROGRAM [ARG]... | - ]"
 msgstr "[OPTION]... [ PROGRAM [ARG]... | - ]"
 
 #. __ help text (output of -H / --help), after initial line ("synopsis")
-#: winmain.c:6215
+#: winmain.c:6248
 msgid ""
 "Start a new terminal session running the specified program or the user's "
 "shell.\n"
@@ -1335,39 +1335,39 @@ msgstr ""
 "    -V, --version         輸出版本資訊並離開\n"
 "參閱說明頁面以取得進一步的命令列選項與設定。\n"
 
-#: winmain.c:6389 winmain.c:6502 winmain.c:6509
+#: winmain.c:6422 winmain.c:6535 winmain.c:6542
 msgid "WSL distribution '%s' not found"
 msgstr "找不到 WSL 發行版 %s"
 
-#: winmain.c:6540
+#: winmain.c:6573
 msgid "Duplicate option '%s'"
 msgstr "重複的選項「%s」"
 
-#: winmain.c:6548 winmain.c:6636
+#: winmain.c:6581 winmain.c:6669
 msgid "Unknown option '%s'"
 msgstr "未知的選項「%s」"
 
-#: winmain.c:6550
+#: winmain.c:6583
 msgid "Option '%s' requires an argument"
 msgstr "選項「%s」需要一個參數"
 
-#: winmain.c:6577
+#: winmain.c:6610
 msgid "Syntax error in position argument '%s'"
 msgstr "Position 參數「%s」有語法錯誤"
 
-#: winmain.c:6588
+#: winmain.c:6621
 msgid "Syntax error in size argument '%s'"
 msgstr "Size 參數「%s」有語法錯誤"
 
-#: winmain.c:6745
+#: winmain.c:6778
 msgid "Syntax error in geometry argument '%s'"
 msgstr "Geometry 參數「%s」有語法錯誤"
 
-#: winmain.c:6842
+#: winmain.c:6875
 msgid "Mintty could not detach from caller, starting anyway"
 msgstr "Mintty 無法自 caller 分離，仍開始啟動"
 
-#: winmain.c:7185
+#: winmain.c:7218
 msgid "Using default title due to invalid characters in program name"
 msgstr "由於程式名稱中有不合法的字元，使用預設標題"
 

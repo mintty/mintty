@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: mintty\n"
 "Report-Msgid-Bugs-To: https://github.com/mintty/mintty/issues/700\n"
-"POT-Creation-Date: 2024-09-17 00:10+0200\n"
+"POT-Creation-Date: 2024-09-24 03:55+0200\n"
 "PO-Revision-Date: 2020-05-07 13:12+0200\n"
 "Last-Translator: Milo Ivir <mail@milotype.de>\n"
 "Language-Team: \n"
@@ -20,7 +20,7 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<12 || n%100>14) ? 1 : 2);\n"
 
-#: charset.c:228 charset.c:239 winmain.c:6389 winmain.c:6502 winmain.c:6509
+#: charset.c:228 charset.c:239 winmain.c:6422 winmain.c:6535 winmain.c:6542
 msgid "(Default)"
 msgstr "(Standardno)"
 
@@ -1253,36 +1253,36 @@ msgstr ""
 msgid "[SCROLL MODE] "
 msgstr ""
 
-#: winmain.c:3701
+#: winmain.c:3734
 msgid "Processes are running in session:"
 msgstr "U sesiji se izvode procesi:"
 
-#: winmain.c:3702
+#: winmain.c:3735
 msgid "Close anyway?"
 msgstr "Svejedno zatvoriti?"
 
-#: winmain.c:3726
+#: winmain.c:3759
 msgid "Reset terminal?"
 msgstr "Vrati terminal?"
 
-#: winmain.c:3928
+#: winmain.c:3961
 msgid "Try '--help' for more information"
 msgstr "Koristi „--help” za daljnje informacije"
 
-#: winmain.c:3936
+#: winmain.c:3969
 msgid "Could not load icon"
 msgstr "Nije bilo moguće učitati ikonu"
 
-#: winmain.c:6211
+#: winmain.c:6244
 msgid "Usage:"
 msgstr "Upotreba:"
 
-#: winmain.c:6212
+#: winmain.c:6245
 msgid "[OPTION]... [ PROGRAM [ARG]... | - ]"
 msgstr "[OPCIJA]… [ PROGRAM [PARAMETAR]… | - ]"
 
 #. __ help text (output of -H / --help), after initial line ("synopsis")
-#: winmain.c:6215
+#: winmain.c:6248
 msgid ""
 "Start a new terminal session running the specified program or the user's "
 "shell.\n"
@@ -1357,39 +1357,39 @@ msgstr ""
 "  -V, --verzija             Ispisuje podatke o verziji i izlazi\n"
 "Pogledaj priručnik za dodatne opcije u naredbenom retku i konfiguraciju.\n"
 
-#: winmain.c:6389 winmain.c:6502 winmain.c:6509
+#: winmain.c:6422 winmain.c:6535 winmain.c:6542
 msgid "WSL distribution '%s' not found"
 msgstr "WSL distribucija „%s” nije pronađena"
 
-#: winmain.c:6540
+#: winmain.c:6573
 msgid "Duplicate option '%s'"
 msgstr "Dupliciraj opciju „%s”"
 
-#: winmain.c:6548 winmain.c:6636
+#: winmain.c:6581 winmain.c:6669
 msgid "Unknown option '%s'"
 msgstr "Nepoznata opcija „%s”"
 
-#: winmain.c:6550
+#: winmain.c:6583
 msgid "Option '%s' requires an argument"
 msgstr "Opcija „%s” zahtijeva argument"
 
-#: winmain.c:6577
+#: winmain.c:6610
 msgid "Syntax error in position argument '%s'"
 msgstr "Greška u sintaksi za argument položaja „%s”"
 
-#: winmain.c:6588
+#: winmain.c:6621
 msgid "Syntax error in size argument '%s'"
 msgstr "Greška u sintaksi za argument veličine „%s”"
 
-#: winmain.c:6745
+#: winmain.c:6778
 msgid "Syntax error in geometry argument '%s'"
 msgstr "Greška u sintaksi za argument geometrije „%s”"
 
-#: winmain.c:6842
+#: winmain.c:6875
 msgid "Mintty could not detach from caller, starting anyway"
 msgstr "Mintty se nije mogao odvojiti od pozivatelja, svejedno se pokreče"
 
-#: winmain.c:7185
+#: winmain.c:7218
 msgid "Using default title due to invalid characters in program name"
 msgstr ""
 "Koristi se standardni naslov, jer ime programa sadrži nevaljane znakove"
