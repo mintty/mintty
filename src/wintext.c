@@ -808,12 +808,6 @@ win_init_fontfamily(HDC dc, int findex)
   printf("font faw %d (dual %d [ambig %d])\n", faw, ff->font_dualwidth, font_ambig_wide);
 #endif
 
-  // Initialise VT100 linedraw character mappings.
-  // See what glyphs are available.
-  ushort glyphs[LDRAW_CHAR_NUM][LDRAW_CHAR_TRIES];
-  GetGlyphIndicesW(dc, *linedraw_chars, LDRAW_CHAR_NUM * LDRAW_CHAR_TRIES,
-                   *glyphs, true);
-
   // See what RTL glyphs are available.
   ushort rtlglyphs[2];
   GetGlyphIndicesW(dc, W("אا"), 2, rtlglyphs, true);
@@ -822,19 +816,22 @@ win_init_fontfamily(HDC dc, int findex)
     ff->no_rtl |= 4;
   //printf("RTL glyphs %04X %04X %d\n", rtlglyphs[0], rtlglyphs[1], ff->no_rtl);
 
+  // Initialise VT100 linedraw character mappings.
+  // See what glyphs are available.
+  ushort glyphs[LDRAW_CHAR_NUM][LDRAW_CHAR_TRIES];
+  GetGlyphIndicesW(dc, *linedraw_chars, LDRAW_CHAR_NUM * LDRAW_CHAR_TRIES,
+                   *glyphs, true);
+
   // For each character, try the list of possible mappings until either we
   // find one that has a glyph in the font or we hit the ASCII fallback.
   for (uint i = 0; i < LDRAW_CHAR_NUM; i++) {
+    bool decbox = 'j' <= i + '`' && i + '`' <= 'x';
     uint j = 0;
     while (linedraw_chars[i][j] >= 0x80 &&
+           !decbox &&  // no substitutes for self-drawn box graphics
            (glyphs[i][j] == 0xFFFF || glyphs[i][j] == 0x1F))
       j++;
     ff->win_linedraw_chars[i] = linedraw_chars[i][j];
-#define draw_vt100_line_drawing_chars
-#ifdef draw_vt100_line_drawing_chars
-    if ('j' - '`' <= i && i <= 'x' - '`')
-      ff->win_linedraw_chars[i] = linedraw_chars[i][0];
-#endif
   }
 
   ff->fonts[FONT_UNDERLINE] = create_font(ff->name, ff->fw_norm, true);
@@ -3022,51 +3019,30 @@ win_text(int tx, int ty, wchar *text, int len, cattr attr, cattr *textattr, usho
 #endif
   //if (kb_trace) {printf("[%ld] <win_text\n", mtime()); kb_trace = 0;}
 
-  int graph = (attr.attr & GRAPH_MASK) >> ATTR_GRAPH_SHIFT;
-  bool graph_vt52 = false;
-  bool boxpower = false;  // Box Drawing or Powerline symbols
-  //bool boxdraw = false;  // Box Drawing
   int findex = (attr.attr & FONTFAM_MASK) >> ATTR_FONTFAM_SHIFT;
-  // in order to save attributes bits, special graphic handling is encoded 
-  // in a compact form, combined with unused values of the font number;
-  // here we do some decoding and also recoding back to the previous format, 
-  // in order to avoid micro-refactoring in the code below, 
-  // where graphic encoding is interpreted bitwise in some cases;
-  // the font ranges used are:
-  //  <none> (graph part only): special for DEC Technical, VT52 fraction
-  //  11     VT100 Line Drawing, bit-wise encoded segments
-  //  12     VT100 scanlines 1...5
-  //  13     VT52 scanlines 1...8
-  //  14     Unicode Block Elements, part 1
-  //  15     Unicode Block Elements, part 2
+  bool boxpower = false;  // Box Drawing or Powerline symbols
+  bool boxcoded = false;  // coded DEC box drawing and scanlines
+  bool vt52fraction = false;
+  bool dectcs = false;
+  // self-drawn graphic glyphs and some special graphic handling are 
+  // indicated as unused font family number, in order to save attribute bits
+  //  11    Unicode Box Drawing and Powerline box drawing
+  //  12    encoded VT100 box drawing and VT100/VT52 scanlines
+  //  13    VT52 fraction numerators 3/ 5/ 7/
+  //  14    DEC Technical Character Set square root, sum segments, triangles
   if (findex > 10) {
-    if (findex == 12) // VT100 scanlines
-      graph <<= 4;
-    else if (findex == 13 && graph == 15) { // Private: geometric Powerline
-      graph = 0;
+    if (findex == 11)  // Unicode Box Drawing and Powerline box drawing
       boxpower = true;
-    }
-    else if (findex == 13 && graph == 0) { // Unicode Box Drawing
-      boxpower = true;
-      //boxdraw = true;
-    }
-    else if (findex == 13) { // VT52 scanlines
-      graph <<= 4;
-      graph_vt52 = true;
-    }
-    else if (findex >= 14)
-      graph |= 0x80 | ((findex & 1) << 4);
+    else if (findex == 12) // VT100 box drawing, VT100/VT52 scanlines
+      boxcoded = true;
+    else if (findex == 13) // VT52 fraction numerators
+      vt52fraction = true;
+    else if (findex == 14) // DEC Technical Character Set (TCS)
+      dectcs = true;
 
     findex = 0;
   }
-  else if (graph) {
-    if (graph == 0xF)
-      graph = 0xF7;
-    else if (graph == 0xE)
-      graph = 0xE0;
-    else
-      graph |= 0xE0;
-  }
+
   struct fontfam * ff = &fontfamilies[findex];
   // check whether font lacks support of given RTL bidi class
   // has_rtl:    1: R/Hebrew,    2: AL/Arabic,    4: other
@@ -3334,12 +3310,7 @@ win_text(int tx, int ty, wchar *text, int len, cattr attr, cattr *textattr, usho
   }
 
   wchar * origtext = 0;
-  if (graph && graph < 0xE0) {
-    // clear codes for Block Elements, VT100 Line Drawing and "scanlines"
-    for (int i = 0; i < len; i++)
-      text[i] = ' ';
-  }
-  else if (boxpower) {
+  if (boxpower || boxcoded || dectcs) {
     // keep orig text in separate ref
     origtext = text;
     text = newn(wchar, len);
@@ -3759,20 +3730,10 @@ draw:;
     goto _return;
   }
 
- /* DEC Tech adjustments */
-  if (graph >= 0xE0) {  // adjust rendering of DEC Technical and VT52 fraction
-    if ((graph & ~1) == 0xE8)  // left square bracket corners
-      xt += line_width + 1;
-    else if ((graph & ~1) == 0xEA)  // right square bracket corners
-      xt -= line_width + 1;
-    else if (graph == 0xE7)  // middle angle: don't display ╳, draw (below)
-      for (int i = 0; i < len; i++)
-        text[i] = ' ';
-    else if (graph == 0xE0)  // square root base: rather draw (partially)
-      for (int i = 0; i < len; i++)
-        text[i] = 0x2502;
-    else if (graph == 0xF7)  // VT52 fraction numerator
-      yt -= line_width;
+ /* Partial glyph adjustments */
+  if (vt52fraction) {
+    // adjust position of VT52 fraction numerator
+    yt -= line_width;
   }
 
  /* Coordinate transformation per character */
@@ -3952,122 +3913,29 @@ skip_drawing:;
     DeleteObject(clipr);
   }
 
-  if (graph >= 0xE0) {  // fix DEC Technical characters, draw VT52 fraction
-    if ((graph & 0x0C) == 0x08) {
-      // square bracket corners already repositioned above
-    }
-    else {  // Sum segments to be (partially) drawn, 
-            // square root base, pointing triangles, VT52 fraction numerator
-      setclipr(x, y, ulen);
+  if (vt52fraction) {  // draw VT52 fraction numerators
+    setclipr(x, y, ulen);
 
-      int sum_width = line_width;
-      int y0 = (lattr == LATTR_BOT) ? y - cell_height : y;
-      int yoff = (cell_height - line_width) * 3 / 5;
-      if (lattr >= LATTR_TOP)
-        yoff *= 2;
-      int xoff = (char_width - line_width) / 2;
-      // 0xE0 square root base
-      // sum segments:
-      // 0xE1 upper left: add diagonal to bottom
-      // 0xE2 lower left: add diagonal to top
-      // 0xE5 upper right: add hook down
-      // 0xE6 lower right: add hook up
-      // 0xE7 middle right angle
-      int yt, yb;
-      int ycellb = y0 + (lattr >= LATTR_TOP ? 2 : 1) * cell_height;
-      if (graph & 1) {  // upper segment: downwards
-        yt = y0 + yoff;
-        yb = ycellb;
-      }
-      else {  // lower segment: upwards
-        yt = y0;
-        yb = y0 + yoff;
-      }
-      int xl = x + xoff;
-      int xr = xl;
-      if (graph <= 0xE2) {  // diagonals
-        sum_width ++;
-        xl += line_width - 1;
-        xr = x + char_width - 1;
-        if (graph == 0xE2) {
-          int xb = xl;
-          xl = xr;
-          xr = xb;
-        }
-      }
-      if (graph == 0xF7) {  // VT52 fraction numerator
-        yt = y + (cell_height - line_width) * 10 / 16;
-        yb = y + (cell_height - line_width) * 8 / 16;
-        xl = x + line_width - 1;
-        xr = xl + char_width - 1;
-      }
-      // adjustments with scaling pen:
-      xl ++; xr ++;
-      int x0 = x;
-      if (graph & 1) {  // upper segment: downwards
-        yt --;
-        yb --;
-      } else {  // lower segment: upwards
-        yt -= 1;
-        yb -= 1;
-      }
-      // pointing triangles:
-      if ((graph & ~1) == 0xEC) {
-        xl = x + line_width;
-        xr = x + char_width - 2 * line_width - 1;
-        x0 = x + (char_width - line_width) / 2;
-        yt = y + cell_height - 2 * line_width - 1;
-        yb = y + line_width;
-        if (graph & 1) {
-          yt ^= yb;
-          yb ^= yt;
-          yt ^= yb;
-        }
-      }
-      // special adjustments:
-      if (graph == 0xE0) {  // square root base
-        xl --;
-      }
-      else if (graph == 0xE7) {  // sum middle right angle
-      }
-      // draw:
-      //HPEN oldpen = SelectObject(dc, CreatePen(PS_SOLID, sum_width, fg));
-      HPEN oldpen = SelectObject(dc, CreatePen(PS_SOLID, line_width, fg));
-      sum_width = 1;  // now handled by pen width
-      for (int i = 0; i < len; i++) {
-        for (int l = 0; l < sum_width; l++) {
-          if (graph == 0xE0) {  // square root base
-            MoveToEx(dc, xl + l, ycellb, null);
-            LineTo(dc, xl - (xl - x0) / 2 + l, yb + l);
-            LineTo(dc, x0, yb + l);
-          }
-          else if (graph == 0xE7) {  // sum middle right angle
-            MoveToEx(dc, x0 + l, y0, null);
-            LineTo(dc, xl + l, yt);
-            LineTo(dc, x0 + l, yb);
-          }
-          else if ((graph & ~1) == 0xEC) {  // pointing triangles
-            MoveToEx(dc, xl + l, yt, null);
-            LineTo(dc, xr + l, yt);
-            LineTo(dc, x0 + l, yb);
-            LineTo(dc, xl + l, yt);
-          }
-          else {
-            MoveToEx(dc, xl + l, yt, null);
-            LineTo(dc, xr + l, yb);
-          }
-        }
-        x0 += char_width;
-        xl += char_width;
-        xr += char_width;
-      }
-      oldpen = SelectObject(dc, oldpen);
-      DeleteObject(oldpen);
+    HPEN oldpen = SelectObject(dc, CreatePen(PS_SOLID, line_width, fg));
 
-      clearclipr();
+    int xi = x;
+    for (int i = 0; i < len; i++) {
+      int yt = y + (cell_height - line_width) * 10 / 16;
+      int yb = y + (cell_height - line_width) * 8 / 16;
+      int xl = xi + line_width - 1;
+      int xr = xl + char_width - 1;
+      MoveToEx(dc, xl, yt, null);
+      LineTo(dc, xr, yb);
+
+      xi += char_width;
     }
+
+    oldpen = SelectObject(dc, oldpen);
+    DeleteObject(oldpen);
+
+    clearclipr();
   }
-  else if ((graph >= 0x80 && !graph_vt52) || boxpower) {  // drawn graphics
+  else if (boxpower || dectcs) {  // drawn graphics
     // Box Drawing (U+2500-U+257F)
     // ─━│┃┄┅┆┇┈┉┊┋┌┍┎┏┐┑┒┓└┕┖┗┘┙┚┛├┝┞┟┠┡┢┣┤┥┦┧┨┩┪┫┬┭┮┯┰┱┲┳┴┵┶┷┸┹┺┻┼┽┾┿
     // ╀╁╂╃╄╅╆╇╈╉╊╋╌╍╎╏═║╒╓╔╕╖╗╘╙╚╛╜╝╞╟╠╡╢╣╤╥╦╧╨╩╪╫╬╭╮╯╰╱╲╳╴╵╶╷╸╹╺╻╼╽╾╿
@@ -4190,7 +4058,7 @@ skip_drawing:;
       ct /= 8;
       cr /= 8;
       cb /= 8;
-      //printf("25%02X <%d%%%d %d%%%d %d%%%d %d%%%d\n", graph, cl, dl, ct, dt, cr, dr, cb, db);
+      //printf("25XX <%d%%%d %d%%%d %d%%%d %d%%%d\n", cl, dl, ct, dt, cr, dr, cb, db);
       int cl_ = cl;
       int ct_ = ct;
       int cr_ = cr;
@@ -4219,7 +4087,7 @@ skip_drawing:;
           cb_++;
         }
       }
-      //printf("25%02X >%d%%%d %d%%%d %d%%%d %d%%%d\n", graph, cl, dl, ct, dt, cr, dr, cb, db);
+      //printf("25XX >%d%%%d %d%%%d %d%%%d %d%%%d\n", cl, dl, ct, dt, cr, dr, cb, db);
       //printf("Rect %d %d %d %d\n", xi + cl_, y0 + ct_, xi + cr_, y0 + cb_);
       HBRUSH br = CreateSolidBrush(c);
       FillRect(dc, &(RECT){xi + cl_, y0 + ct_, xi + cr_, y0 + cb_}, br);
@@ -4254,7 +4122,9 @@ skip_drawing:;
 #define use_extpen
 #ifdef use_extpen
     LOGBRUSH brush = (LOGBRUSH){BS_SOLID, fg, 0};
-    DWORD style = PS_GEOMETRIC | PS_SOLID | PS_ENDCAP_SQUARE;
+    DWORD style = PS_GEOMETRIC | PS_SOLID;
+    if (boxpower)
+      style |= PS_ENDCAP_SQUARE;  // skipped for DEC Technical sum segments
     HPEN pen = ExtCreatePen(style, penwidth, &brush, 0, 0);
     HPEN heavypen = ExtCreatePen(style, heavypenwidth, &brush, 0, 0);
 #else
@@ -4336,6 +4206,14 @@ skip_drawing:;
           x2 += xi;
           if (heavy)
             SelectObject(dc, heavypen);
+          if (y3 == -2) {  // diagonals ╲ ╱ ╳
+            // without adjustment, the diagonals appear clipped from right,
+            // widh adjustment both sides, they appear clipped from left,
+            // with adjustment by penwidth / 2, alignment appears bad;
+            // penwidth / 3 on the right/bottom side is a compromise
+            y2 -= max(penwidth / 3, 1);
+            x2 -= max(penwidth / 3, 1);
+          }
 
           // draw the line back again to compensate for the missing endpoint
           //Polyline(dc, (POINT[]){{x1, y1}, {x2, y2}, {x1, y1}}, 3);
@@ -4399,17 +4277,52 @@ skip_drawing:;
       LineTo(dc, xi + x2, y0 + y2);
     }
 
-    for (int i = 0; i < ulen; i++) {
+    for (int i = 0; i < len; i++) {
       setclipr(xi, yclip, 1);
 
-      if (boxpower && origtext) switch (origtext[i]) {
+      switch (origtext[i]) {
         // Box Drawing (U+2500-U+257F)
+        // ─━│┃┄┅┆┇┈┉┊┋┌┍┎┏┐┑┒┓└┕┖┗┘┙┚┛├┝┞┟┠┡┢┣┤┥┦┧┨┩┪┫┬┭┮┯┰┱┲┳┴┵┶┷┸┹┺┻┼┽┾┿
+        // ╀╁╂╃╄╅╆╇╈╉╊╋╌╍╎╏═║╒╓╔╕╖╗╘╙╚╛╜╝╞╟╠╡╢╣╤╥╦╧╨╩╪╫╬╭╮╯╰╱╲╳╴╵╶╷╸╹╺╻╼╽╾╿
 // tune position and length of double/triple dash segments
 #define sub2 line_width
 #define add2 2 * line_width
 #define sub3 line_width
 #define add3 line_width
 #include "boxdrawing.t"
+
+        // DEC Technical Character Set (TCS)
+        // !1234567DE
+        // ⎷  ╲╱   Δ∇
+        when '!': // RADICAL SYMBOL BOTTOM
+          boxlines(false, 12, 0, 12, 24, -1, -1);
+          boxlines(false, 0, 12, 5, 12, 12, 24);
+        when '"':
+          boxlines(false, 12, 24, 12, 12, 24, 12);
+        when '#':
+          boxlines(false, 0, 12, 24, 12, -1, -1);
+        when '1': // Top Left Sigma
+          boxlines(false, 24, 12, 12, 12, 24, 24);
+        when '2': // Bottom Left Sigma
+          boxlines(false, 24, 12, 12, 12, 24, 0);
+        when '3': // Top Diagonal Sigma
+          boxlines(false, 0, 0, 24, 24, -2, -2);
+        when '4': // Bottom Diagonal Sigma
+          boxlines(false, 0, 24, 24, 0, -2, -2);
+#define sigend 18
+        when '5': // Top Right Sigma
+          boxlines(false, 0, 12, sigend, 12, sigend, 22);
+        when '6': // Bottom Right Sigma
+          boxlines(false, 0, 12, sigend, 12, sigend, 2);
+        when '7': // Middle Sigma
+          boxlines(false, 0, 0, 12, 12, 0, 24);
+#define nabdel 8
+        when 'D': // DELTA
+          boxlines(false, 12, 2, 12 - nabdel, 22, 12 + nabdel, 22);
+          boxlines(false, 12, 2, 12 + nabdel, 22, -1, -1);
+        when 'E': // NABLA
+          boxlines(false, 12, 22, 12 - nabdel, 2, 12 + nabdel, 2);
+          boxlines(false, 12, 22, 12 + nabdel, 2, -1, -1);
 
         // Private Use geometric Powerline symbols (U+E0B0-U+E0BF, not 5, 7)
         // 
@@ -4442,35 +4355,35 @@ skip_drawing:;
           triangle(0, 0, 8, 0, 8, 8);
         when 0xE0BF:
           lines(0, 0, 8, 8, -1, -1);
-      } else switch (graph) {
+
         // Block Elements (U+2580-U+259F)
         // ▀▁▂▃▄▅▆▇█▉▊▋▌▍▎▏▐░▒▓▔▕▖▗▘▙▚▛▜▝▞▟
-        when 0x80: rect(0, 0, 8, 4); // UPPER HALF BLOCK
-        when 0x81 ... 0x88: rect(0, 0x88 - graph, 8, 8); // LOWER EIGHTHS
-        when 0x89 ... 0x8F: rect(0, 0, 0x90 - graph, 8); // LEFT EIGHTHS
-        when 0x90: rect(4, 0, 8, 8); // RIGHT HALF BLOCK
-        when 0x91: rectsolcol(0, 0, 8, 8, 2); // ░ LIGHT SHADE
-        when 0x92: rectsolcol(0, 0, 8, 8, 3); // ▒ MEDIUM SHADE
-        when 0x93: rectsolcol(0, 0, 8, 8, 5); // ▓ DARK SHADE
-        when 0x94: rect(0, 0, 8, 1); // UPPER ONE EIGHTH BLOCK
-        when 0x95: rect(7, 0, 8, 8); // RIGHT ONE EIGHTH BLOCK
-        when 0x96: rect(0, 4, 4, 8);
-        when 0x97: rect(4, 4, 8, 8);
-        when 0x98: rect(0, 0, 4, 4);
+        when 0x2580: rect(0, 0, 8, 4); // UPPER HALF BLOCK
+        when 0x2581 ... 0x2588: rect(0, 0x2588 - origtext[i], 8, 8); // LOWER EIGHTHS
+        when 0x2589 ... 0x258F: rect(0, 0, 0x2590 - origtext[i], 8); // LEFT EIGHTHS
+        when 0x2590: rect(4, 0, 8, 8); // RIGHT HALF BLOCK
+        when 0x2591: rectsolcol(0, 0, 8, 8, 2); // ░ LIGHT SHADE
+        when 0x2592: rectsolcol(0, 0, 8, 8, 3); // ▒ MEDIUM SHADE
+        when 0x2593: rectsolcol(0, 0, 8, 8, 5); // ▓ DARK SHADE
+        when 0x2594: rect(0, 0, 8, 1); // UPPER ONE EIGHTH BLOCK
+        when 0x2595: rect(7, 0, 8, 8); // RIGHT ONE EIGHTH BLOCK
+        when 0x2596: rect(0, 4, 4, 8);
+        when 0x2597: rect(4, 4, 8, 8);
+        when 0x2598: rect(0, 0, 4, 4);
         // solid 0b1111 top right bottom left
-        when 0x99: rectsolid(0, 4, 4, 8, 0xF);
+        when 0x2599: rectsolid(0, 4, 4, 8, 0xF);
                    rectsolid(0, 0, 4, 4, 0xB);
                    rectsolid(4, 4, 8, 8, 0x7);
-        when 0x9A: rect(0, 0, 4, 4); rect(4, 4, 8, 8);
-        when 0x9B: rectsolid(0, 0, 4, 4, 0xF);
+        when 0x259A: rect(0, 0, 4, 4); rect(4, 4, 8, 8);
+        when 0x259B: rectsolid(0, 0, 4, 4, 0xF);
                    rectsolid(4, 0, 8, 4, 0xD);
                    rectsolid(0, 4, 4, 8, 0xB);
-        when 0x9C: rectsolid(4, 0, 8, 4, 0xF);
+        when 0x259C: rectsolid(4, 0, 8, 4, 0xF);
                    rectsolid(0, 0, 4, 4, 0xD);
                    rectsolid(4, 4, 8, 8, 0xE);
-        when 0x9D: rect(4, 0, 8, 4);
-        when 0x9E: rect(4, 0, 8, 4); rect(0, 4, 4, 8);
-        when 0x9F: rectsolid(4, 4, 8, 8, 0xF);
+        when 0x259D: rect(4, 0, 8, 4);
+        when 0x259E: rect(4, 0, 8, 4); rect(0, 4, 4, 8);
+        when 0x259F: rectsolid(4, 4, 8, 8, 0xF);
                    rectsolid(4, 0, 8, 4, 0xE);
                    rectsolid(0, 4, 4, 8, 0x7);
       }
@@ -4486,71 +4399,82 @@ skip_drawing:;
     DeleteObject(heavypen);
     DeleteObject(br);
   }
-  else if (graph >> 4) {  // VT100/VT52 horizontal "scanlines"
-    setclipr(x, y, ulen);
-
-    int parts = graph_vt52 ? 8 : 5;
+  else if (boxcoded && origtext) {  // VT100/VT52 box drawing and scanlines
     HPEN oldpen = SelectObject(dc, CreatePen(PS_SOLID, 0, fg));
-    int yoff = (cell_height - line_width) * (graph >> 4) / parts;
-    if (lattr >= LATTR_TOP)
-      yoff *= 2;
-    if (lattr == LATTR_BOT)
-      yoff -= cell_height;
-    for (int l = 0; l < line_width; l++) {
-      MoveToEx(dc, x, y + yoff + l, null);
-      LineTo(dc, x + len * char_width, y + yoff + l);
-    }
-    oldpen = SelectObject(dc, oldpen);
-    DeleteObject(oldpen);
 
-    clearclipr();
-  }
-  else if (graph) {  // VT100 box drawing characters ┘┐┌└┼ ─ ├┤┴┬│
-    setclipr(x, y, ulen);
-
-    HPEN oldpen = SelectObject(dc, CreatePen(PS_SOLID, 0, fg));
-    int y0 = (lattr == LATTR_BOT) ? y - cell_height : y;
-    int yoff = (cell_height - line_width) * 3 / 5;
-    if (lattr >= LATTR_TOP)
-      yoff *= 2;
-    int xoff = (char_width - line_width) / 2;
+    int xi = x;
     for (int i = 0; i < len; i++) {
-      if (graph & DRAW_HORIZ) {
-        int xl, xr;
-        if (graph & DRAW_LEFT)
-          xl = x + i * char_width;
-        else
-          xl = x + i * char_width + xoff;
-        if (graph & DRAW_RIGHT)
-          xr = x + (i + 1) * char_width;
-        else
-          xr = x + i * char_width + xoff + line_width;
+      setclipr(xi, y, 1);
+
+      int graph = origtext[i];
+      bool graph_vt52 = false;
+      if (graph > 0x500) {
+        graph_vt52 = true;
+        graph &= 0xF;
+        graph <<= 4;  // indicate VT52 scanlines where expected
+      }
+      else {
+        graph -= 0x100;
+      }
+      if (graph >> 4) {  // VT100/VT52 horizontal "scanlines"
+        int parts = graph_vt52 ? 8 : 5;
+        int yoff = (cell_height - line_width) * (graph >> 4) / parts;
+        if (lattr >= LATTR_TOP)
+          yoff *= 2;
+        if (lattr == LATTR_BOT)
+          yoff -= cell_height;
         for (int l = 0; l < line_width; l++) {
-          MoveToEx(dc, xl, y0 + yoff + l, null);
-          LineTo(dc, xr, y0 + yoff + l);
+          MoveToEx(dc, x, y + yoff + l, null);
+          LineTo(dc, x + len * char_width, y + yoff + l);
         }
       }
-      if (graph & DRAW_VERT) {
-        int xi = x + i * char_width + xoff;
-        int yt, yb;
-        if (graph & DRAW_UP)
-          yt = y0;
-        else
-          yt = y0 + yoff;
-        if (graph & DRAW_DOWN)
-          yb = y0 + (lattr >= LATTR_TOP ? 2 : 1) * cell_height;
-        else
-          yb = y0 + yoff + line_width;
-        for (int l = 0; l < line_width; l++) {
-          MoveToEx(dc, xi + l, yt, null);
-          LineTo(dc, xi + l, yb);
+      else {  // VT100 box drawing characters ┘┐┌└┼ ─ ├┤┴┬│
+        int y0 = (lattr == LATTR_BOT) ? y - cell_height : y;
+        int yoff = (cell_height - line_width) * 3 / 5;
+        if (lattr >= LATTR_TOP)
+          yoff *= 2;
+        int xoff = (char_width - line_width) / 2;
+
+        if (graph & DRAW_HORIZ) {
+          int xl, xr;
+          if (graph & DRAW_LEFT)
+            xl = x + i * char_width;
+          else
+            xl = x + i * char_width + xoff;
+          if (graph & DRAW_RIGHT)
+            xr = x + (i + 1) * char_width;
+          else
+            xr = x + i * char_width + xoff + line_width;
+          for (int l = 0; l < line_width; l++) {
+            MoveToEx(dc, xl, y0 + yoff + l, null);
+            LineTo(dc, xr, y0 + yoff + l);
+          }
+        }
+        if (graph & DRAW_VERT) {
+          int xi = x + i * char_width + xoff;
+          int yt, yb;
+          if (graph & DRAW_UP)
+            yt = y0;
+          else
+            yt = y0 + yoff;
+          if (graph & DRAW_DOWN)
+            yb = y0 + (lattr >= LATTR_TOP ? 2 : 1) * cell_height;
+          else
+            yb = y0 + yoff + line_width;
+          for (int l = 0; l < line_width; l++) {
+            MoveToEx(dc, xi + l, yt, null);
+            LineTo(dc, xi + l, yb);
+          }
         }
       }
+
+      clearclipr();
+
+      xi += char_width;
     }
+
     oldpen = SelectObject(dc, oldpen);
     DeleteObject(oldpen);
-
-    clearclipr();
   }
 
  /* Strikeout */

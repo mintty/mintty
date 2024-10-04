@@ -143,9 +143,6 @@ enum {
   ATTR_PROTECTED  = 0x20000000u,
   ATTR_FRAMED     = 0x0010000000000000u,
 
-  GRAPH_MASK      = 0x00000F0000000000u,
-  ATTR_GRAPH_SHIFT = 40,
-
   FONTFAM_MASK    = 0x000F000000000000u,
   ATTR_FONTFAM_SHIFT = 48,
 
@@ -176,7 +173,10 @@ enum {
   DATTR_MASK      = TATTR_RIGHTCURS | TATTR_PASCURS | TATTR_ACTCURS
                     | DATTR_STARTRUN
   // unassigned bits:
-  // - none
+  //              = 0x0000080000000000u,
+  //              = 0x0000040000000000u,
+  //              = 0x0000020000000000u,
+  //              = 0x0000010000000000u,
 };
 
 /* Line attributes.

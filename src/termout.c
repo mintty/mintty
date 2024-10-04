@@ -5117,110 +5117,88 @@ term_do_write(const char *buf, uint len, bool fix_status)
         // Do these before the NRCS switch below as that transforms 
         // some characters into this range which would then get 
         // doubly-transformed
-        if (wc >= 0x2580 && wc <= 0x259F) {
-          // Block Elements (U+2580-U+259F)
-          // ▀▁▂▃▄▅▆▇█▉▊▋▌▍▎▏▐░▒▓▔▕▖▗▘▙▚▛▜▝▞▟
-          term.curs.attr.attr |= ((cattrflags)(wc & 0xF)) << ATTR_GRAPH_SHIFT;
-          uchar gcode = 14 + ((wc >> 4) & 1);
-          // extend graph encoding with unused font numbers
+        if ((cfg.box_drawing && wc >= 0x2500 && wc <= 0x257F)
+         || (wc >= 0x2580 && wc <= 0x259F)
+         || (wc >= 0xE0B0 && wc <= 0xE0BF && wc != 0xE0B5 && wc != 0xE0B7)
+           )
+        {
           term.curs.attr.attr &= ~FONTFAM_MASK;
-          term.curs.attr.attr |= (cattrflags)gcode << ATTR_FONTFAM_SHIFT;
-        }
-        else if (cfg.box_drawing && wc >= 0x2500 && wc <= 0x257F) {
-          // Box Drawing (U+2500-U+257F)
-          // ─━│┃┄┅┆┇┈┉┊┋┌┍┎┏┐┑┒┓└┕┖┗┘┙┚┛├┝┞┟┠┡┢┣┤┥┦┧┨┩┪┫┬┭┮┯┰┱┲┳┴┵┶┷┸┹┺┻┼┽┾┿
-          // ╀╁╂╃╄╅╆╇╈╉╊╋╌╍╎╏═║╒╓╔╕╖╗╘╙╚╛╜╝╞╟╠╡╢╣╤╥╦╧╨╩╪╫╬╭╮╯╰╱╲╳╴╵╶╷╸╹╺╻╼╽╾╿
-          term.curs.attr.attr &= ~FONTFAM_MASK;
-          term.curs.attr.attr |= (cattrflags)13 << ATTR_FONTFAM_SHIFT;
-        }
-        else if (wc >= 0xE0B0 && wc <= 0xE0BF && wc != 0xE0B5 && wc != 0xE0B7) {
-          // draw geometric full-cell Powerline symbols,
-          // to avoid artefacts at their borders (#943)
-          term.curs.attr.attr &= ~FONTFAM_MASK;
-          term.curs.attr.attr |= (cattrflags)13 << ATTR_FONTFAM_SHIFT;
-          term.curs.attr.attr |= (cattrflags)15 << ATTR_GRAPH_SHIFT;
+          term.curs.attr.attr |= (cattrflags)11 << ATTR_FONTFAM_SHIFT;
         }
         else
         // Everything else
         switch (cset) {
           when CSET_VT52DRW:  // VT52 "graphics" mode
-            if (0x5E <= wc && wc <= 0x7E) {
-              uchar dispcode = 0;
-              uchar gcode = 0;
-              if ('l' <= wc && wc <= 's') {
-                dispcode = wc - 'l' + 1;
-                gcode = 13;
-              }
-              else if ('c' <= wc && wc <= 'e') {
-                dispcode = 0xF;
-              }
-              wc = W("^ ￿▮⅟³⁵⁷°±→…÷↓⎺⎺⎻⎻⎼⎼⎽⎽₀₁₂₃₄₅₆₇₈₉¶") [c - 0x5E];
-              term.curs.attr.attr |= ((cattrflags)dispcode) << ATTR_GRAPH_SHIFT;
-              if (gcode) {
-                // extend graph encoding with unused font number
+            if (0x5E <= c && c <= 0x7E) {
+              if ('l' <= c && c <= 's') {
+                wc = c - 'l' + 1 + 0x500;
                 term.curs.attr.attr &= ~FONTFAM_MASK;
-                term.curs.attr.attr |= (cattrflags)gcode << ATTR_FONTFAM_SHIFT;
+                term.curs.attr.attr |= (cattrflags)12 << ATTR_FONTFAM_SHIFT;
+              }
+              else {
+                wc = W("^ ￿▮⅟³⁵⁷°±→…÷↓⎺⎺⎻⎻⎼⎼⎽⎽₀₁₂₃₄₅₆₇₈₉¶") [c - 0x5E];
+                if ('c' <= c && c <= 'e') {
+                  term.curs.attr.attr &= ~FONTFAM_MASK;
+                  term.curs.attr.attr |= (cattrflags)13 << ATTR_FONTFAM_SHIFT;
+                }
               }
             }
           when CSET_LINEDRW:  // VT100 line drawing characters
-            if (0x60 <= wc && wc <= 0x7E) {
-              wchar dispwc = win_linedraw_char(wc - 0x60);
-#define draw_vt100_line_drawing_chars
-#ifdef draw_vt100_line_drawing_chars
-              if ('j' <= wc && wc <= 'x') {
-                static uchar linedraw_code[31] = {
-                  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-#if __GNUC__ >= 5
-                  0b1001, 0b1100, 0b0110, 0b0011, 0b1111,  // ┘┐┌└┼
-                  0x10, 0x20, 0b1010, 0x40, 0x50,          // ⎺⎻─⎼⎽
-                  0b0111, 0b1101, 0b1011, 0b1110, 0b0101,  // ├┤┴┬│
-#else // < 4.3
+            if ('`' <= c && c <= '~') {
+              //      `abcdefghijklmnopqrstuvwxyz{|}~
+              //      ♦▒→↡↵↴°±↴↓┘┐┌└┼‾⁻—₋_├┤┴┬│≤≥π≠£·
+              if ('j' <= c && c <= 'x') {
+                static uchar linedraw_code[15] = {
                   0x09, 0x0C, 0x06, 0x03, 0x0F,  // ┘┐┌└┼
                   0x10, 0x20, 0x0A, 0x40, 0x50,  // ⎺⎻─⎼⎽
                   0x07, 0x0D, 0x0B, 0x0E, 0x05,  // ├┤┴┬│
-#endif
-                  0, 0, 0, 0, 0, 0
                 };
-                uchar dispcode = linedraw_code[wc - 0x60];
-                if (dispcode) {
-                  uchar gcode = 11;
-                  if (dispcode >> 4) {
-                    dispcode >>= 4;
-                    gcode++;
+                wc = 0x100 + linedraw_code[c - 'j'];
+                term.curs.attr.attr &= ~FONTFAM_MASK;
+                term.curs.attr.attr |= (cattrflags)12 << ATTR_FONTFAM_SHIFT;
+              }
+              else
+                wc = win_linedraw_char(c - 0x60);
+            }
+          when CSET_TECH:  // DEC Technical Character Set
+            if (c > ' ' && c < 0x7F) {
+              //      !"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~
+              // = W("⎷┌─⌠⌡│⎡⎣⎤⎦⎧⎩⎫⎭⎨⎬  ╲╱   ␦␦␦␦≤≠≥∫∴∝∞÷Δ∇ΦΓ∼≃Θ×Λ⇔⇒≡ΠΨ␦Σ␦␦√ΩΞΥ⊂⊃∩∪∧∨¬αβχδεφγηιθκλ␦ν∂πψρστ␦ƒωξυζ←↑→↓")
+              //               "⎛⎝⎞⎠" would not align with ⎨⎬
+              wc = W("   ⌠⌡│⎡⎣⎤⎦⎧⎩⎫⎭⎨⎬       ␦␦␦␦≤≠≥∫∴∝∞÷  ΦΓ∼≃Θ×Λ⇔⇒≡ΠΨ␦Σ␦␦√ΩΞΥ⊂⊃∩∪∧∨¬αβχδεφγηιθκλ␦ν∂πψρστ␦ƒωξυζ←↑→↓")
+                   [c - ' ' - 1];
+              if (wc == 0x2502) {
+                if (term.curs.y) {
+                  // substitute vertical bar with EXTENSION matching the 
+                  // character cell above, to achieve proper alignment
+                  wchar wc0 = term.lines[term.curs.y - 1]
+                              ->chars[term.curs.x].chr;
+                  switch (wc0) {
+                    when 0x2320 or 0x23AE: // ⌠
+                      wc = 0x23AE;         // ⎮
+                    when 0x23A1 or 0x23A2: // ⎡
+                      wc = 0x23A2;         // ⎢
+                    when 0x23A4 or 0x23A5: // ⎤
+                      wc = 0x23A5;         // ⎥
+                    when 0x239B or 0x239C: // ⎛
+                      wc = 0x239C;         // ⎜
+                    when 0x239E or 0x239F: // ⎞
+                      wc = 0x239F;         // ⎟
+                    when 0x23A7 or 0x23AB: // ⎧⎫
+                      wc = 0x23AA;         // ⎪⎪
+                    when 0x23A8 or 0x23AC: // ⎨⎬
+                      wc = 0x23AA;         // ⎪⎪
+                    when 0x23AA:           // ⎪⎪
+                      wc = 0x23AA;         // ⎪⎪
                   }
-                  term.curs.attr.attr |= ((cattrflags)dispcode) << ATTR_GRAPH_SHIFT;
-                  // extend graph encoding with unused font numbers
-                  term.curs.attr.attr &= ~FONTFAM_MASK;
-                  term.curs.attr.attr |= (cattrflags)gcode << ATTR_FONTFAM_SHIFT;
                 }
               }
-#endif
-              wc = dispwc;
-            }
-          when CSET_TECH:  // DEC Technical character set
-            if (c > ' ' && c < 0x7F) {
-              // = W("⎷┌─⌠⌡│⎡⎣⎤⎦⎛⎝⎞⎠⎨⎬￿￿╲╱￿￿￿￿￿￿￿≤≠≥∫∴∝∞÷Δ∇ΦΓ∼≃Θ×Λ⇔⇒≡ΠΨ￿Σ￿￿√ΩΞΥ⊂⊃∩∪∧∨¬αβχδεφγηιθκλ￿ν∂πψρστ￿ƒωξυζ←↑→↓")
-              // = W("⎷┌─⌠⌡│⎡⎣⎤⎦⎛⎝⎞⎠⎨⎬╶╶╲╱╴╴╳￿￿￿￿≤≠≥∫∴∝∞÷Δ∇ΦΓ∼≃Θ×Λ⇔⇒≡ΠΨ￿Σ￿￿√ΩΞΥ⊂⊃∩∪∧∨¬αβχδεφγηιθκλ￿ν∂πψρστ￿ƒωξυζ←↑→↓")
-              // = W("⎷┌─⌠⌡│⎡⎣⎤⎦⎧⎩⎫⎭⎨⎬╶╶╲╱╴╴╳￿￿￿￿≤≠≥∫∴∝∞÷Δ∇ΦΓ∼≃Θ×Λ⇔⇒≡ΠΨ￿Σ￿￿√ΩΞΥ⊂⊃∩∪∧∨¬αβχδεφγηιθκλ￿ν∂πψρστ￿ƒωξυζ←↑→↓")
-              wc = W("⎷┌─⌠⌡│⎡⎣⎤⎦⎧⎩⎫⎭⎨⎬╶╶╲╱╴╴╳￿￿￿￿≤≠≥∫∴∝∞÷  ΦΓ∼≃Θ×Λ⇔⇒≡ΠΨ￿Σ￿￿√ΩΞΥ⊂⊃∩∪∧∨¬αβχδεφγηιθκλ￿ν∂πψρστ￿ƒωξυζ←↑→↓")
-                   [c - ' ' - 1];
-              uchar dispcode = 0;
-              if (c <= 0x37) {
-                static uchar techdraw_code[23] = {
-                  0xE,                          // square root base
-                  0, 0, 0, 0, 0,
-                  0x8, 0x9, 0xA, 0xB,           // square bracket corners
-                  0, 0, 0, 0,                   // curly bracket hooks
-                  0, 0,                         // curly bracket middle pieces
-                  0x1, 0x2, 0, 0, 0x5, 0x6, 0x7 // sum segments
-                };
-                dispcode = techdraw_code[c - 0x21];
+              if (wc == ' ' || wc == 0x2502) {
+                if (wc == ' ')
+                  wc = c;
+                term.curs.attr.attr &= ~FONTFAM_MASK;
+                term.curs.attr.attr |= (cattrflags)14 << ATTR_FONTFAM_SHIFT;
               }
-              else if (c == 0x44)
-                dispcode = 0xC;
-              else if (c == 0x45)
-                dispcode = 0xD;
-              term.curs.attr.attr |= ((cattrflags)dispcode) << ATTR_GRAPH_SHIFT;
             }
           when CSET_NL:
             wc = NRC(W("£¾ĳ½|^_`¨ƒ¼´"));  // Dutch

@@ -3069,7 +3069,7 @@ void trace_line(char * tag, termchar * chars)
 #endif
 
 #define UNLINED (UNDER_MASK | ATTR_STRIKEOUT | ATTR_OVERL | ATTR_OVERSTRIKE)
-#define UNBLINK (FONTFAM_MASK | GRAPH_MASK | UNLINED | TATTR_EMOJI)
+#define UNBLINK (FONTFAM_MASK | UNLINED | TATTR_EMOJI)
 
 // Attributes to be ignored when checking whether to apply overhang:
 // we cannot support overhang over double-width space (TATTR_WIDE),
@@ -3293,13 +3293,9 @@ term_paint(void)
         else if (tchar < ' ' && cfg.printable_controls > 1)
           tchar = 0x2591;  // ⌷⎕░▒▓
         if (tchar >= 0x2580 && tchar <= 0x259F) {
-          // Block Elements (U+2580-U+259F)
-          // ▀▁▂▃▄▅▆▇█▉▊▋▌▍▎▏▐░▒▓▔▕▖▗▘▙▚▛▜▝▞▟
-          tattr.attr |= ((cattrflags)(tchar & 0xF)) << ATTR_GRAPH_SHIFT;
-          uchar gcode = 14 + ((tchar >> 4) & 1);
-          // extend graph encoding with unused font numbers
+          // tag substitutes as Block Elements (U+2580-U+259F)
           tattr.attr &= ~FONTFAM_MASK;
-          tattr.attr |= (cattrflags)gcode << ATTR_FONTFAM_SHIFT;
+          tattr.attr |= (cattrflags)11 << ATTR_FONTFAM_SHIFT;
         }
       }
 
