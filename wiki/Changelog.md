@@ -1,3 +1,5 @@
+  * Fix drawing of Powerline round symbols (mintty/wsltty#358).
+
 ### 3.7.6 (24 September 2024) ###
 
 Font and character rendering

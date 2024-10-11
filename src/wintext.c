@@ -4010,11 +4010,6 @@ skip_drawing:;
       int _y2 = char_height * y2 / 8;
       int _x3 = char_width * x3 / 8;
       int _y3 = char_height * y3 / 8;
-      if (x1) _x1--;
-      if (x2) _x2--;
-      if (x3) _x3--;
-      if (y2 == 8) _y2--;
-      _y3--;
 
       HPEN oldpen = SelectObject(dc, CreatePen(PS_SOLID, 0, fg));
       HBRUSH oldbrush = SelectObject(dc, CreateSolidBrush(fg));
