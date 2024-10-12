@@ -3095,7 +3095,7 @@ win_text(int tx, int ty, wchar *text, int len, cattr attr, cattr *textattr, usho
   bool default_bg = (attr.attr & ATTR_BGMASK) >> ATTR_BGSHIFT == BG_COLOUR_I;
   if (attr.attr & ATTR_REVERSE)
     default_bg = false;
-  cattr attr0 = attr;  // need unmodified colour attributes for combinings
+  //cattr attr0 = attr;  // need unmodified colour attributes for combinings
   attr = apply_attr_colour(attr, ACM_TERM);
   colour fg = attr.truefg;
   colour bg = attr.truebg;
@@ -3819,7 +3819,9 @@ draw:;
         overwropt = 0;
       }
       // combining characters
-      textattr[0] = attr0; // need unmodified colour attributes for combinings
+      //textattr[0] = attr0; // need unmodified colour attributes for combinings
+      // but that spoils separate blinking, so revert commit 736da154
+      textattr[0] = attr;
       for (int i = ulen; i < len; i += ulen) {
         // separate stacking of combining characters 
         // does not work with Uniscribe

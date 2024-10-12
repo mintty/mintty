@@ -1,3 +1,5 @@
+Character rendering
+  * Reenabled distinct blinking for combined characters (broken since 3.5.3).
   * Fix drawing of Powerline round symbols (mintty/wsltty#358).
 
 ### 3.7.6 (24 September 2024) ###
