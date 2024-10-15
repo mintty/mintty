@@ -7798,6 +7798,9 @@ static int dynfonts = 0;
   win_synctabs(4);
 #endif
 
+  // mark userdata with timestamp, for initial tabbar ordering
+  SetWindowLong(wnd, GWL_USERDATA, mtime() & GWL_TIMEMASK);
+
   update_tab_titles();
 
 #ifdef always_hook_keyboard
@@ -7968,9 +7971,6 @@ static int dynfonts = 0;
   // and grab focus again, just in case and for Windows 11
   // (https://github.com/mintty/mintty/issues/1113#issuecomment-1210278957)
   SetFocus(wnd);
-
-  // mark userdata with timestamp, for initial tabbar ordering
-  SetWindowLong(wnd, GWL_USERDATA, mtime() & GWL_TIMEMASK);
 
   is_init = true;
   // tab management: secure transparency appearance by hiding other tabs
