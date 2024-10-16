@@ -311,10 +311,16 @@ emoji-data.txt:	Blocks.txt
 emoji-variation-sequences.txt:	Blocks.txt
 	$(WGET) http://www.unicode.org/Public/$(univer)/ucd/emoji/$@
 
-unicodever = `sed -e '/^\# Blocks-/ s,[^0-9]*\([0-9]*\)\.\([0-9]\)\.\([0-9]\)[^0-9]*,\1\2\3,' -e t -e d Blocks.txt`
+unicodever = $(shell sed -e '/^\# Blocks-/ s,[^0-9]*\([0-9]*\)\.\([0-9]\)\.\([0-9]\)[^0-9]*,\1\2\3,' -e t -e d Blocks.txt)
+univer = $(shell sed -e '/^\# Blocks-/ s,[^0-9]*\([0-9]*\)\.\([0-9]\)\.\([0-9]\)[^0-9]*,\1.\2.\3,' -e t -e d Blocks.txt)
+x11ver = $(shell cygcheck -f /usr/share/X11/locale/en_US.UTF-8/Compose | sed -e "s,^[^-]*-,," -e "s,-.*,,")
 
-unicodever.t:	# Blocks.txt
+releasever:
+	sed -e 's,\(Mintty .*\)`.*`,\1`$(srcversion)`,' -i ../wiki/Versions.md
+
+unicodever.t:	Blocks.txt
 	echo "#define UNICODE_VERSION $(unicodever)" > unicodever.t
+	sed -e 's,\(Unicode .*\)`.*`,\1`$(univer)`,' -i ../wiki/Versions.md
 
 univer:	Blocks.txt
 	echo univer: $(univer)
@@ -336,6 +342,7 @@ emojiseqs.t:	# emoji-sequences.txt emoji-zwj-sequences.txt emoji-test.txt
 
 composed.t:	# $(compose_list) $(keysymdefs)
 	sh ./mkcomposedt > composed.t
+	sed -e 's,\(X11 .*\)`.*`,\1`$(x11ver)`,' -i ../wiki/Versions.md
 
 XGETTEXT_OPTS=--package-name=mintty #--package-version=$(srcversion)
 XGETTEXT_OPTS+=--msgid-bugs-address=https://github.com/mintty/mintty/issues/700

@@ -60,6 +60,7 @@ gitversion=$(shell src/mkvertag)
 
 ver:
 	echo $(version) > VERSION
+	cd src; $(MAKE) releasever
 
 checkver:
 	echo checking same version in changelog, source, and git
