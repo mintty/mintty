@@ -233,81 +233,6 @@ static HCURSOR hcursor = NULL;
     ReleaseCapture();
     dragidx = -1;
   }
-#if 0
-  else if (msg == WM_SETCURSOR && dragmsg && LOWORD(lp) == HTCLIENT) {
-    //printf("WM_SETCURSOR lo %02X hi %02X\n", LOWORD(lp), HIWORD(lp));
-    if (HIWORD(lp) == WM_MOUSEMOVE) {
-      // drag during tab reordering; display visual feedback
-
-      // cannot determine current cursor target tab via TCITEM
-      // (like #ifdef determine_tab_index_by_wnd_in_item above)
-      // as the index remains the click-and-drag tab
-
-      // enquire cursor position; derive drop target item index
-      POINT p;
-      if (GetCursorPos(&p) && ScreenToClient(hwnd, &p)) {
-        int x = p.x - xoff;
-        int dropidx = x / curr_tab_width;
-        //printf("%d:%d (pw %d) x %d drop %d\n", (int)p.y, (int)p.x, curr_tab_width, x, dropidx);
-        bool redraw_tab = false;
-        if (dropidx != targidx && targidx >= 0) {
-          // clear hover highlighting of previous drop target
-
-          // clear visual indication via RedrawWindow/WM_DRAWITEM
-          targidx = -1;
-          redraw_tab = true;
-        }
-        if (dropidx != dragidx) {
-          // visual indication of tab dragging: hover highlighting
-          // enquire tab rect to calculate relative cursor position
-          RECT tr;
-          SendMessage(tab_wnd, TCM_GETITEMRECT, dropidx, (LPARAM)&tr);
-          //printf("drop RECT %d %d %d %d\n", tr.left, tr.right, tr.top, tr.bottom);
-          int w = tr.right - tr.left;
-          int c = (tr.left + tr.right) / 2;
-          targpro = 100 - abs(x - c) * 100 / (w / 2);
-          //printf("drop %d [%d] %d: %d\n", tr.left, x, tr.right, targpro);
-#ifdef hover_tab_within_wm_setcursor
-#warning the RECT does not properly match what we have at WM_DRAWITEM ...
-          tr.right += xoff;  // tune tab position
-          tr.bottom += xoff;  // assuming yoff would be == xoff
-          HDC tabdc = GetDC(tab_wnd);
-          HBRUSH tabbr = CreateSolidBrush(RGB(50, 90, 200));
-          FillRect(tabdc, &tr, tabbr);
-          DeleteObject(tabbr);
-          ReleaseDC(tab_wnd, tabdc);
-#endif
-          // enquire tab rect to calculate relative cursor position
-
-          // render visual indication via RedrawWindow/WM_DRAWITEM
-          targidx = dropidx;
-          redraw_tab = true;
-        }
-        if (redraw_tab)
-          RedrawWindow(tab_wnd, 0, 0, RDW_INVALIDATE | RDW_UPDATENOW);
-      }
-    }
-    else if (HIWORD(lp) == WM_LBUTTONUP) {
-      // drop tab while dragging for tab reordering
-
-      // cannot determine current cursor target tab via TCITEM
-      // (like #ifdef determine_tab_index_by_wnd_in_item above)
-      // as the index remains the click-and-drag tab
-
-      // enquire cursor position; derive drop target item index
-      POINT p;
-      if (GetCursorPos(&p) && ScreenToClient(hwnd, &p)) {
-        int x = p.x - xoff;
-        int dropidx = x / curr_tab_width;
-        //printf("%d:%d (pw %d) x %d: drag %d -> drop %d\n", (int)p.y, (int)p.x, curr_tab_width, x, dragidx, dropidx);
-
-        // act on drop target item
-        win_tab_move(dropidx - dragidx);
-        dragmsg = 0;
-      }
-    }
-  }
-#endif
   else if (msg == WM_NOTIFY) {
     //printf("tabbar con_proc WM_NOTIFY\n");
     LPNMHDR lpnmhdr = (LPNMHDR)lp;
@@ -340,14 +265,6 @@ static HCURSOR hcursor = NULL;
           SendMessage(tab_wnd, TCM_SETCURSEL, i, 0);
       }
     }
-#if 0
-    else if (lpnmhdr->code == (uint)NM_CLICK) {
-      // clear tab dragging; the tab drop could be hooked here 
-      // but would not work if dropped in free space right of tabset
-      dragmsg = 0;
-      dragidx = -1;
-    }
-#endif
   }
   else if (msg == WM_CREATE) {
     //printf("tabbar con_proc WM_CREATE\n");
