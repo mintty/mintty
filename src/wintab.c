@@ -162,14 +162,16 @@ static LRESULT CALLBACK
 container_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 {
   //printf("tabbar con_proc %03X\n", msg);
-static WORD dragmsg = 0;
 static int dragidx = -1;
 static int targidx = -1;
 static int targpro = -1;
+static int xpos = 0;
+static HCURSOR hcursor = NULL;
 
   if (msg == WM_MOUSEACTIVATE) {
     //printf("WM_MOUSEACTIVATE lo %02X hi %02X\n", LOWORD(lp), HIWORD(lp));
     if (LOWORD(lp) == HTCLIENT && HIWORD(lp) == WM_LBUTTONDOWN) {
+      WORD dragmsg = 0;
       // begin drag-and-drop tab reordering
 #ifdef determine_tab_index_by_wnd_in_item
       // get tab wnd from TCITEM lParam, lookup tab index (not implemented)
@@ -189,6 +191,7 @@ static int targpro = -1;
       POINT p;
       if (GetCursorPos(&p) && ScreenToClient(hwnd, &p)) {
         int x = p.x - xoff;
+        xpos = p.x;
         dragidx = x / curr_tab_width;
         if (dragidx < ntabinfo)
           dragmsg = HIWORD(lp);
@@ -196,8 +199,41 @@ static int targpro = -1;
           dragidx = -1;
         //printf("%d:%d (pw %d) x %d drag %d\n", (int)p.y, (int)p.x, curr_tab_width, x, dragidx);
       }
+      if (dragmsg) {
+        SetCapture(hwnd);
+        hcursor = GetCursor();
+      }
     }
   }
+  else if (msg == WM_MOUSEMOVE) {
+    if ((GetCapture() == hwnd) && ((wp & MK_LBUTTON) != 0)) {
+      POINT p;
+      if (GetCursorPos(&p) && ScreenToClient(hwnd, &p)) {
+        if (abs(p.x - xpos) > GetSystemMetrics(SM_CXDRAG)) {
+          SetCursor(LoadCursor(NULL, IDC_SIZEWE));
+
+          // drop tab while dragging for tab reordering
+
+          // derive drop target item index
+          int x = p.x - xoff;
+          int dropidx = x / curr_tab_width;
+          //printf("%d:%d (pw %d) x %d: drag %d -> drop %d\n", (int)p.y, (int)p.x, curr_tab_width, x, dragidx, dropidx);
+
+          // act on drop target item
+          if (dropidx < ntabinfo) {
+            win_tab_move(dropidx - dragidx);
+            dragidx = dropidx;
+          }
+        }
+      }
+    }
+  }
+  else if (msg == WM_LBUTTONUP && GetCapture() == hwnd) {
+    SetCursor(hcursor);
+    ReleaseCapture();
+    dragidx = -1;
+  }
+#if 0
   else if (msg == WM_SETCURSOR && dragmsg && LOWORD(lp) == HTCLIENT) {
     //printf("WM_SETCURSOR lo %02X hi %02X\n", LOWORD(lp), HIWORD(lp));
     if (HIWORD(lp) == WM_MOUSEMOVE) {
@@ -271,6 +307,7 @@ static int targpro = -1;
       }
     }
   }
+#endif
   else if (msg == WM_NOTIFY) {
     //printf("tabbar con_proc WM_NOTIFY\n");
     LPNMHDR lpnmhdr = (LPNMHDR)lp;
@@ -303,12 +340,14 @@ static int targpro = -1;
           SendMessage(tab_wnd, TCM_SETCURSEL, i, 0);
       }
     }
+#if 0
     else if (lpnmhdr->code == (uint)NM_CLICK) {
       // clear tab dragging; the tab drop could be hooked here 
       // but would not work if dropped in free space right of tabset
       dragmsg = 0;
       dragidx = -1;
     }
+#endif
   }
   else if (msg == WM_CREATE) {
     //printf("tabbar con_proc WM_CREATE\n");
