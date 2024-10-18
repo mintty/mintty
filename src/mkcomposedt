@@ -23,5 +23,6 @@ sed -e 's,[ 	]*:,:,' |
 sed -e 's/^<Multi_key> \([^:]*\): *"\(.*\)".*/{\1},"\2"/' -e t -e d |
 sed -e 's/ /, /g' -e 's,^,  {,' -e 's/},/}, /' -e 's/$/},/' |
 sed -f keysyms.sed -e 's,<U\([0-9A-Fa-f]*\)>,0x\1,g' -e '/<.*>/ d' |
+grep -v "0x[0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f]" |
 sort | uniq
 
