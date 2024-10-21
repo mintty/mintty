@@ -232,6 +232,7 @@ static HCURSOR hcursor = NULL;
     SetCursor(hcursor);
     ReleaseCapture();
     dragidx = -1;
+    SetFocus(wnd);
   }
   else if (msg == WM_NOTIFY) {
     //printf("tabbar con_proc WM_NOTIFY\n");
