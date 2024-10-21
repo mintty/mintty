@@ -1,5 +1,6 @@
 Character rendering
   * Reenabled distinct blinking for combined characters (broken since 3.5.3).
+  * Fix skipping of accent to next position on background colour.
   * Fix drawing of Powerline round symbols (mintty/wsltty#358).
 
 Window handling

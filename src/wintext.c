@@ -2560,6 +2560,15 @@ _trace_line(char * tag, cattr attr, ushort lattr, wchar * text, int len)
 #define trace_line(tag)
 #endif
 
+
+#ifdef substitute_combining_chars
+/* Substitution of (some) combining characters by lookalike characters; 
+   this has not been needed anymore for a while already (see #295),
+   it was dropped for unpleasant side effects:
+   for a combined character like x̀, when displayed in two phases 
+   (e.g. with background or with cursor), the accent would 
+   skip to the next position
+*/
 static wchar
 combsubst(wchar comb, cattrflags attr)
 {
@@ -2623,6 +2632,8 @@ combsubst(wchar comb, cattrflags attr)
   }
   return comb;
 }
+#endif
+
 
 int
 termattrs_equal_fg(cattr * a, cattr * b)
@@ -3095,7 +3106,7 @@ win_text(int tx, int ty, wchar *text, int len, cattr attr, cattr *textattr, usho
   bool default_bg = (attr.attr & ATTR_BGMASK) >> ATTR_BGSHIFT == BG_COLOUR_I;
   if (attr.attr & ATTR_REVERSE)
     default_bg = false;
-  //cattr attr0 = attr;  // need unmodified colour attributes for combinings
+  //cattr attr0 = attr;  // needed unmodified colour attributes for combinings
   attr = apply_attr_colour(attr, ACM_TERM);
   colour fg = attr.truefg;
   colour bg = attr.truebg;
@@ -3296,9 +3307,12 @@ win_text(int tx, int ty, wchar *text, int len, cattr attr, cattr *textattr, usho
 
   bool let_windows_combine = false;
   if (combining) {
+#ifdef substitute_combining_chars
    /* Substitute combining characters by overprinting lookalike glyphs */
+   /* Dropped for unpleasant effects, see comments at function combsubst */
     for (int i = 0; i < len; i++)
       text[i] = combsubst(text[i], attr.attr);
+#endif
    /* Determine characters that should be combined by Windows */
     if (len == 2) {
       if (text[0] == 'i' && (text[1] == 0x030F || text[1] == 0x0311))
@@ -3799,6 +3813,7 @@ draw:;
 
   text_out_start(dc, text, len, dxs);
 
+  // overstrike loop is for shadow or manual bold mode
   for (int xoff = 0; xoff < xwidth; xoff++) {
     if ((combining || combining_double) && !has_sea) {
       // Workaround for mangled display of combining characters;
@@ -3818,10 +3833,14 @@ draw:;
         SetBkMode(dc, TRANSPARENT);
         overwropt = 0;
       }
+
       // combining characters
       //textattr[0] = attr0; // need unmodified colour attributes for combinings
       // but that spoils separate blinking, so revert commit 736da154
       textattr[0] = attr;
+      // (which in turn spoiled substituted combined characters 
+      // while combsubst was still in use)
+
       for (int i = ulen; i < len; i += ulen) {
         // separate stacking of combining characters 
         // does not work with Uniscribe
