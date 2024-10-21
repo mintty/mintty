@@ -650,6 +650,7 @@ for entering accented characters, enhanced by self-composed characters
 for dead-key combinations that Windows does not support (e.g. ẃ).
 
 Mintty also provides a Compose key, using X11 compose data.
+(See also wiki page [Versions](https://github.com/mintty/mintty/wiki/Versions).)
 It is configurable to Control, Shift, Alt, Super or Hyper, or CapsLock, 
 or to any key combination with user-definable function `compose` in 
 setting `KeyFunctions`.
