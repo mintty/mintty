@@ -163,7 +163,7 @@ container_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 {
   //printf("tabbar con_proc %03X\n", msg);
 static int dragidx = -1;
-static int targidx = -1;
+static int dragini = -1;  // initial drag tab, where it was clicked on
 static int targpro = -1;
 static int xpos = 0;
 static HCURSOR hcursor = NULL;
@@ -199,6 +199,7 @@ static HCURSOR hcursor = NULL;
           dragidx = -1;
         //printf("%d:%d (pw %d) x %d drag %d\n", (int)p.y, (int)p.x, curr_tab_width, x, dragidx);
       }
+      dragini = dragidx; // suppress highlighting on initial drag position
       if (dragmsg) {
         SetCapture(hwnd);
         hcursor = GetCursor();
@@ -207,6 +208,7 @@ static HCURSOR hcursor = NULL;
   }
   else if (msg == WM_MOUSEMOVE) {
     if ((GetCapture() == hwnd) && ((wp & MK_LBUTTON) != 0)) {
+      // dragging tab
       POINT p;
       if (GetCursorPos(&p) && ScreenToClient(hwnd, &p)) {
         if (abs(p.x - xpos) > GetSystemMetrics(SM_CXDRAG)) {
@@ -220,9 +222,28 @@ static HCURSOR hcursor = NULL;
           //printf("%d:%d (pw %d) x %d: drag %d -> drop %d\n", (int)p.y, (int)p.x, curr_tab_width, x, dragidx, dropidx);
 
           // act on drop target item
-          if (dropidx < ntabinfo) {
+          if (dropidx < ntabinfo && dropidx >= 0) {
+            // visual indication of tab dragging: highlight the dragging
+            RECT tr; // enquire tab rect
+            SendMessage(tab_wnd, TCM_GETITEMRECT, dropidx, (LPARAM)&tr);
+            //printf("drop RECT %d %d %d %d\n", tr.left, tr.right, tr.top, tr.bottom);
+            // calculate relative cursor position
+            int w = tr.right - tr.left;
+            int c = (tr.left + tr.right) / 2;
+            targpro = 100 - abs(x - c) * 100 / (w / 2);
+            //printf("drop %d [%d] %d: %d%%\n", tr.left, x, tr.right, targpro);
+            // draw tab drag indication
+            RedrawWindow(tab_wnd, 0, 0, RDW_INVALIDATE | RDW_UPDATENOW);
+
+            // move the tab
             win_tab_move(dropidx - dragidx);
+
+            // update index of tab being dragged
+            //printf("dragini %d dragidx %d dropidx %d\n", dragini, dragidx, dropidx);
             dragidx = dropidx;
+            if (dragidx != dragini)
+              // enable dynamic highlighting when changed drag tab position
+              dragini = -1;
           }
         }
       }
@@ -322,12 +343,39 @@ static HCURSOR hcursor = NULL;
       SetTextColor(hdc, GetSysColor(COLOR_HIGHLIGHTTEXT));
       //printf("TAB fg %06X\n", GetSysColor(COLOR_HIGHLIGHTTEXT));
 
-      // override active tab colours if configured
-      tabbg = cfg.tab_bg_colour;
-      if (tabbg != (colour)-1) {
-        //printf("TAB bg %06X\n", tabbg);
+      // override active tab colours
+      if (dragidx >= 0 && dragidx != dragini) {
+        // dynamic highlighting of tab being dragged (not initially)
+        colour bg1 = cfg.tab_bg_colour;
+        if (bg1 == (colour)-1)
+          bg1 = GetSysColor(COLOR_HIGHLIGHT);
+        colour bg0 = GetSysColor(COLOR_3DFACE);
+
+        //int p = targpro * 80 / 100 + 10;
+        int p = (100 - sqr(100 - targpro) / 100) * 80 / 100 + 10;
+        int r = red(bg0) + p * (red(bg1) - red(bg0)) / 100;
+        int g = green(bg0) + p * (green(bg1) - green(bg0)) / 100;
+        int b = blue(bg0) + p * (blue(bg1) - blue(bg0)) / 100;
+
+        // set dynamic highlighting colour, depending on tab middle focus
+        tabbg = RGB(r, g, b);
+        // could use a different colour, or even configurable:
+        //tabbg = RGB(b, g, r);
+        //tabbg = RGB(g, b, r);
+        //tabbg = RGB(g, r, b);
+        //tabbg = RGB(b, r, g);
+
         tabbr = CreateSolidBrush(tabbg);
       }
+      else {
+        // override active tab colours if configured
+        tabbg = cfg.tab_bg_colour;
+        if (tabbg != (colour)-1) {
+          //printf("TAB bg %06X\n", tabbg);
+          tabbr = CreateSolidBrush(tabbg);
+        }
+      }
+      // foreground colour
       colour tabfg = cfg.tab_fg_colour;
       if (tabfg != (colour)-1) {
         //printf("TAB fg %06X\n", tabfg);
@@ -340,23 +388,6 @@ static HCURSOR hcursor = NULL;
       //tabbr = GetSysColorBrush(COLOR_INACTIVECAPTION);
       SetTextColor(hdc, GetSysColor(COLOR_CAPTIONTEXT));
       //printf("tab fg %06X\n", GetSysColor(COLOR_CAPTIONTEXT));
-
-      // drag-and-drop hover highlighting
-      if (itemID == targidx) {
-        colour bg1 = cfg.tab_bg_colour;
-        if (bg1 == (colour)-1)
-          bg1 = GetSysColor(COLOR_HIGHLIGHT);
-        colour bg0 = GetSysColor(COLOR_3DFACE);
-
-        //int p = targpro * 80 / 100 + 10;
-        int p = (100 - sqr(100 - targpro) / 100) * 80 / 100 + 10;
-        int r = red(bg0) + p * (red(bg1) - red(bg0)) / 100;
-        int g = green(bg0) + p * (green(bg1) - green(bg0)) / 100;
-        int b = blue(bg0) + p * (blue(bg1) - blue(bg0)) / 100;
-
-        tabbg = RGB(r, g, b);
-        tabbr = CreateSolidBrush(tabbg);
-      }
     }
     FillRect(hdc, &dis->rcItem, tabbr);
     if (tabbg != (colour)-1)

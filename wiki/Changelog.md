@@ -5,6 +5,9 @@ Character rendering
 
 Window handling
   * Show new tab at its target position right away (#1292).
+  * Live changing of reordered tabs while being dragged (#1293).
+  * Change mouse pointer while tab dragging (#1293).
+  * Adapt dynamic tab drag highlighting (~#1293).
 
 ### 3.7.6 (24 September 2024) ###
 
