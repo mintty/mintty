@@ -869,6 +869,43 @@ write_primary_da(void)
   child_write(primary_da, strlen(primary_da));
 }
 
+
+static inline xchar
+xtermchar(termchar * tc)
+{
+  xchar ch = tc->chr;
+  if (is_high_surrogate(ch) && tc->cc_next) {
+    termchar * cc = tc + tc->cc_next;
+    if (is_low_surrogate(cc->chr)) {
+      ch = combine_surrogates(tc->chr, cc->chr);
+    }
+  }
+  return ch;
+}
+
+/*
+   Check whether the base character before the cursor could be a base 
+   character of an emoji sequence, so a subsequent ZWJ (U+200D) should 
+   enforce double-width on the cell. To save some performance here, 
+   we do not check the exact emoji base property but the inclusion in 
+   a character range that could (perhaps in future Unicode versions) 
+   contain an emoji sequence base character.
+   The important issue here is to exclude script characters / letters 
+   from getting widened (as U+200D is for example also used as a 
+   formatting modifier for Arabic script).
+ */
+static bool
+could_be_emoji_base(termchar * tc)
+{
+  xchar c = xtermchar(tc);
+  return c >= 0x2300 && (c < 0x2400
+     || (c >= 0x25A0 && c < 0x27C0)
+     || (c >= 0x2B00 && c < 0x2C00)
+     || (c >= 0x1F100 && c < 0x1F700)
+     || (c >= 0x1F900 && c < 0x20000)
+         );
+}
+
 static wchar last_high = 0;
 static wchar last_char = 0;
 static int last_width = 0;
@@ -1134,7 +1171,8 @@ write_char(wchar c, int width)
               // enforce emoji sequence on:
               // U+FE0F VARIATION SELECTOR-16
               // U+200D ZERO WIDTH JOINER
-              (c == 0xFE0F || c == 0x200D
+              (c == 0xFE0F
+            || (c == 0x200D && could_be_emoji_base(&line->chars[x]))
               // U+1F3FB..U+1F3FF EMOJI MODIFIER FITZPATRICKs
               // UTF-16: D83C DFFB .. D83C DFFF
             || is_fitzpatrick
