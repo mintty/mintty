@@ -3080,8 +3080,9 @@ print_system_metrics(int dpi, string tag)
          "        frame  %d/%d %d/%d size %d/%d %d/%d\n"
          "        padded %d/%d\n"
          "        caption %d/%d\n"
-         "        scrollbar %d/%d\n",
-         dpi, tag,
+         "        scrollbar %d/%d\n"
+         "        drag %d/%d\n"
+         , dpi, tag,
          GetSystemMetrics(SM_CXBORDER), pGetSystemMetricsForDpi(SM_CXBORDER, dpi),
          GetSystemMetrics(SM_CYBORDER), pGetSystemMetricsForDpi(SM_CYBORDER, dpi),
          GetSystemMetrics(SM_CXEDGE), pGetSystemMetricsForDpi(SM_CXEDGE, dpi),
@@ -3092,7 +3093,8 @@ print_system_metrics(int dpi, string tag)
          GetSystemMetrics(SM_CYSIZEFRAME), pGetSystemMetricsForDpi(SM_CYSIZEFRAME, dpi),
          GetSystemMetrics(SM_CXPADDEDBORDER), pGetSystemMetricsForDpi(SM_CXPADDEDBORDER, dpi),
          GetSystemMetrics(SM_CYCAPTION), pGetSystemMetricsForDpi(SM_CYCAPTION, dpi),
-         GetSystemMetrics(SM_CXVSCROLL), pGetSystemMetricsForDpi(SM_CXVSCROLL, dpi)
+         GetSystemMetrics(SM_CXVSCROLL), pGetSystemMetricsForDpi(SM_CXVSCROLL, dpi),
+         GetSystemMetrics(SM_CXDRAG), pGetSystemMetricsForDpi(SM_CXDRAG, dpi)
          );
 }
 #endif
