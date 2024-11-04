@@ -3043,12 +3043,18 @@ void
 _win_text(int line, int tx, int ty, wchar *text, int len, cattr attr, cattr *textattr, ushort lattr, char has_rtl, char has_sea, bool clearpad, uchar phase)
 {
   if (*text != ' ') {
-    printf("[%d] %d:%d(len %d) attr %08llX", line, ty, tx, len, attr.attr);
+    printf("[<%d] %d:%d(len %d) attr %08llX", line, ty, tx, len, attr.attr);
     for (int i = 0; i < len && i < 8; i++)
       printf(" %04X", text[i]);
     printf("\n");
   }
   win_text(tx, ty, text, len, attr, textattr, lattr, has_rtl, has_sea, clearpad, phase);
+  if (*text != ' ') {
+    printf("[>%d] %d:%d(len %d) attr %08llX", line, ty, tx, len, attr.attr);
+    for (int i = 0; i < len && i < 8; i++)
+      printf(" %04X", text[i]);
+    printf("\n");
+  }
 }
 
 #define win_text(tx, ty, text, len, attr, textattr, lattr, has_rtl, has_sea, clearpad, phase) _win_text(__LINE__, tx, ty, text, len, attr, textattr, lattr, has_rtl, has_sea, clearpad, phase)
@@ -4046,6 +4052,7 @@ term_paint(void)
     void flush_text()
     {
       if (ovl_len) {
+        // now flush the text for 2-phase output
         win_text(ovl_x, ovl_y, ovl_text, ovl_len, ovl_attr, ovl_textattr, ovl_lattr, ovl_has_rtl, ovl_has_sea, false, 2);
         ovl_len = 0;
       }
@@ -4154,8 +4161,8 @@ term_paint(void)
            * combining doubles
            * cursor position, to support underlay cursor painting
          */
-        win_text(x, y, text, len, attr, textattr, lattr, has_rtl, has_sea, false, 1);
-        flush_text();
+        // remember actual text for later phase 2 output (flush)
+        // do this before phase 1 output below which may modify text contents
         ovl_x = x;
         ovl_y = y;
         wcsncpy(ovl_text, text, len);
@@ -4165,6 +4172,9 @@ term_paint(void)
         ovl_lattr = lattr;
         ovl_has_rtl = has_rtl;
         ovl_has_sea = has_sea;
+        // for 2-phase output, now do phase 1 for the background
+        win_text(x, y, text, len, attr, textattr, lattr, has_rtl, has_sea, false, 1);
+        flush_text();
       }
       else {
         win_text(x, y, text, len, attr, textattr, lattr, has_rtl, has_sea, false, 0);

@@ -2,6 +2,7 @@ Character rendering
   * Reenabled distinct blinking for combined characters (broken since 3.5.3).
   * Fix skipping of accent to next position on background colour.
   * Fix drawing of Powerline round symbols (mintty/wsltty#358).
+  * Fix rendering of right-to-left scripts on italic or cursor position.
 
 Window handling
   * Show new tab at its target position right away (#1292).

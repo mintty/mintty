@@ -3276,6 +3276,9 @@ win_text(int tx, int ty, wchar *text, int len, cattr attr, cattr *textattr, usho
 #endif
 
   uint eto_options = ETO_CLIPPED;
+#ifdef glyph_output
+  // this mode of output processing with unclear purpose used to corrupt
+  // cursor and italic display of right-to-left scripts; disabled
   if (has_rtl) {
    /* We've already done right-to-left processing in the screen buffer,
     * so stop Windows from doing it again (and hence undoing our work).
@@ -3300,6 +3303,7 @@ win_text(int tx, int ty, wchar *text, int len, cattr attr, cattr *textattr, usho
     trace_line(" >ChrPlc:");
     eto_options |= ETO_GLYPH_INDEX;
   }
+#endif
 
 
   bool combining = attr.attr & TATTR_COMBINING;
