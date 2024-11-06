@@ -1,5 +1,5 @@
 // windialog.c (part of mintty)
-// Copyright 2008-11 Andy Koppe
+// Copyright 2008-11 Andy Koppe, -2024 Thomas Wolff
 // Based on code from PuTTY-0.60 by Simon Tatham and team.
 // Licensed under the terms of the GNU General Public License v3 or later.
 
@@ -26,6 +26,29 @@ extern void setup_config_box(controlbox *);
 #include <sys/cygwin.h>  // cygwin_internal
 #endif
 #include <sys/stat.h>  // chmod
+
+
+#ifdef debug_handler
+static control *
+trace_ctrl(int line, int ev, control * ctrl)
+{
+static char * debugopt = 0;
+  if (!debugopt) {
+    debugopt = getenv("MINTTY_DEBUG");
+    if (!debugopt)
+      debugopt = "";
+  }
+
+  if (strchr(debugopt, 'o')) {
+    printf("[%d ev %d] type %d (%d %d %d) label %s col %d\n", line, ev,
+           ctrl->type, !!ctrl->handler, !!ctrl->widget, !!ctrl->context,
+           ctrl->label, ctrl->column);
+  }
+  return ctrl;
+}
+// inject trace invocation into calls like ctrl->handler
+#define handler(ctrl, ev)	handler(trace_ctrl(__LINE__, ev, ctrl), ev)
+#endif
 
 
 /*
