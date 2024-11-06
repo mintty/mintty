@@ -10,6 +10,9 @@ Window handling
   * Change mouse pointer while tab dragging (#1293).
   * Adapt dynamic tab drag highlighting (~#1293).
 
+Misc
+  * Avoid potentially blocking retrieval of printers list (#1295).
+
 ### 3.7.6 (24 September 2024) ###
 
 Font and character rendering
