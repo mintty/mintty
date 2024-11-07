@@ -19,7 +19,6 @@ static PRINTER_INFO_4W * printer_info = null;
 static struct printer_info {
   wchar * pPrinterName;
 } * printer_info;
-static DWORD num_values, maxvalnamelen;
 static int num = 0;
 #endif
 
@@ -46,16 +45,23 @@ printer_start_enum(void)
 #define PKEY "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Devices"
 //#define PKEY "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\PrinterPorts"
   RegOpenKeyW(HKEY_CURRENT_USER, W(PKEY), &dev);
-  DWORD num_subkeys, maxsubkeylen, maxclasslen, maxvaluelen;
-  RegQueryInfoKeyW(dev, 0, 0, 0, &num_subkeys, &maxsubkeylen, &maxclasslen,
-                   &num_values, &maxvalnamelen, &maxvaluelen, 0, 0);
+  DWORD num_subkeys, maxsubkeylen, maxclasslen, maxvaluelen;  // dummy
+  DWORD num_values = 0, maxvalnamelen = 0;
+  int res =
+    RegQueryInfoKeyW(dev, 0, 0, 0, &num_subkeys, &maxsubkeylen, &maxclasslen,
+                     &num_values, &maxvalnamelen, &maxvaluelen, 0, 0);
+  if (res)
+    return 0;
   num = num_values;
   printer_info = newn(struct printer_info, num);
   wchar valname[maxvalnamelen + 1];
   for (int i = 0; i < num; i++) {
     DWORD nambuflen = maxvalnamelen + 1;
-    RegEnumValueW(dev, i, valname, &nambuflen, 0, 0, 0, 0);
-    printer_info[i].pPrinterName = wcsdup(valname);
+    res = RegEnumValueW(dev, i, valname, &nambuflen, 0, 0, 0, 0);
+    if (res)
+      printer_info[i].pPrinterName = wcsdup(W(""));
+    else
+      printer_info[i].pPrinterName = wcsdup(valname);
   }
   RegCloseKey(dev);
   return num;
@@ -98,6 +104,8 @@ printer_get_default(void)
   len ++;
   def = newn(wchar, len);
   res = RegQueryValueExW(win, W("Device"), 0, 0, (void *)def, &len);
+  if (res)
+    return 0;
   wchar * comma = wcschr(def, ',');
   if (comma)
     *comma = 0;
