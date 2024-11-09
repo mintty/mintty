@@ -891,6 +891,12 @@ or to the CapsLock key.
 The Compose key function can also be assigned to another key combination 
 using user-definable function \fBcompose\fP in setting \fBKeyFunctions\fP.
 
+Details: Mintty extracts a list of compose key combinations from the 
+current X11 cygwin package, file 
+/usr/share/X11/locale/en_US.UTF-8/Compose, where "Multi_key" 
+combinations can be resolved using key name definitions from 
+/usr/include/X11/keysymdef.h. For the X11 version used, see the wiki.
+
 .SS Keyboard shortcuts
 
 This section gives an overview of all the keyboard shortcuts.
