@@ -9,6 +9,8 @@ Window handling
   * Live changing of reordered tabs while being dragged (#1293).
   * Change mouse pointer while tab dragging (#1293).
   * Adapt dynamic tab drag highlighting (~#1293).
+  * New windows/Alt+F2 launches terminal on same monitor (broken since 2.9.5).
+  * Maximise/Restore keeps window on same monitor (broken since 3.6.5, ~#1226).
 
 Misc
   * Avoid potentially blocking retrieval of printers list (#1295).

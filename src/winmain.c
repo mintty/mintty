@@ -1671,21 +1671,29 @@ static long current_monitor = 1 - 1;  // assumption for MonitorFromWindow
      returns number of monitors;
        stores smallest width/height of all monitors
        stores info of current monitor
+       used by user function new-key
    search_monitors(&x, &y, 0, true, &moninfo)
      returns number of monitors;
        stores smallest width/height of all monitors
        stores info of primary monitor
+       used by user function new-key
    search_monitors(&x, &y, mon, false/true, 0)
      returns index of given monitor (0/primary if not found)
+       used by user function new-key (true)
+       used by function win_launch (true), IDM_SESSIONCOMMAND, launcher
+       used by IDM_NEW*, IDM_TAB* (true)
    search_monitors(&x, &y, 0, false, 0)
      returns number of monitors;
        stores virtual screen size
+       used by CSI 15/19 t Report screen size
    search_monitors(&x, &y, 0, 2, &moninfo)
      returns number of monitors;
        stores virtual screen top left corner
        stores virtual screen size
+       used by function win_get_scrpos, save_win_pos, win_maximise
    search_monitors(&x, &y, 0, true, 0)
      prints information about all monitors
+       used by option -Rm
  */
 int
 search_monitors(int * minx, int * miny, HMONITOR lookup_mon, int get_primary, MONITORINFO *mip)
@@ -1740,6 +1748,7 @@ search_monitors(int * minx, int * miny, HMONITOR lookup_mon, int get_primary, MO
   struct data_search_monitors data = {
     .moni = 0,
     .moni_found = 0,
+    .lookup_mon = lookup_mon,
     .minx = minx,
     .miny = miny,
     .vscr = (RECT){0, 0, 0, 0},
@@ -1755,13 +1764,18 @@ search_monitors(int * minx, int * miny, HMONITOR lookup_mon, int get_primary, MO
   data.print_monitors = !lookup_mon;
 #endif
 
+  /*
+     Enumerate monitors for various use cases 
+     (see invocation descriptions of search_monitors above);
+     this code is obscure and needs revision
+   */
   BOOL CALLBACK
   monitor_enum(HMONITOR hMonitor, HDC hdcMonitor, LPRECT monp, LPARAM dwData)
   {
     struct data_search_monitors *data = (struct data_search_monitors *)dwData;
     (void)hdcMonitor, (void)monp;
 
-    (data->moni) ++;
+    data->moni ++;
     if (hMonitor == data->lookup_mon) {
       // looking for index of specific monitor
       data->moni_found = data->moni;
@@ -1792,7 +1806,7 @@ search_monitors(int * minx, int * miny, HMONITOR lookup_mon, int get_primary, MO
       uint x, dpi = 0;
       if (pGetDpiForMonitor)
         pGetDpiForMonitor(hMonitor, 0, &x, &dpi);  // MDT_EFFECTIVE_DPI
-      printf("Monitor %d %s %s (%3d dpi) w,h %4d,%4d (%4d,%4d...%4d,%4d)\n", 
+      printf("Monitor %d %s %s (%3d dpi) w,h %4d,%4d (l %4d,t %4d .. r %4d,b %4d)\n", 
              data->moni,
              hMonitor == data->curmon ? "current" : "       ",
              mi.dwFlags & MONITORINFOF_PRIMARY ? "primary" : "       ",
@@ -1811,7 +1825,7 @@ search_monitors(int * minx, int * miny, HMONITOR lookup_mon, int get_primary, MO
     *miny = data.vscr.bottom - data.vscr.top;
     return data.moni;
   }
-  else if (lookup_mon) {
+  else if (data.lookup_mon) {
     return data.moni_found;
   }
   else if (mip) {
@@ -3349,15 +3363,19 @@ win_maximise(int max)
   if (max == -2) // toggle full screen
     max = win_is_fullscreen ? 0 : 2;
 
+#ifdef broken_fix_for_normal_position_resilience
 static short normal_rows = 0;
 static short normal_cols = 0;
 static int normal_y, normal_x;
 static uint normal_dpi;
+#endif
   void save_win_pos(void) {
+#ifdef broken_fix_for_normal_position_resilience
     normal_rows = term.rows;
     normal_cols = term.cols;
     win_get_scrpos(&normal_x, &normal_y, false);
     normal_dpi = dpi;
+#endif
   }
 
   /* for some weird reason, changes to avoid ShowWindow in commit 113286
@@ -3407,6 +3425,8 @@ static uint normal_dpi;
       SetWindowPos(wnd, null, fr.left, fr.top,
                    fr.right - fr.left, fr.bottom - fr.top,
                    SWP_FRAMECHANGED | SWP_NOACTIVATE | SWP_NOZORDER);
+#ifdef broken_fix_for_normal_position_resilience
+#warning this would not keep window on same monitor after 2× Alt+F11
       // after screen size changes or DPI changes, the previous size 
       // is no longer remembered in rcNormalPosition 
       // (maybe it got cleared after multiple induced window operations),
@@ -3417,6 +3437,7 @@ static uint normal_dpi;
         (void)normal_dpi;
         win_fix_position(false);
       }
+#endif
 
       win_is_fullscreen = false;
     }
