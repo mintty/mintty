@@ -42,8 +42,10 @@ printer_start_enum(void)
   return ok ? num : 0;
 #else
   HKEY dev;
-#define PKEY "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Devices"
-//#define PKEY "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\PrinterPorts"
+  // open registry key to retrieve printers list; the ...\Devices key 
+  // may contain some bogus entries in addition to the \PrinterPorts key,
+  // so we use the more reliable list
+#define PKEY "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\PrinterPorts"
   RegOpenKeyW(HKEY_CURRENT_USER, W(PKEY), &dev);
   DWORD num_subkeys, maxsubkeylen, maxclasslen, maxvaluelen;  // dummy
   DWORD num_values = 0, maxvalnamelen = 0;
