@@ -4295,7 +4295,46 @@ can be configured.
 \fBTabForegroundColour\fP=\fI\fP
 .en
 \fBTabBackgroundColour\fP=\fI\fP
+. add space between ./ul and .SH
+
 ./ul
+
+.SH ENVIRONMENT
+
+Mintty uses a couple of environment variables mainly to steer Alt+F2 window 
+cloning. Some variable are also useful for explicit control or information:
+
+.TQ
+.B MINTTY_MONITOR
+Select monitor for a new terminal session started from the shell.
+Monitor numbers and their coordinates within the Windows multi-monitor 
+address space can be listed with \fBmintty -Rm\fP.
+
+.TQ
+.B MINTTY_SHORTCUT
+Filename of a desktop shortcut from which mintty was started.
+
+.TQ
+.B MINTTY_DEBUG
+C will list usage of config files;
+o, x, h enable interaction debugging for the Options dialog.
+
+.TQ
+.B Process spawning
+Variables that pass information about terminal environment and contents 
+to external programs launched from mintty, e.g. as configured with 
+user-defined \`\`-embedded command (via KeyFunctions), via CtxMenuFunctions 
+or from user-defined menu entries, as described above:
+MINTTY_SELECT, MINTTY_BUFFER, MINTTY_SCREEN, MINTTY_OUTPUT, 
+MINTTY_TITLE, MINTTY_PID, MINTTY_PROG, MINTTY_CWD
+
+.TQ
+.B New window placement
+Variables that pass placement information when launching new terminal 
+sessions, for example with Alt+F2:
+MINTTY_MONITOR, MINTTY_ROWS, MINTTY_COLS, MINTTY_MAXIMIZE, 
+MINTTY_X, MINTTY_Y, MINTTY_DX, MINTTY_DY, 
+MINTTY_ICON, MINTTY_TABBAR, MINTTY_CLASS, MINTTY_PWD
 
 .SH SCOPE AND LIMITATIONS
 
