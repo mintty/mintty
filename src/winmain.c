@@ -23,6 +23,7 @@ char * mintty_debug;
 #include "child.h"
 #include "charset.h"
 #include "tek.h"
+#include "print.h"  // list_printers
 
 #include <locale.h>
 #include <getopt.h>
@@ -6672,6 +6673,9 @@ main(int argc, char *argv[])
             report_moni = true;
           when 'f':
             list_fonts(true);
+            exit(0);
+          when 'R':
+            list_printers();
             exit(0);
 #if CYGWIN_VERSION_API_MINOR >= 74
           when 'W': {

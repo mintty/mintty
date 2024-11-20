@@ -15,6 +15,7 @@ Window handling
 
 Misc
   * Avoid potentially blocking retrieval of printers list (#1295).
+  * Option -RR reports list of available printers.
 
 ### 3.7.6 (24 September 2024) ###
 

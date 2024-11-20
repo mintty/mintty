@@ -131,16 +131,25 @@ printer_finish_enum(void)
   printer_info = 0;
 }
 
+void
+list_printers(void)
+{
+  wstring defpri = printer_get_default();
+  uint num = printer_start_enum();
+  for (uint i = 0; i < num; i++)
+    if (0 == wcscmp(printer_get_name(i), defpri))
+      printf("[7m%ls[m\n", printer_get_name(i));
+    else
+      printf("%ls\n", printer_get_name(i));
+  printer_finish_enum();
+}
+
 #ifdef list_printers
 // standalone test tool: list printers
 //cc -include std.h -Dlist_printers printers.c -lwinspool -o printers
 void
 main()
 {
-  printf("default printer: <%ls>\n", printer_get_default());
-  uint num = printer_start_enum();
-  for (uint i = 0; i < num; i++)
-    printf("<%ls>\n", printer_get_name(i));
-  printer_finish_enum();
+  list_printers();
 }
 #endif

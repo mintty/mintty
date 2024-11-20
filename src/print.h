@@ -13,4 +13,7 @@ extern void printer_write(char *, uint len);
 extern void printer_wwrite(wchar *, uint len);
 extern void printer_finish_job(void);
 
+// reports printers list
+extern void list_printers(void);
+
 #endif
