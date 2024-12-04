@@ -110,8 +110,12 @@ move(int x, int y, int marg_clip)
 
   if (x < 0)
     x = 0;
-  if (x >= term.cols)
-    x = term.cols - 1;
+  if (x >= term.cols) {
+    if (term.vt52_mode)  // && if implementing VT52 emulation of VT100 (#1299)
+      x = curs->x;
+    else
+      x = term.cols - 1;
+  }
 
   if (term.st_active) {
     if (curs->y < term.rows)
@@ -122,8 +126,12 @@ move(int x, int y, int marg_clip)
   else {
     if (y < 0)
       y = 0;
-    if (y >= term.rows)
-      y = term.rows - 1;
+    if (y >= term.rows) {
+      if (term.vt52_mode)
+        y = curs->y;  // #1299
+      else
+        y = term.rows - 1;
+    }
   }
 
   curs->x = x;
