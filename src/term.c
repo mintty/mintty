@@ -3042,19 +3042,28 @@ emoji_show(int x, int y, struct emoji e, int elen, cattr eattr, ushort lattr)
 void
 _win_text(int line, int tx, int ty, wchar *text, int len, cattr attr, cattr *textattr, ushort lattr, char has_rtl, char has_sea, bool clearpad, uchar phase)
 {
-  if (*text != ' ') {
-    printf("[<%d] %d:%d(len %d) attr %08llX", line, ty, tx, len, attr.attr);
-    for (int i = 0; i < len && i < 8; i++)
+  int last = len - 1;
+  while (last >= 0 && text[last] == ' ')
+    last --;
+
+  if (last >= 0) {
+    printf("[<%d] %d:%d(len %2d) attr %09llX", line, ty, tx, len, attr.attr);
+    for (int i = 0; i <= last /*&& i < 8*/; i++)
       printf(" %04X", text[i]);
     printf("\n");
   }
+
   win_text(tx, ty, text, len, attr, textattr, lattr, has_rtl, has_sea, clearpad, phase);
-  if (*text != ' ') {
-    printf("[>%d] %d:%d(len %d) attr %08llX", line, ty, tx, len, attr.attr);
-    for (int i = 0; i < len && i < 8; i++)
+
+#ifdef debug_win_text_modified
+  // debug modification by substitute_combining_chars feature, now disabled
+  if (last >= 0) {
+    printf("[>%d] %d:%d(len %2d) attr %09llX", line, ty, tx, len, attr.attr);
+    for (int i = 0; i <= last /*&& i < 8*/; i++)
       printf(" %04X", text[i]);
     printf("\n");
   }
+#endif
 }
 
 #define win_text(tx, ty, text, len, attr, textattr, lattr, has_rtl, has_sea, clearpad, phase) _win_text(__LINE__, tx, ty, text, len, attr, textattr, lattr, has_rtl, has_sea, clearpad, phase)
