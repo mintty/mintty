@@ -1143,7 +1143,8 @@ write_char(wchar c, int width)
             check for a previous Fitzpatrick high surrogate 
             before we add its low surrogate (add_cc below)
          */
-          if (c == 0x200D)
+          bool emoji_joiner = c == 0x200D && could_be_emoji_base(&line->chars[x]);
+          if (emoji_joiner)
             //printf("%d:%d (%04X) %04X mark joiner\n", curs->y, curs->x, line->chars[x].chr, c),
             line->chars[x].attr.attr |= TATTR_EMOJI;
           else
@@ -1180,7 +1181,7 @@ write_char(wchar c, int width)
               // U+FE0F VARIATION SELECTOR-16
               // U+200D ZERO WIDTH JOINER
               (c == 0xFE0F
-            || (c == 0x200D && could_be_emoji_base(&line->chars[x]))
+            || emoji_joiner
               // U+1F3FB..U+1F3FF EMOJI MODIFIER FITZPATRICKs
               // UTF-16: D83C DFFB .. D83C DFFF
             || is_fitzpatrick
