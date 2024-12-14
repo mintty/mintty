@@ -1846,6 +1846,21 @@ offset_bg(HDC dc)
   int wx = wr.left + GetSystemMetrics(SM_CXSIZEFRAME);
   int wy = wr.top + GetSystemMetrics(SM_CYSIZEFRAME) + GetSystemMetrics(SM_CYCAPTION);
 
+  // adjust brush to virtual desktop (#1296)
+static int virtual_desktop_left;
+static int virtual_desktop_top;
+  if (!checked_desktop_config) {
+    HWND dt = GetDesktopWindow();
+    HDC dtc = GetDC(dt);
+    GetClipBox(dtc, &wr);
+    ReleaseDC(dt, dtc);
+    virtual_desktop_left = wr.left;
+    virtual_desktop_top = wr.top;
+    checked_desktop_config = true;
+  }
+  wx -= virtual_desktop_left;
+  wy -= virtual_desktop_top;
+
   // adjust wallpaper origin
 
   SetBrushOrgEx(dc, -wx, -wy, 0);

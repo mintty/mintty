@@ -112,6 +112,8 @@ static bool restoring = false;
 static bool focus_here = false;
 static bool focus_inhibit = false;
 #endif
+// cleared when changing primary monitor:
+bool checked_desktop_config = false;
 
 // Options
 bool title_settable = true;
@@ -4757,6 +4759,9 @@ static struct {
         // this will switch from Light to Dark mode immediately but not back!
         //win_dark_mode(wnd);
       }
+
+    when WM_DISPLAYCHANGE:
+      checked_desktop_config = false;
 
     when WM_FONTCHANGE:
       font_cs_reconfig(true);

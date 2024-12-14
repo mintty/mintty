@@ -16,6 +16,7 @@ Window handling
   * Adapt dynamic tab drag highlighting (~#1293).
   * New windows/Alt+F2 launches terminal on same monitor (broken since 2.9.5).
   * Maximise/Restore keeps window on same monitor (broken since 3.6.5, ~#1226).
+  * Virtual transparency: fix desktop background offset (#1296).
 
 Misc
   * Avoid potentially blocking retrieval of printers list (#1295).

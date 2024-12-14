@@ -90,6 +90,7 @@ extern uint dpi;
 extern int per_monitor_dpi_aware;
 extern bool keep_screen_on;
 extern bool force_opaque;
+extern bool checked_desktop_config;
 
 extern bool click_focus_token;
 extern pos last_pos;
