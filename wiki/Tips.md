@@ -461,6 +461,24 @@ set enable-bracketed-paste on
 ```
 
 
+## Paste protection ##
+
+Paste control can be tuned with these options, and used dynamically 
+via Bracketed paste mode (DECSET 2004, see above how to enable its 
+_usage_ for readline).
+
+### Ignore bracketed paste mode ###
+
+To disable the effect of bracketed paste mode, it can be ignored by setting
+`SuppressDEC=2004`.
+
+### Enhance paste control ###
+
+To enhance protection against malicious paste contents, setting 
+`ConfirmMultiLinePasting=yes` supports interactive control, while
+option `FilterPasteControls` can drop control characters from paste contents.
+
+
 ## Unexpected behaviour with certain applications (e.g. vim) ##
 
 If for example the PgUp and PgDn keys do not work in your editor, the reason 
