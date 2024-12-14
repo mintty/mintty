@@ -64,6 +64,7 @@ const config default_cfg = {
   .theme_file = W(""),
   .background = W(""),
   .colour_scheme = "",
+  .use_windows_theme = false,
   .transparency = 0,
   .blurred = false,
   .opaque_when_focused = false,
@@ -366,6 +367,7 @@ options[] = {
   {"ThemeFile", OPT_WSTRING, offcfg(theme_file)},
   {"Background", OPT_WSTRING, offcfg(background)},
   {"ColourScheme", OPT_STRING, offcfg(colour_scheme)},
+  {"UseWindowsTheme", OPT_BOOL, offcfg(use_windows_theme)},
   {"Transparency", OPT_TRANS, offcfg(transparency)},
 #ifdef support_blurred
   {"Blur", OPT_BOOL, offcfg(blurred)},
@@ -1880,7 +1882,6 @@ apply_config(bool save)
         remember_file_option("apply", i);
     }
   }
-
   copy_config("apply", &file_cfg, &new_cfg);
   if (wcscmp(new_cfg.lang, cfg.lang) != 0
       || (wcscmp(new_cfg.lang, W("=")) == 0 && new_cfg.locale != cfg.locale)
@@ -1903,6 +1904,16 @@ apply_config(bool save)
     win_invalidate_all(false);
   }
   else if (had_theme) {
+    win_reset_colours();
+    win_invalidate_all(false);
+  } else if(cfg.use_windows_theme) {
+    uint val = getregval(HKEY_CURRENT_USER, W("Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize"), W("AppsUseLightTheme"));
+    //Means Windows is using dark mode, or is not defined (With also means is using dark mode)
+    if (val == 0) {
+      load_theme(W("windows10"));
+    } else {
+      load_theme(W("kohlrausch"));
+    }
     win_reset_colours();
     win_invalidate_all(false);
   }
@@ -3756,6 +3767,10 @@ setup_config_box(controlbox * b)
   (store_button = ctrl_pushbutton(s, _("Store"), scheme_saver, 0))
     ->column = 1;
 
+  ctrl_checkbox(
+    //__ Options - Looks: cursor feature
+    s, _("Use Windows Theme"), dlg_stdcheckbox_handler, &new_cfg.use_windows_theme
+  );
   s = ctrl_new_set(b, _("Looks"), null, 
   //__ Options - Looks: section title
                       _("Transparency"));
