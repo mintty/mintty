@@ -967,6 +967,7 @@ Character width can be modified by a number of configuration or dynamic settings
 * OSC 50: changes font, may affect ambiguous width handling (with `Locale`)
 * [OSC 77119](https://github.com/mintty/mintty/wiki/CtrlSeqs#wide-characters): turns some character ranges to wide characters
 * [PEC](https://github.com/mintty/mintty/wiki/CtrlSeqs#explicit-character-width): explicit character width attribute
+* [Emoji width mode](https://github.com/mintty/mintty/wiki/CtrlSeqs#emoji-width-mode): forces emojis to double-cell width
 
 See the [mintty manual](http://mintty.github.io/mintty.1.html) and
 [Control Sequences](https://github.com/mintty/mintty/wiki/CtrlSeqs)

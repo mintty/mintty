@@ -547,8 +547,8 @@ albeit compromising system-defined string width.
 The following rules describe the character sequences to be handled as 
 2-cell emojis:
 
-0. The rules below need to be applied to any character sequence 
-   depending on the respective pattern only, 
+0. The rules below are applied to any character sequence 
+   that begins with a potential emoji base character, 
    regardless of whether it has a Unicode emoji definition, and 
    regardless of whether it has a glyph in the current glyph set.
 1. Appending variation selector U+FE0F as a combining character changes any 
@@ -559,9 +559,11 @@ The following rules describe the character sequences to be handled as
 4. The zero-width joiner U+200D forces the subsequent character to 
    also be treated like a combining character, thus not add any width.
 
-Note that rule 0 is important to keep screen width predictable for 
-applications; otherwise screen positioning would be hardly manageable 
-with respect to changing Unicode versions and emoji graphic resources.
+Note that by rule 0 neither actual glyph availabilty nor the listing 
+of an emoji sequence in Unicode data is required; this is important to 
+keep screen width predictable for applications; otherwise screen 
+positioning would be hardly manageable with respect to changing 
+Unicode versions and emoji graphic resources.
 
 Note that other terminals support a “Unicode width” mode which may deviate 
 from the rules applied by mintty; a common specification is not yet agreed.
