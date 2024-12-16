@@ -3558,6 +3558,16 @@ win_update_transparency(int trans, bool opaque)
   win_update_glass(opaque);
 }
 
+static void
+win_adjust_background(void)
+{
+  if (*cfg.background) {
+    //term_invalidate(0, 0, term.cols - 1, term.rows - 1);
+    // rather, more smoothly:
+    win_invalidate_all(true);
+  }
+}
+
 void
 win_update_scrollbar(bool inner)
 {
@@ -4738,6 +4748,9 @@ static struct {
       }
 
     when WM_THEMECHANGED or WM_WININICHANGE or WM_SYSCOLORCHANGE:
+      // keep image background updated while moving/resizing
+      win_adjust_background();
+
       // Size of window border (border, title bar, scrollbar) changed by:
       //   Personalization of window geometry (e.g. Title Bar Size)
       //     -> Windows sends WM_SYSCOLORCHANGE
@@ -5137,11 +5150,7 @@ static int olddelta;
         break;
 
       // keep image background updated while moving/resizing
-      if (*cfg.background) {
-        //term_invalidate(0, 0, term.cols - 1, term.rows - 1);
-        // rather, more smoothly:
-        win_invalidate_all(true);
-      }
+      win_adjust_background();
 
       trace_resize(("# WM_WINDOWPOSCHANGED %3X (resizing %d) %d %d @ %d %d\n", WP->flags, resizing, WP->cy, WP->cx, WP->y, WP->x));
       if (per_monitor_dpi_aware == DPI_AWAREV1) {
