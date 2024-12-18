@@ -1856,6 +1856,18 @@ static int virtual_desktop_top;
     ReleaseDC(dt, dtc);
     virtual_desktop_left = wr.left;
     virtual_desktop_top = wr.top;
+
+    LONG exstyle = GetWindowLong(wnd, GWL_EXSTYLE);
+    if (exstyle & WS_EX_LEFTSCROLLBAR)
+      virtual_desktop_left -= GetSystemMetrics(SM_CXVSCROLL);
+    LONG style = GetWindowLong(wnd, GWL_STYLE);
+    if (!(style & WS_THICKFRAME)) {  // BorderStyle=void
+      virtual_desktop_top += GetSystemMetrics(SM_CYSIZEFRAME);// + GetSystemMetrics(SM_CYCAPTION);
+      virtual_desktop_left += GetSystemMetrics(SM_CXSIZEFRAME);
+    }
+    if (!(style & WS_CAPTION))  // BorderStyle=frame
+      virtual_desktop_top += GetSystemMetrics(SM_CYCAPTION);
+
     checked_desktop_config = true;
   }
   wx -= virtual_desktop_left;
