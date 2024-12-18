@@ -157,6 +157,9 @@ create_tabbar_font()
   SendMessage(tab_wnd, WM_SETFONT, (WPARAM)tabbar_font, 1);
 }
 
+// visual feedback during tab movement? could be made a configuration option
+#define swipe_tab true
+
 // We need to make a container for the tabbar for handling WM_NOTIFY, also for further extensions
 static LRESULT CALLBACK
 container_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
@@ -165,7 +168,8 @@ container_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 static int dragidx = -1;
 static int dragini = -1;  // initial drag tab, where it was clicked on
 static int targpro = -1;
-static int xpos = 0;
+static int xstart = 0;  // origin position of moved tab
+static int xswipe = 0;  // swipe offset with swipe_tab feature
 static HCURSOR hcursor = NULL;
 
   if (msg == WM_MOUSEACTIVATE) {
@@ -191,7 +195,8 @@ static HCURSOR hcursor = NULL;
       POINT p;
       if (GetCursorPos(&p) && ScreenToClient(hwnd, &p)) {
         int x = p.x - xoff;
-        xpos = p.x;
+        xstart = p.x;
+        xswipe = 0;  // init swipe_tab offset
         dragidx = x / curr_tab_width;
         if (dragidx < ntabinfo)
           dragmsg = HIWORD(lp);
@@ -211,7 +216,9 @@ static HCURSOR hcursor = NULL;
       // dragging tab
       POINT p;
       if (GetCursorPos(&p) && ScreenToClient(hwnd, &p)) {
-        if (abs(p.x - xpos) > GetSystemMetrics(SM_CXDRAG)) {
+        xswipe = p.x - xstart;  // adjust swipe_tab offset
+
+        if (abs(p.x - xstart) > GetSystemMetrics(SM_CXDRAG)) {
           SetCursor(LoadCursor(NULL, IDC_SIZEWE));
 
           // drop tab while dragging for tab reordering
@@ -232,22 +239,33 @@ static HCURSOR hcursor = NULL;
             int c = (tr.left + tr.right) / 2;
             targpro = 100 - abs(x - c) * 100 / (w / 2);
             //printf("drop %d [%d] %d: %d%%\n", tr.left, x, tr.right, targpro);
-            // draw tab drag indication
-            RedrawWindow(tab_wnd, 0, 0, RDW_INVALIDATE | RDW_UPDATENOW);
 
-            // move the tab
+            // move the tab (before swipe_tab adaptation!)
             win_tab_move(dropidx - dragidx);
 
             // update index of tab being dragged
             //printf("dragini %d dragidx %d dropidx %d\n", dragini, dragidx, dropidx);
             dragidx = dropidx;
-            if (dragidx != dragini)
+            if (dragidx != dragini) {
               // enable dynamic highlighting when changed drag tab position
               dragini = -1;
+
+              // rebase reference for swipe_tab visualisation feature
+              dragini = dragidx;
+              xstart = p.x;
+            }
+
+            // draw tab drag indication, shifted with swipe_tab feature
+            RedrawWindow(tab_wnd, 0, 0, RDW_INVALIDATE | RDW_UPDATENOW);
           }
         }
       }
     }
+  }
+  else if (msg == WM_SETCURSOR) {  // release cursor after tab moving
+    if (swipe_tab)
+      // clear swipe artefacts for proper swipe_tab visualisation
+      RedrawWindow(tab_wnd, 0, 0, RDW_INVALIDATE | RDW_UPDATENOW);
   }
   else if (msg == WM_LBUTTONUP && GetCapture() == hwnd) {
     SetCursor(hcursor);
@@ -322,8 +340,11 @@ static HCURSOR hcursor = NULL;
 
     HDC hdc = dis->hDC;
     //printf("WM_DRAWITEM %d DC %p RECT %d %d %d %d\n", itemID, hdc, dis->rcItem.left, dis->rcItem.right, dis->rcItem.top, dis->rcItem.bottom);
-    int hcenter = (dis->rcItem.left + dis->rcItem.right) / 2;
-    int vcenter = (dis->rcItem.top + dis->rcItem.bottom) / 2;
+
+    // copy RECT for dynamic swipe offset adaptation (swipe_tab feature)
+    RECT rcitem = dis->rcItem;
+    int hcenter = (rcitem.left + rcitem.right) / 2;
+    int vcenter = (rcitem.top + rcitem.bottom) / 2;
 
     SetTextAlign(hdc, TA_CENTER | TA_TOP);
     TCITEMW tie;
@@ -344,13 +365,17 @@ static HCURSOR hcursor = NULL;
       //printf("TAB fg %06X\n", GetSysColor(COLOR_HIGHLIGHTTEXT));
 
       // override active tab colours
-      if (dragidx >= 0 && dragidx != dragini) {
+      // if tab position changed, or always with feature swipe_tab
+      if (dragidx >= 0 && (swipe_tab || dragidx != dragini)) {
         // dynamic highlighting of tab being dragged (not initially)
         colour bg1 = cfg.tab_bg_colour;
         if (bg1 == (colour)-1)
           bg1 = GetSysColor(COLOR_HIGHLIGHT);
         colour bg0 = GetSysColor(COLOR_3DFACE);
 
+        // fix unset target hit percentage for swipe_tab feature
+        if (targpro < 0)
+          targpro = 100;
         //int p = targpro * 80 / 100 + 10;
         int p = (100 - sqr(100 - targpro) / 100) * 80 / 100 + 10;
         int r = red(bg0) + p * (red(bg1) - red(bg0)) / 100;
@@ -362,10 +387,17 @@ static HCURSOR hcursor = NULL;
         // could use a different colour, or even configurable:
         //tabbg = RGB(b, g, r);
         //tabbg = RGB(g, b, r);
-        //tabbg = RGB(g, r, b);
+        tabbg = RGB(g, r, b);
         //tabbg = RGB(b, r, g);
 
         tabbr = CreateSolidBrush(tabbg);
+
+        if (swipe_tab) {
+          // dynamic swipe offset shifting
+          rcitem.left += xswipe;
+          rcitem.right += xswipe;
+          hcenter += xswipe;
+        }
       }
       else {
         // override active tab colours if configured
@@ -389,7 +421,9 @@ static HCURSOR hcursor = NULL;
       SetTextColor(hdc, GetSysColor(COLOR_CAPTIONTEXT));
       //printf("tab fg %06X\n", GetSysColor(COLOR_CAPTIONTEXT));
     }
-    FillRect(hdc, &dis->rcItem, tabbr);
+
+    // paint tab contents, shifted as set up by swipe_tab feature
+    FillRect(hdc, &rcitem, tabbr);
     if (tabbg != (colour)-1)
       DeleteObject(tabbr);
     SetBkMode(hdc, TRANSPARENT);
