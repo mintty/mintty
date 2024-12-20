@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: mintty\n"
 "Report-Msgid-Bugs-To: https://github.com/mintty/mintty/issues/700\n"
-"POT-Creation-Date: 2024-09-24 03:55+0200\n"
+"POT-Creation-Date: 2024-12-21 13:51+0100\n"
 "PO-Revision-Date: 2024-06-28 23:51+0200\n"
 "Last-Translator: GeekDuanLian <dl@pbstu.com>\n"
 "Language-Team: \n"
@@ -19,7 +19,7 @@ msgstr ""
 "X-Generator: Poedit 2.0.3\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: charset.c:228 charset.c:239 winmain.c:6422 winmain.c:6535 winmain.c:6542
+#: charset.c:228 charset.c:239 winmain.c:6471 winmain.c:6584 winmain.c:6591
 msgid "(Default)"
 msgstr "(默认)"
 
@@ -263,7 +263,7 @@ msgid "Save"
 msgstr "保存"
 
 #. __ Dialog button - cancel
-#: config.c:3711 winctrls.c:1254 windialog.c:872
+#: config.c:3711 winctrls.c:1277 windialog.c:895
 msgid "Cancel"
 msgstr "取消"
 
@@ -273,12 +273,12 @@ msgid "Apply"
 msgstr "应用"
 
 #. __ Dialog button - take notice
-#: config.c:3719 windialog.c:869
+#: config.c:3719 windialog.c:892
 msgid "I see"
 msgstr "我了解了"
 
 #. __ Dialog button - confirm action
-#: config.c:3721 winctrls.c:1253 windialog.c:871
+#: config.c:3721 winctrls.c:1276 windialog.c:894
 msgid "OK"
 msgstr "确定"
 
@@ -323,7 +323,7 @@ msgid "Color Scheme Designer"
 msgstr "颜色样式设计工具"
 
 #. __ Options - Looks: store colour scheme
-#: config.c:3756 winctrls.c:461
+#: config.c:3756 winctrls.c:484
 msgid "Store"
 msgstr "保存"
 
@@ -431,12 +431,12 @@ msgstr "字体"
 
 #. __ Options - Text:
 #. __ Font chooser:
-#: config.c:3857 winctrls.c:1264
+#: config.c:3857 winctrls.c:1287
 msgid "Font st&yle:"
 msgstr "字体样式(&Y)"
 
 #. __ Font chooser:
-#: config.c:3862 winctrls.c:1266
+#: config.c:3862 winctrls.c:1289
 msgid "&Size:"
 msgstr "大小(&S)"
 
@@ -926,126 +926,126 @@ msgid "[Printing...] "
 msgstr "[打印中...] "
 
 #. __ Options - Text: font chooser activation button
-#: winctrls.c:912
+#: winctrls.c:935
 msgid "&Select..."
 msgstr "选择(&S)..."
 
 #. __ Font chooser: title bar label
-#: winctrls.c:1258
+#: winctrls.c:1281
 msgid "Font "
 msgstr "字体 "
 
 #. __ Font chooser: button
-#: winctrls.c:1260
+#: winctrls.c:1283
 msgid "&Apply"
 msgstr "应用(&A)"
 
 #. __ Font chooser:
-#: winctrls.c:1262
+#: winctrls.c:1285
 msgid "&Font:"
 msgstr "字体(&F)："
 
 #. __ Font chooser:
-#: winctrls.c:1268
+#: winctrls.c:1291
 msgid "Sample"
 msgstr "实例"
 
 #. __ Font chooser: text sample ("AaBbYyZz" by default)
-#: winctrls.c:1272 winctrls.c:1531 winctrls.c:1696
+#: winctrls.c:1295 winctrls.c:1554 winctrls.c:1719
 msgid "Ferqœm’4€"
 msgstr "ABC abc 文字实例"
 
 #. __ Font chooser: this field is only shown with FontMenu=1
-#: winctrls.c:1289
+#: winctrls.c:1312
 msgid "Sc&ript:"
 msgstr "字符集："
 
 #. __ Font chooser: this field is only shown with FontMenu=1
-#: winctrls.c:1291
+#: winctrls.c:1314
 msgid "<A>Show more fonts</A>"
 msgstr "<A>显示更多字体</A>"
 
 #. __ Colour chooser: title bar label
-#: winctrls.c:1296
+#: winctrls.c:1319
 msgid "Colour "
 msgstr "颜色 "
 
 #. __ Colour chooser:
-#: winctrls.c:1309 winctrls.c:1321
+#: winctrls.c:1332 winctrls.c:1344
 msgid "B&asic colours:"
 msgstr "基本颜色(&B)："
 
 #. __ Colour chooser:
-#: winctrls.c:1330
+#: winctrls.c:1353
 msgid "&Custom colours:"
 msgstr "自定义颜色(&C)："
 
 #. __ Colour chooser:
-#: winctrls.c:1337
+#: winctrls.c:1360
 msgid "De&fine Custom Colours >>"
 msgstr "定义当前颜色(&F)>>"
 
 #. __ Colour chooser:
-#: winctrls.c:1340
+#: winctrls.c:1363
 msgid "Colour"
 msgstr "颜色"
 
 #. __ Colour chooser:
-#: winctrls.c:1342
+#: winctrls.c:1365
 msgid "|S&olid"
 msgstr "|纯色(&O)"
 
 #. __ Colour chooser:
-#: winctrls.c:1344
+#: winctrls.c:1367
 msgid "&Hue:"
 msgstr "色调(&H)"
 
 #. __ Colour chooser:
-#: winctrls.c:1347
+#: winctrls.c:1370
 msgid "&Sat:"
 msgstr "饱和度(&S)"
 
 #. __ Colour chooser:
-#: winctrls.c:1349
+#: winctrls.c:1372
 msgid "&Lum:"
 msgstr "亮度(&L)"
 
 #. __ Colour chooser:
-#: winctrls.c:1351
+#: winctrls.c:1374
 msgid "&Red:"
 msgstr "红色(&R)："
 
 #. __ Colour chooser:
-#: winctrls.c:1353
+#: winctrls.c:1376
 msgid "&Green:"
 msgstr "绿色(&G)："
 
 #. __ Colour chooser:
-#: winctrls.c:1355
+#: winctrls.c:1378
 msgid "&Blue:"
 msgstr "蓝色(&B)："
 
 #. __ Colour chooser:
-#: winctrls.c:1358
+#: winctrls.c:1381
 msgid "A&dd to Custom Colours"
 msgstr "添加到自定义颜色(&D)"
 
 #. __ Options: dialog title
-#: windialog.c:243 windialog.c:816
+#: windialog.c:266 windialog.c:839
 msgid "Options"
 msgstr "选项"
 
 #. __ Options: dialog title: "mintty <release> available (for download)"
-#: windialog.c:245
+#: windialog.c:268
 msgid "available"
 msgstr "可用"
 
 #. __ Options: dialog width scale factor (80...200)
-#: windialog.c:760
+#: windialog.c:783
 msgid "100"
 msgstr "105"
 
-#: windialog.c:901 windialog.c:928
+#: windialog.c:924 windialog.c:951
 msgid "Error"
 msgstr "错误"
 
@@ -1252,36 +1252,36 @@ msgstr "［暂停滚屏］"
 msgid "[SCROLL MODE] "
 msgstr "［滚屏模式］"
 
-#: winmain.c:3734
+#: winmain.c:3770
 msgid "Processes are running in session:"
 msgstr "在当前会话中还运行着进程："
 
-#: winmain.c:3735
+#: winmain.c:3771
 msgid "Close anyway?"
 msgstr "确认关闭？"
 
-#: winmain.c:3759
+#: winmain.c:3795
 msgid "Reset terminal?"
 msgstr "重置 终端？"
 
-#: winmain.c:3961
+#: winmain.c:3997
 msgid "Try '--help' for more information"
 msgstr "使用 --help 参数运行来了解如何使用"
 
-#: winmain.c:3969
+#: winmain.c:4005
 msgid "Could not load icon"
 msgstr "无法加载图标"
 
-#: winmain.c:6244
+#: winmain.c:6293
 msgid "Usage:"
 msgstr "用法："
 
-#: winmain.c:6245
+#: winmain.c:6294
 msgid "[OPTION]... [ PROGRAM [ARG]... | - ]"
 msgstr "[选项]... [ 程序名 [参数]... | - ]"
 
 #. __ help text (output of -H / --help), after initial line ("synopsis")
-#: winmain.c:6248
+#: winmain.c:6297
 msgid ""
 "Start a new terminal session running the specified program or the user's "
 "shell.\n"
@@ -1339,39 +1339,39 @@ msgstr ""
 "  -V, --version         打印版本信息然后退出\n"
 "请查阅 man 手册了解更多命令行选项和配置相关帮助内容。\n"
 
-#: winmain.c:6422 winmain.c:6535 winmain.c:6542
+#: winmain.c:6471 winmain.c:6584 winmain.c:6591
 msgid "WSL distribution '%s' not found"
 msgstr "找不到 '%s' WSL 发行版"
 
-#: winmain.c:6573
+#: winmain.c:6622
 msgid "Duplicate option '%s'"
 msgstr "重复的选项 %s"
 
-#: winmain.c:6581 winmain.c:6669
+#: winmain.c:6630 winmain.c:6721
 msgid "Unknown option '%s'"
 msgstr "未知的选项 %s"
 
-#: winmain.c:6583
+#: winmain.c:6632
 msgid "Option '%s' requires an argument"
 msgstr "选项 %s 需要一个参数"
 
-#: winmain.c:6610
+#: winmain.c:6659
 msgid "Syntax error in position argument '%s'"
 msgstr "position 选项的参数 '%s' 有语法错误"
 
-#: winmain.c:6621
+#: winmain.c:6670
 msgid "Syntax error in size argument '%s'"
 msgstr "size 选项的参数 '%s' 有语法错误"
 
-#: winmain.c:6778
+#: winmain.c:6830
 msgid "Syntax error in geometry argument '%s'"
 msgstr "geometry 选项的参数 '%s' 有语法错误"
 
-#: winmain.c:6875
+#: winmain.c:6927
 msgid "Mintty could not detach from caller, starting anyway"
 msgstr "Mintty 不能从调用者分离，但继续启动"
 
-#: winmain.c:7218
+#: winmain.c:7270
 msgid "Using default title due to invalid characters in program name"
 msgstr "使用默认的标题栏文字，因为程序名中有无效字符"
 

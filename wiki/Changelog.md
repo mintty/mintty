@@ -1,3 +1,5 @@
+### 3.7.7 (21 December 2024) ###
+
 Terminal features
   * VT52 emulation absolute position keeps row/column if out-of-bounds (#1299).
 

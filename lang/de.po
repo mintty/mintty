@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: mintty\n"
 "Report-Msgid-Bugs-To: https://github.com/mintty/mintty/issues/700\n"
-"POT-Creation-Date: 2024-09-24 03:55+0200\n"
+"POT-Creation-Date: 2024-12-21 13:51+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -16,7 +16,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: charset.c:228 charset.c:239 winmain.c:6422 winmain.c:6535 winmain.c:6542
+#: charset.c:228 charset.c:239 winmain.c:6471 winmain.c:6584 winmain.c:6591
 msgid "(Default)"
 msgstr ""
 
@@ -260,7 +260,7 @@ msgid "Save"
 msgstr "Sichern"
 
 #. __ Dialog button - cancel
-#: config.c:3711 winctrls.c:1254 windialog.c:872
+#: config.c:3711 winctrls.c:1277 windialog.c:895
 msgid "Cancel"
 msgstr "Abbruch"
 
@@ -270,12 +270,12 @@ msgid "Apply"
 msgstr "Anwenden"
 
 #. __ Dialog button - take notice
-#: config.c:3719 windialog.c:869
+#: config.c:3719 windialog.c:892
 msgid "I see"
 msgstr "Aha"
 
 #. __ Dialog button - confirm action
-#: config.c:3721 winctrls.c:1253 windialog.c:871
+#: config.c:3721 winctrls.c:1276 windialog.c:894
 msgid "OK"
 msgstr ""
 
@@ -320,7 +320,7 @@ msgid "Color Scheme Designer"
 msgstr ""
 
 #. __ Options - Looks: store colour scheme
-#: config.c:3756 winctrls.c:461
+#: config.c:3756 winctrls.c:484
 msgid "Store"
 msgstr "Sichern"
 
@@ -428,12 +428,12 @@ msgstr "Schrift"
 
 #. __ Options - Text:
 #. __ Font chooser:
-#: config.c:3857 winctrls.c:1264
+#: config.c:3857 winctrls.c:1287
 msgid "Font st&yle:"
 msgstr "Schriftsch&nitt:"
 
 #. __ Font chooser:
-#: config.c:3862 winctrls.c:1266
+#: config.c:3862 winctrls.c:1289
 msgid "&Size:"
 msgstr "Schr.&grad:"
 
@@ -923,126 +923,126 @@ msgid "[Printing...] "
 msgstr "[Druckt...] "
 
 #. __ Options - Text: font chooser activation button
-#: winctrls.c:912
+#: winctrls.c:935
 msgid "&Select..."
 msgstr "&Wählen..."
 
 #. __ Font chooser: title bar label
-#: winctrls.c:1258
+#: winctrls.c:1281
 msgid "Font "
 msgstr "Schriftart"
 
 #. __ Font chooser: button
-#: winctrls.c:1260
+#: winctrls.c:1283
 msgid "&Apply"
 msgstr "&Übernehmen"
 
 #. __ Font chooser:
-#: winctrls.c:1262
+#: winctrls.c:1285
 msgid "&Font:"
 msgstr "&Schriftart:"
 
 #. __ Font chooser:
-#: winctrls.c:1268
+#: winctrls.c:1291
 msgid "Sample"
 msgstr "Beispiel"
 
 #. __ Font chooser: text sample ("AaBbYyZz" by default)
-#: winctrls.c:1272 winctrls.c:1531 winctrls.c:1696
+#: winctrls.c:1295 winctrls.c:1554 winctrls.c:1719
 msgid "Ferqœm’4€"
 msgstr ""
 
 #. __ Font chooser: this field is only shown with FontMenu=1
-#: winctrls.c:1289
+#: winctrls.c:1312
 msgid "Sc&ript:"
 msgstr "S&kript:"
 
 #. __ Font chooser: this field is only shown with FontMenu=1
-#: winctrls.c:1291
+#: winctrls.c:1314
 msgid "<A>Show more fonts</A>"
 msgstr "<A>Weitere Schriftarten anzeigen</A>"
 
 #. __ Colour chooser: title bar label
-#: winctrls.c:1296
+#: winctrls.c:1319
 msgid "Colour "
 msgstr "Farbe"
 
 #. __ Colour chooser:
-#: winctrls.c:1309 winctrls.c:1321
+#: winctrls.c:1332 winctrls.c:1344
 msgid "B&asic colours:"
 msgstr "Gru&ndfarben:"
 
 #. __ Colour chooser:
-#: winctrls.c:1330
+#: winctrls.c:1353
 msgid "&Custom colours:"
 msgstr "Ben&utzerdefinierte Farben:"
 
 #. __ Colour chooser:
-#: winctrls.c:1337
+#: winctrls.c:1360
 msgid "De&fine Custom Colours >>"
 msgstr "Farben &definieren >>"
 
 #. __ Colour chooser:
-#: winctrls.c:1340
+#: winctrls.c:1363
 msgid "Colour"
 msgstr "Farbe"
 
 #. __ Colour chooser:
-#: winctrls.c:1342
+#: winctrls.c:1365
 msgid "|S&olid"
 msgstr "|B&asis"
 
 #. __ Colour chooser:
-#: winctrls.c:1344
+#: winctrls.c:1367
 msgid "&Hue:"
 msgstr "Farb&t.:"
 
 #. __ Colour chooser:
-#: winctrls.c:1347
+#: winctrls.c:1370
 msgid "&Sat:"
 msgstr "S&ätt.:"
 
 #. __ Colour chooser:
-#: winctrls.c:1349
+#: winctrls.c:1372
 msgid "&Lum:"
 msgstr "&Hell.:"
 
 #. __ Colour chooser:
-#: winctrls.c:1351
+#: winctrls.c:1374
 msgid "&Red:"
 msgstr "&Rot:"
 
 #. __ Colour chooser:
-#: winctrls.c:1353
+#: winctrls.c:1376
 msgid "&Green:"
 msgstr "&Grün:"
 
 #. __ Colour chooser:
-#: winctrls.c:1355
+#: winctrls.c:1378
 msgid "&Blue:"
 msgstr "&Blau:"
 
 #. __ Colour chooser:
-#: winctrls.c:1358
+#: winctrls.c:1381
 msgid "A&dd to Custom Colours"
 msgstr "Farben hin&zufügen"
 
 #. __ Options: dialog title
-#: windialog.c:243 windialog.c:816
+#: windialog.c:266 windialog.c:839
 msgid "Options"
 msgstr "Optionen"
 
 #. __ Options: dialog title: "mintty <release> available (for download)"
-#: windialog.c:245
+#: windialog.c:268
 msgid "available"
 msgstr "verfügbar"
 
 #. __ Options: dialog width scale factor (80...200)
-#: windialog.c:760
+#: windialog.c:783
 msgid "100"
 msgstr ""
 
-#: windialog.c:901 windialog.c:928
+#: windialog.c:924 windialog.c:951
 msgid "Error"
 msgstr "Fehler"
 
@@ -1249,36 +1249,36 @@ msgstr "[KEIN SCROLLEN] "
 msgid "[SCROLL MODE] "
 msgstr "[SCROLL MODUS] "
 
-#: winmain.c:3734
+#: winmain.c:3770
 msgid "Processes are running in session:"
 msgstr "Laufende Prozesse:"
 
-#: winmain.c:3735
+#: winmain.c:3771
 msgid "Close anyway?"
 msgstr "Trotzdem schließen?"
 
-#: winmain.c:3759
+#: winmain.c:3795
 msgid "Reset terminal?"
 msgstr "Terminal zurücksetzen?"
 
-#: winmain.c:3961
+#: winmain.c:3997
 msgid "Try '--help' for more information"
 msgstr "Versuche '--help' für mehr Information"
 
-#: winmain.c:3969
+#: winmain.c:4005
 msgid "Could not load icon"
 msgstr "Konnte Symbol nicht laden"
 
-#: winmain.c:6244
+#: winmain.c:6293
 msgid "Usage:"
 msgstr "Aufruf:"
 
-#: winmain.c:6245
+#: winmain.c:6294
 msgid "[OPTION]... [ PROGRAM [ARG]... | - ]"
 msgstr "[OPTION]... [ PROGRAMM [ARG]... | - ]"
 
 #. __ help text (output of -H / --help), after initial line ("synopsis")
-#: winmain.c:6248
+#: winmain.c:6297
 msgid ""
 "Start a new terminal session running the specified program or the user's "
 "shell.\n"
@@ -1345,39 +1345,39 @@ msgstr ""
 "  -V, --version         Zeige nur Versions-Information\n"
 "Siehe die Manual-Seite für weitere Optionen und Konfiguration.\n"
 
-#: winmain.c:6422 winmain.c:6535 winmain.c:6542
+#: winmain.c:6471 winmain.c:6584 winmain.c:6591
 msgid "WSL distribution '%s' not found"
 msgstr "WSL-Distribution '%s' nicht gefunden"
 
-#: winmain.c:6573
+#: winmain.c:6622
 msgid "Duplicate option '%s'"
 msgstr "Doppelte Option '%s'"
 
-#: winmain.c:6581 winmain.c:6669
+#: winmain.c:6630 winmain.c:6721
 msgid "Unknown option '%s'"
 msgstr "Unbekannte Option '%s'"
 
-#: winmain.c:6583
+#: winmain.c:6632
 msgid "Option '%s' requires an argument"
 msgstr "Option '%s' benötigt einen Parameter"
 
-#: winmain.c:6610
+#: winmain.c:6659
 msgid "Syntax error in position argument '%s'"
 msgstr "Formatfehler in Positionsparameter '%s'"
 
-#: winmain.c:6621
+#: winmain.c:6670
 msgid "Syntax error in size argument '%s'"
 msgstr "Formatfehler in Größenparameter '%s'"
 
-#: winmain.c:6778
+#: winmain.c:6830
 msgid "Syntax error in geometry argument '%s'"
 msgstr "Formatfehler in Größen-/Positionsparameter '%s'"
 
-#: winmain.c:6875
+#: winmain.c:6927
 msgid "Mintty could not detach from caller, starting anyway"
 msgstr "Mintty konnte nicht vom Aufrufer abkoppeln, startet trotzdem"
 
-#: winmain.c:7218
+#: winmain.c:7270
 msgid "Using default title due to invalid characters in program name"
 msgstr "Nehme Default-Titel wegen ungültiger Zeichen im Programmnamen"
 
