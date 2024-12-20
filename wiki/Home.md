@@ -16,4 +16,5 @@ Further information:
 <dt>	[[PuttyIssues]] <dd>PuTTY issues addressed in mintty
 <dt>	[[Credits]]	<dd>Distinguished contributors
 <dt>	[[Changelog]]
+<dt>	[[Versions]]
 </dl>
