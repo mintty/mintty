@@ -6820,7 +6820,7 @@ main(int argc, char *argv[])
     load_scheme(cfg.colour_scheme);
   else if (*cfg.theme_file)
     load_theme(cfg.theme_file);
-  else if (cfg.use_windows_theme) {
+  else if (*cfg.dark_theme) {
       uint val = getregval(HKEY_CURRENT_USER, W("Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize"), W("AppsUseLightTheme"));
       if (val == 0) {
         load_theme(W("windows10"));
@@ -8022,15 +8022,15 @@ static int dynfonts = 0;
 #else
       check_unhide_or_clear_tab();
 #endif
-      if(cfg.use_windows_theme) {
+      if(*cfg.dark_theme) {
         uint val = getregval(HKEY_CURRENT_USER, W("Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize"), W("AppsUseLightTheme"));
         if (initial_value != val) {
           initial_value = val;
 
           if (val == 0) {
-            load_theme(W("windows10"));
+            load_theme(cfg.dark_theme);
           } else {
-            load_theme(W("kohlrausch"));
+            load_theme(cfg.theme_file);
           }
           win_reset_colours();
           win_invalidate_all(false);
