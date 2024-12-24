@@ -8010,7 +8010,7 @@ static int dynfonts = 0;
   is_init = true;
   // tab management: secure transparency appearance by hiding other tabs
   win_set_tab_focus('I');  // hide other tabs
-  uint initial_value = 2;
+  uint theme_reg_value = 2;  // We use this variable to avoid keep loading the theme all the time, so we start with an impossible value, and then we check if it changed from 0 to 1.
   // Message loop.
   for (;;) {
     MSG msg;
@@ -8024,8 +8024,8 @@ static int dynfonts = 0;
 #endif
       if(*cfg.dark_theme) {
         uint val = getregval(HKEY_CURRENT_USER, W("Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize"), W("AppsUseLightTheme"));
-        if (initial_value != val) {
-          initial_value = val;
+        if (theme_reg_value != val) {
+          theme_reg_value = val;
 
           if (val == 0) {
             load_theme(cfg.dark_theme);
