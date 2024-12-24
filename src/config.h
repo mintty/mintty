@@ -252,6 +252,7 @@ typedef struct {
   string word_chars_excl;
   colour ime_cursor_colour;
   colour_pair ansi_colours[16];
+  wstring dark_theme;
   wstring sixel_clip_char;
   bool short_long_opts;
   bool bold_as_special;

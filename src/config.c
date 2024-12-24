@@ -64,6 +64,7 @@ const config default_cfg = {
   .theme_file = W(""),
   .background = W(""),
   .colour_scheme = "",
+  .dark_theme = W(""),
   .transparency = 0,
   .blurred = false,
   .opaque_when_focused = false,
@@ -366,6 +367,7 @@ options[] = {
   {"ThemeFile", OPT_WSTRING, offcfg(theme_file)},
   {"Background", OPT_WSTRING, offcfg(background)},
   {"ColourScheme", OPT_STRING, offcfg(colour_scheme)},
+  {"DarkTheme", OPT_WSTRING, offcfg(dark_theme)},
   {"Transparency", OPT_TRANS, offcfg(transparency)},
 #ifdef support_blurred
   {"Blur", OPT_BOOL, offcfg(blurred)},
@@ -1880,7 +1882,6 @@ apply_config(bool save)
         remember_file_option("apply", i);
     }
   }
-
   copy_config("apply", &file_cfg, &new_cfg);
   if (wcscmp(new_cfg.lang, cfg.lang) != 0
       || (wcscmp(new_cfg.lang, W("=")) == 0 && new_cfg.locale != cfg.locale)
@@ -1890,15 +1891,25 @@ apply_config(bool save)
   fix_config();
   if (save)
     save_config();
-  bool had_theme = !!*cfg.theme_file;
+  bool had_theme = !!*cfg.theme_file && !!*cfg.dark_theme;
 
   if (*cfg.colour_scheme) {
     load_scheme(cfg.colour_scheme);
     win_reset_colours();
     win_invalidate_all(false);
   }
-  else if (*cfg.theme_file) {
+  else if (*cfg.theme_file && !*cfg.dark_theme) {
     load_theme(cfg.theme_file);
+    win_reset_colours();
+    win_invalidate_all(false);
+  } else if(*cfg.dark_theme) {
+    uint val = getregval(HKEY_CURRENT_USER, W("Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize"), W("AppsUseLightTheme"));
+    //Means Windows is using dark mode, or is not defined (With also means is using dark mode)
+    if (val == 0) {
+      load_theme(cfg.dark_theme);
+    } else {
+      load_theme(cfg.theme_file);
+    }
     win_reset_colours();
     win_invalidate_all(false);
   }
@@ -2920,6 +2931,16 @@ scheme_return:
 }
 
 static void
+set_new_cfg(control *ctrl, config *new_cfg, wstring theme_name)
+{
+  if (strcmp(ctrl->label, "&Theme") == 0) {
+    new_cfg->theme_file = theme_name;
+  } else {
+    new_cfg->dark_theme = theme_name;
+  }
+}
+
+static void
 theme_handler(control *ctrl, int event)
 {
   //__ terminal theme / colour scheme
@@ -2930,7 +2951,13 @@ theme_handler(control *ctrl, int event)
   // downloaded theme indicator must contain a slash
   // to steer enabled state of Store button properly
   const wstring CFG_DOWNLOADED = W("@/@");
-  wstring theme_name = new_cfg.theme_file;
+  wstring theme_name;
+  if (strcmp(ctrl->label, "&Theme") == 0) {
+    theme_name = new_cfg.theme_file;
+  } else {
+    theme_name = new_cfg.dark_theme;
+  }
+
   if (event == EVENT_REFRESH) {
     dlg_listbox_clear(ctrl);
     dlg_listbox_add_w(ctrl, NONE);
@@ -2950,14 +2977,14 @@ theme_handler(control *ctrl, int event)
     else
       dlg_editbox_get_w(ctrl, &theme_name);
 
-    new_cfg.theme_file = theme_name;
+    set_new_cfg(ctrl, &new_cfg, theme_name);
     // clear pending colour scheme
     strset(&new_cfg.colour_scheme, "");
     enable_widget(store_button, false);
   }
   else if (event == EVENT_VALCHANGE) {  // pasted or typed-in
     dlg_editbox_get_w(ctrl, &theme_name);
-    new_cfg.theme_file = theme_name;
+    set_new_cfg(ctrl, &new_cfg, theme_name);
     enable_widget(store_button,
                   *new_cfg.colour_scheme && *theme_name
                   && !wcschr(theme_name, L'/') && !wcschr(theme_name, L'\\')
@@ -2970,7 +2997,11 @@ theme_handler(control *ctrl, int event)
     if (wcsncmp(W("data:text/plain,"), dragndrop, 16) == 0) {
       // indicate availability of downloaded scheme to be stored
       dlg_editbox_set_w(ctrl, DOWNLOADED);
-      wstrset(&new_cfg.theme_file, CFG_DOWNLOADED);
+      if (strcmp(ctrl->label, "&Theme") == 0) {
+        wstrset(&new_cfg.theme_file, CFG_DOWNLOADED);
+      } else {
+        wstrset(&new_cfg.dark_theme, CFG_DOWNLOADED);
+      }
       // un-URL-escape scheme description
       char * scheme = cs__wcstoutf(&dragndrop[16]);
       char * url = scheme;
@@ -3021,7 +3052,11 @@ theme_handler(control *ctrl, int event)
           // set theme name proposal to url base name
           urlpoi++;
           dlg_editbox_set_w(ctrl, urlpoi);
-          wstrset(&new_cfg.theme_file, urlpoi);
+          if (strcmp(ctrl->label, "&Theme") == 0) {
+            wstrset(&new_cfg.theme_file, urlpoi);
+          } else {
+            wstrset(&new_cfg.dark_theme, urlpoi);
+          }
           // set scheme
           strset(&new_cfg.colour_scheme, sch);
 
@@ -3037,12 +3072,16 @@ theme_handler(control *ctrl, int event)
     }
     else {
       dlg_editbox_set_w(ctrl, dragndrop);
-      wstrset(&new_cfg.theme_file, dragndrop);
+      if (strcmp(ctrl->label, "&Theme") == 0) {
+        wstrset(&new_cfg.theme_file, dragndrop);
+      } else {
+        wstrset(&new_cfg.dark_theme, dragndrop);
+      }
       enable_widget(store_button, false);
     }
   }
   // apply changed theme immediately
-  if (strcmp(new_cfg.colour_scheme, cfg.colour_scheme) || wcscmp(new_cfg.theme_file, cfg.theme_file))
+  if (strcmp(new_cfg.colour_scheme, cfg.colour_scheme) || wcscmp(new_cfg.theme_file, cfg.theme_file) || wcscmp(new_cfg.dark_theme, cfg.dark_theme))
   {
 #ifdef debug_theme
     printf("theme_handler: apply\n");
@@ -3745,7 +3784,11 @@ setup_config_box(controlbox * b)
   )->column = 2;
   theme = ctrl_combobox(
     //__ Options - Looks:
-    s, _("&Theme"), 80, theme_handler, &new_cfg.theme_file
+    s, _("&Theme"), 75 , theme_handler, &new_cfg.theme_file
+  );
+  theme = ctrl_combobox(
+    //__ Options - Dark Theme:
+    s, _("&Dark Theme"), 75, theme_handler, &new_cfg.dark_theme
   );
   ctrl_columns(s, 1, 100);  // reset column stuff so we can rearrange them
   ctrl_columns(s, 2, 80, 20);
