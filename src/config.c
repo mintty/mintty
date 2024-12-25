@@ -62,9 +62,9 @@ const config default_cfg = {
   .search_bg_colour = 0x00DDDD,
   .search_current_colour = 0x0099DD,
   .theme_file = W(""),
+  .dark_theme = W(""),
   .background = W(""),
   .colour_scheme = "",
-  .dark_theme = W(""),
   .transparency = 0,
   .blurred = false,
   .opaque_when_focused = false,
@@ -365,9 +365,9 @@ options[] = {
   {"SearchBackgroundColour", OPT_COLOUR, offcfg(search_bg_colour)},
   {"SearchCurrentColour", OPT_COLOUR, offcfg(search_current_colour)},
   {"ThemeFile", OPT_WSTRING, offcfg(theme_file)},
+  {"DarkTheme", OPT_WSTRING, offcfg(dark_theme)},
   {"Background", OPT_WSTRING, offcfg(background)},
   {"ColourScheme", OPT_STRING, offcfg(colour_scheme)},
-  {"DarkTheme", OPT_WSTRING, offcfg(dark_theme)},
   {"Transparency", OPT_TRANS, offcfg(transparency)},
 #ifdef support_blurred
   {"Blur", OPT_BOOL, offcfg(blurred)},
@@ -1881,6 +1881,7 @@ apply_config(bool save)
       if (changed)
         remember_file_option("apply", i);
     }
+
   }
   copy_config("apply", &file_cfg, &new_cfg);
   if (wcscmp(new_cfg.lang, cfg.lang) != 0
@@ -1902,7 +1903,7 @@ apply_config(bool save)
     load_theme(cfg.theme_file);
     win_reset_colours();
     win_invalidate_all(false);
-  } else if(*cfg.dark_theme) {
+  } else if (*cfg.dark_theme) {
     uint val = getregval(HKEY_CURRENT_USER, W("Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize"), W("AppsUseLightTheme"));
     //Means Windows is using dark mode, or is not defined (With also means is using dark mode)
     if (val == 0) {
@@ -1910,6 +1911,7 @@ apply_config(bool save)
     } else {
       load_theme(cfg.theme_file);
     }
+
     win_reset_colours();
     win_invalidate_all(false);
   }
@@ -2931,7 +2933,7 @@ scheme_return:
 }
 
 static void
-set_new_cfg(control *ctrl, config *new_cfg, wstring theme_name)
+set_new_cfg_theme(control *ctrl, config *new_cfg, wstring theme_name)
 {
   if (strcmp(ctrl->label, "&Theme") == 0) {
     new_cfg->theme_file = theme_name;
@@ -2977,14 +2979,14 @@ theme_handler(control *ctrl, int event)
     else
       dlg_editbox_get_w(ctrl, &theme_name);
 
-    set_new_cfg(ctrl, &new_cfg, theme_name);
+    set_new_cfg_theme(ctrl, &new_cfg, theme_name);
     // clear pending colour scheme
     strset(&new_cfg.colour_scheme, "");
     enable_widget(store_button, false);
   }
   else if (event == EVENT_VALCHANGE) {  // pasted or typed-in
     dlg_editbox_get_w(ctrl, &theme_name);
-    set_new_cfg(ctrl, &new_cfg, theme_name);
+    set_new_cfg_theme(ctrl, &new_cfg, theme_name);
     enable_widget(store_button,
                   *new_cfg.colour_scheme && *theme_name
                   && !wcschr(theme_name, L'/') && !wcschr(theme_name, L'\\')

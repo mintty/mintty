@@ -8022,7 +8022,7 @@ static int dynfonts = 0;
 #else
       check_unhide_or_clear_tab();
 #endif
-      if(*cfg.dark_theme) {
+      if (*cfg.dark_theme) {
         uint val = getregval(HKEY_CURRENT_USER, W("Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize"), W("AppsUseLightTheme"));
         if (theme_reg_value != val) {
           theme_reg_value = val;
