@@ -1,3 +1,6 @@
+Character rendering
+  * Fix overhang rendering for some characters, clipped in 3.7.7 (#1304).
+
 ### 3.7.7 (21 December 2024) ###
 
 Terminal features
