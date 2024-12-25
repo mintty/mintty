@@ -1881,8 +1881,8 @@ apply_config(bool save)
       if (changed)
         remember_file_option("apply", i);
     }
-
   }
+
   copy_config("apply", &file_cfg, &new_cfg);
   if (wcscmp(new_cfg.lang, cfg.lang) != 0
       || (wcscmp(new_cfg.lang, W("=")) == 0 && new_cfg.locale != cfg.locale)
