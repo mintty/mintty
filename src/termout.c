@@ -4999,6 +4999,14 @@ term_do_write(const char *buf, uint len, bool fix_status)
   while (pos < len) {
     uchar c = buf[pos++];
 
+    if (!tek_mode && (c == 0x1A || c == 0x18)) { // SUB or CAN
+      term.state = NORMAL;
+      // display one of ␦ / ⸮ / ▒
+      write_char(0x2426, 1);
+      //write_char(0x2592, 1);
+      continue;
+    }
+
    /*
     * If we're printing, add the character to the printer buffer.
     */

@@ -1,3 +1,6 @@
+Terminal features
+  * SUB and CAN controls terminate ESC sequences and are displayed (DEC, xterm 397).
+
 Character rendering
   * Fix overhang rendering for some characters, clipped in 3.7.7 (#1304).
 
