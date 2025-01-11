@@ -1,5 +1,5 @@
 // termout.c (part of mintty)
-// Copyright 2008-23 Andy Koppe, 2017-2024 Thomas Wolff
+// Copyright 2008-23 Andy Koppe, 2017-2025 Thomas Wolff
 // Adapted from code from PuTTY-0.60 by Simon Tatham and team.
 // Licensed under the terms of the GNU General Public License v3 or later.
 
@@ -5204,8 +5204,13 @@ term_do_write(const char *buf, uint len, bool fix_status)
                 term.curs.attr.attr &= ~FONTFAM_MASK;
                 term.curs.attr.attr |= (cattrflags)12 << ATTR_FONTFAM_SHIFT;
               }
-              else
+              else {
                 wc = win_linedraw_char(c - 0x60);
+                if (wc >= 0x2500 && wc <= 0x259F) {
+                  term.curs.attr.attr &= ~FONTFAM_MASK;
+                  term.curs.attr.attr |= (cattrflags)11 << ATTR_FONTFAM_SHIFT;
+                }
+              }
             }
           when CSET_TECH:  // DEC Technical Character Set
             if (c > ' ' && c < 0x7F) {
