@@ -5001,9 +5001,27 @@ term_do_write(const char *buf, uint len, bool fix_status)
 
     if (!tek_mode && (c == 0x1A || c == 0x18)) { // SUB or CAN
       term.state = NORMAL;
-      // display one of ␦ / ⸮ / ▒
-      write_char(0x2426, 1);
-      //write_char(0x2592, 1);
+      if (c == 0x1A || strstr(cfg.term, "vt1")) {
+        // display one of ␦ / ⸮ / ▒
+        wchar sub = 0x2592;  // ▒
+        if (!strstr(cfg.term, "vt1")) {
+          wchar subs[] = W("␦⸮");
+          win_check_glyphs(subs, 2, term.curs.attr.attr);
+          if (subs[0])
+            sub = subs[0];
+          else if (subs[1])
+            sub = subs[1];
+        }
+        if (sub == 0x2592) {
+          cattrflags savattr = term.curs.attr.attr;
+          term.curs.attr.attr &= ~FONTFAM_MASK;
+          term.curs.attr.attr |= (cattrflags)11 << ATTR_FONTFAM_SHIFT;
+          write_char(sub, 1);
+          term.curs.attr.attr = savattr;
+        }
+        else
+          write_char(sub, 1);
+      }
       continue;
     }
 
