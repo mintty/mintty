@@ -4,6 +4,9 @@ Terminal features
 Character rendering
   * Fix overhang rendering for some characters, clipped in 3.7.7 (#1304).
 
+Font configuration:
+  * Handle font metrics errors (#1309).
+
 ### 3.7.7 (21 December 2024) ###
 
 Terminal features

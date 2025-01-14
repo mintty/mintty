@@ -692,8 +692,10 @@ win_init_fontfamily(HDC dc, int findex)
   GetObject(ff->fonts[FONT_NORMAL], sizeof(LOGFONT), &logfont);
   trace_font(("created font %s %d it %d cs %d\n", logfont.lfFaceName, (int)logfont.lfWeight, logfont.lfItalic, logfont.lfCharSet));
   SelectObject(dc, ff->fonts[FONT_NORMAL]);
-  GetTextMetrics(dc, &tm);
-  if (!tm.tmHeight) {
+
+  int tmok = GetTextMetrics(dc, &tm);
+  //printf("GTM %d h %d a %d d %d e %d i %d w %d cs %d\n", tmok, tm.tmHeight, tm.tmAscent, tm.tmDescent, tm.tmExternalLeading, tm.tmInternalLeading, tm.tmAveCharWidth, tm.tmCharSet);
+  if (!tmok || !tm.tmHeight) {
     // corrupt font installation (e.g. deleted font file)
     font_warning(ff, _("Font installation corrupt, using system substitute"));
     wstrset(&ff->name, W(""));
@@ -702,6 +704,11 @@ win_init_fontfamily(HDC dc, int findex)
     SelectObject(dc, ff->fonts[FONT_NORMAL]);
     GetTextMetrics(dc, &tm);
   }
+  // fix broken font metrics
+  if (tm.tmAveCharWidth < 0)
+    // Panic Sans reports negative char width
+    tm.tmAveCharWidth = - tm.tmAveCharWidth;
+
   if (!findex)
     lfont = logfont;
 
