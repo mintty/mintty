@@ -196,6 +196,17 @@ and Block Elements (U+2580-U+259F). Others may be added in future versions.
 
 Note: SPD is a deprecated fun feature.
 
+### LAM/ALEF joining ###
+
+In Arabic LAM/ALEF single-cell joining mode, output of Arabic LAM followed 
+by either of ALEF, ALEF WITH MADDA ABOVE, ALEF WITH HAMZA ABOVE or BELOW 
+will be rendered in only one terminal cell.
+
+| **sequence**  | **ouput rendering** |
+|:--------------|:--------------------|
+| `^[[?2521l`   | LAM/ALEF ligatures take two cells (default)    |
+| `^[[?2521h`   | LAM/ALEF single-cell width (Arabic typography) |
+
 
 ## Reflow / Rewrap / Line rebreaking on resize ##
 

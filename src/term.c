@@ -356,6 +356,7 @@ term_reset(bool full)
     term.wide_indic = false;
     term.wide_extra = false;
     term.disable_bidi = false;
+    term.join_lam_alef = false;
     term.enable_bold_colour = cfg.bold_as_colour;
     term.enable_blink_colour = true;
     term.readline_mouse_1 = cfg.clicks_place_cursor;
@@ -4403,6 +4404,13 @@ term_paint(void)
 #endif
           dd += dd->cc_next;
           wchar tchar = dd->chr;
+
+          // skip joined ALEF:
+          // if ALEF was handled like a combining char in order to trigger 
+          // single-cell rendering of Arabic LAM/ALEF ligatures, 
+          // prevent its double display as an additional combining accent
+          if (dd->attr.attr & TATTR_JOINED)
+            continue;
 
           // mark combining unless pseudo-combining surrogates
           if (!is_low_surrogate(tchar)) {

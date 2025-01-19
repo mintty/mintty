@@ -1359,6 +1359,12 @@ toggle_bidi()
 }
 
 void
+toggle_lam_alef()
+{
+  term.join_lam_alef = !term.join_lam_alef;
+}
+
+void
 toggle_dim_margins()
 {
   term.dim_margins = !term.dim_margins;
@@ -1694,6 +1700,12 @@ mflags_bidi()
 }
 
 static uint
+mflags_lam_alef()
+{
+  return term.join_lam_alef ? MF_CHECKED : MF_UNCHECKED;
+}
+
+static uint
 mflags_dim_margins()
 {
   return term.dim_margins ? MF_CHECKED : MF_UNCHECKED;
@@ -1842,6 +1854,7 @@ static struct function_def cmd_defs[] = {
   {"toggle-vt220", {.fct = toggle_vt220}, mflags_vt220},
   {"toggle-auto-repeat", {.fct = toggle_auto_repeat}, mflags_auto_repeat},
   {"toggle-bidi", {.fct = toggle_bidi}, mflags_bidi},
+  {"toggle-lam-alef", {.fct = toggle_lam_alef}, mflags_lam_alef},
   {"refresh", {.fct = refresh}, 0},
   {"toggle-dim-margins", {.fct = toggle_dim_margins}, mflags_dim_margins},
   {"toggle-status-line", {.fct = toggle_status_line}, mflags_status_line},

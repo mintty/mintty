@@ -480,6 +480,12 @@ They follow the current status of the bidi mode model of the
 \fBBiDi in Terminal Emulators\fP recommendation 
 (\fIhttps://terminal\-wg.pages.freedesktop.org/bidi/\fP).
 
+.TQ
+.B LAM/ALEF single-cell joining
+Mintty supports a switchable terminal mode so that Arabic LAM/ALEF ligatures 
+are rendered in a single terminal cell.
+See \fIhttps://github.com/mintty/mintty/wiki/CtrlSeqs#lamalef\-joining\fP.
+
 .SS Menus
 
 The context menu can be opened by right-clicking the mouse (with Shift 
@@ -3390,6 +3396,8 @@ Supported actions are described as follows:
 \fBprint\-screen\fP: print screen contents
 .en
 \fBtoggle\-bidi\fP: toggles (global) bidi disabling
+.en
+\fBtoggle\-lam\-alef\fP: toggles LAM/ALEF single-cell joining
 .en
 \fBrefresh\fP: refresh terminal display
 .en

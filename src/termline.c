@@ -1172,6 +1172,7 @@ term_bidi_line(termline *line, int scr_y)
 #ifdef apply_HL3
     uint emojirest = 0;
 #endif
+
     for (int it = 0; it < term.cols; it++) {
       ucschar c = line->chars[it].chr;
       //wcs[wcsi++] = c;
@@ -1283,10 +1284,15 @@ term_bidi_line(termline *line, int scr_y)
       // Unfold directional formatting characters which are handled 
       // like combining characters in the mintty structures 
       // (and would thus stay hidden from minibidi), and need to be 
-      // exposed as separate characters for the minibidi algorithm
+      // exposed as separate characters for the minibidi algorithm.
+      // Also unfold ALEF if handled like combining character for joining.
       while (bp->cc_next) {
         bp += bp->cc_next;
+        // check if ALEF was output in single-cell LAM/ALEF joining mode, 
+        // thus handled like a combining character
+        bool is_ALEF = isALEF(bp->chr);
         if (bp->chr == 0x200E || bp->chr == 0x200F
+            || is_ALEF
             || (bp->chr >= 0x202A && bp->chr <= 0x202E)
             || (bp->chr >= 0x2066 && bp->chr <= 0x2069)
            )
@@ -1300,6 +1306,11 @@ term_bidi_line(termline *line, int scr_y)
           term.wcFrom[ib].emojilen = 0;
           ib++;
           //wcs[wcsi++] = bp->chr;
+
+          // mark ALEF (if stored as combining) as joined already, 
+          // to prevent its double display as an additional combining accent
+          if (is_ALEF)
+            bp->attr.attr |= TATTR_JOINED;
         }
       }
     }

@@ -169,12 +169,13 @@ enum {
   TATTR_CLEAR     = 0x4000000000000000u, /* erased / unwritten */
   TATTR_OVERHANG  = 0x0080000000000000u, /* visual double-width overhang */
 
+  TATTR_JOINED    = 0x0000040000000000u, /* LAM/ALEF joined as combining */
+
   DATTR_STARTRUN  = 0x8000000000000000u, /* start of redraw run */
   DATTR_MASK      = TATTR_RIGHTCURS | TATTR_PASCURS | TATTR_ACTCURS
                     | DATTR_STARTRUN
   // unassigned bits:
   //              = 0x0000080000000000u,
-  //              = 0x0000040000000000u,
   //              = 0x0000020000000000u,
   //              = 0x0000010000000000u,
 };
@@ -561,6 +562,7 @@ struct term {
   bool wide_indic;
   bool wide_extra;
   bool disable_bidi;
+  bool join_lam_alef;
   bool enable_bold_colour;
   bool enable_blink_colour;
   bool readline_mouse_1;

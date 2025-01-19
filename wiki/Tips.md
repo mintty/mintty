@@ -963,6 +963,7 @@ Character width can be modified by a number of configuration or dynamic settings
 * `Charset`: may affect CJK ambiguous-width handling if used with `Locale`
 * `Font`: may affect CJK ambiguous-width handling if locale support fails
 * `PrintableControls`: makes C1 or C0 control characters visible (width 1)
+* [DECSET 2521](https://github.com/mintty/mintty/wiki/CtrlSeqs#lamalef-joining): renders Arabic LAM/ALEF ligatures in single-cell width.
 * [OSC 701](https://github.com/mintty/mintty/wiki/CtrlSeqs#locale): changes locale/charset, may affect ambiguous width handling
 * OSC 50: changes font, may affect ambiguous width handling (with `Locale`)
 * [OSC 77119](https://github.com/mintty/mintty/wiki/CtrlSeqs#wide-characters): turns some character ranges to wide characters
