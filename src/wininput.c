@@ -2671,6 +2671,13 @@ C	M	+C	+A	"	"
 
   bool altgr = ralt | ctrl_lalt_altgr;
   //altgr |= is_altgr;  // doesn't appear to be necessary
+  if (!(cfg.old_altgr_detection & 4)) {
+    // enforce Control modifier as detected by VK_ state
+    // unless it could be involved to determine AltGr
+    //printf("-- lctrl %d lctrl0 %d altgr %d altgr0 %d is_ralt %d is_altgr %d\n", lctrl, lctrl0, altgr, altgr0, is_ralt, is_altgr);
+    if (lctrl0 && !altgr)
+      ctrl = true;
+  }
 
   // While this should more properly reflect the AltGr modifier state, 
   // with the current implementation it has the opposite effect;
