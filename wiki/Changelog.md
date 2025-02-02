@@ -5,6 +5,7 @@ Terminal features
 Character rendering
   * Fix overhang rendering for some characters, clipped in 3.7.7 (#1304).
   * Optional single-cell rendering of Arabic LAM/ALEF ligatures.
+  * Revise background clearing to catch border cases (#1310).
 
 Keyboard handling
   * Enforce Ctrl as held down (except with AltGr) (~#1266, ~#1273).

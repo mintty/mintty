@@ -1,5 +1,5 @@
 // wintext.c (part of mintty)
-// Copyright 2008-22 Andy Koppe, 2015-2024 Thomas Wolff
+// Copyright 2008-22 Andy Koppe, 2015-2025 Thomas Wolff
 // Adapted from code from PuTTY-0.60 by Simon Tatham and team.
 // Licensed under the terms of the GNU General Public License v3 or later.
 
@@ -3367,8 +3367,11 @@ win_text(int tx, int ty, wchar *text, int len, cattr attr, cattr *textattr, usho
     origtext = text;
     text = newn(wchar, len);
     // clear font glyphs under self-drawn geometric symbols
+    // - this method of clearing background is no longer in use since 3.7.8
+    // - keeping it in for now just in case; should be cleaned up later
     for (int i = 0; i < len; i++)
-      text[i] = ' ';
+      //text[i] = ' ';
+      text[i] = 'X';  // make accidental use of this feature apparent
   }
 
  /* Array with offsets between neighbouring characters */
@@ -3511,7 +3514,10 @@ win_text(int tx, int ty, wchar *text, int len, cattr attr, cattr *textattr, usho
   bool underlaid = false;
   void clear_run() {
     if (!underlaid) {
-      ExtTextOutW(dc, xt, yt, eto_options | ETO_OPAQUE, &box0, W(" "), 1, dxs);
+      // clear background of current output chunk
+      HBRUSH bgb = CreateSolidBrush(bg);
+      FillRect(dc, &box, bgb);
+      DeleteObject(bgb);
 
       underlaid = true;
     }
@@ -3543,6 +3549,8 @@ win_text(int tx, int ty, wchar *text, int len, cattr attr, cattr *textattr, usho
       underlaid = false;
 #endif
   }
+  else if (origtext && !ldisp2)
+    clear_run();  // clear background for self-drawn characters (#1310)
 
  /* Coordinate transformation per line */
   int coord_transformed = 0;
@@ -3727,6 +3735,7 @@ draw:;
  /* Underline */
   if (!ldisp2 && lattr != LATTR_TOP &&
       (force_manual_underline ||
+       nfont & FONT_UNDERLINE ||  // ensure underline of self-drawn characters
        (attr.attr & (ATTR_DOUBLYUND | ATTR_BROKENUND)) ||
        ((attr.attr & UNDER_MASK) == ATTR_UNDER &&
         (ff->und_mode == UND_LINE || (attr.attr & ATTR_ULCOLOUR)))
@@ -3779,7 +3788,7 @@ draw:;
   if (ldisp1) {
     if (!underlaid)
       clear_run();
-    goto _return;
+    goto _return;  // skipping coord_transformed2 set and restore
   }
 
  /* Partial glyph adjustments */
@@ -3821,7 +3830,9 @@ draw:;
     }
   }
 
+
  /* Finally, draw the text */
+
   uint overwropt;
   if (ldisp2 || underlaid) {
     SetBkMode(dc, TRANSPARENT);
@@ -3844,10 +3855,16 @@ draw:;
   if (combining || combining_double)
     *dxs = char_width;  // convince Windows to apply font underlining
 
- /* Now, really draw the text */
   // handle invisible and blinking attributes on image background
   if (fg == bg && default_bg && *cfg.background)
+    goto skip_drawing;  // restore coord_transformed2, then skip self-drawing
+
+  // skip text output for self-drawn characters
+  if (origtext)
     goto skip_drawing;
+
+
+ /* Now, really draw the text */
 
   text_out_start(dc, text, len, dxs);
 
@@ -3925,6 +3942,7 @@ draw:;
 
 skip_drawing:;
 
+
  /* Reset coordinate transformation */
   if (coord_transformed2) {
     SetWorldTransform(dc, &old_xform2);
@@ -3935,7 +3953,9 @@ skip_drawing:;
     box2 = box2_;
   }
 
- /* Manual drawing of certain graphics */
+
+ /* Self-drawn characters: manual drawing of certain graphics */
+
   // line_width already set above for DEC Tech adjustments
 #define dont_debug_vt100_line_drawing_chars
 #ifdef debug_vt100_line_drawing_chars
@@ -4537,8 +4557,10 @@ skip_drawing:;
 
  /* Strikeout */
   if ((attr.attr & ATTR_STRIKEOUT)
+      //&& !ldisp1
       && (cfg.underl_manual || cfg.underl_colour != (colour)-1
           || (attr.attr & ATTR_ULCOLOUR)
+          || origtext  // apply strikeout to self-drawn characters
          )
      )
   {
