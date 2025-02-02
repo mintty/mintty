@@ -3954,6 +3954,11 @@ skip_drawing:;
   }
 
 
+ /* Skip self-drawing to handle invisible attribute on image background */
+  if (fg == bg && default_bg && *cfg.background)
+    goto _return;
+
+
  /* Self-drawn characters: manual drawing of certain graphics */
 
   // line_width already set above for DEC Tech adjustments
