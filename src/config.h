@@ -66,6 +66,7 @@ typedef struct {
   colour sel_fg_colour, sel_bg_colour;
   colour search_fg_colour, search_bg_colour, search_current_colour;
   wstring theme_file;
+  wstring dark_theme;
   wstring background;
   string colour_scheme;
   char transparency;
