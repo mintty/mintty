@@ -1515,12 +1515,18 @@ will override an earlier one (see CJK example below).
 Finally, special name \fBPrivate\fP covers the Private Use ranges, which are 
 often used for additional icon symbols (e.g. by "Nerd Fonts" or "Powerline" fonts).
 .br
+With a prefix of up to 7 ">", characters mapped from a script range to 
+a font will be shifted horizontally to adjust CJK characters of a smaller 
+font to appear approximately centered in the double-cell space.
+.br
 In addition to Unicode scripts, also Unicode blocks can be used 
 to specify a secondary font, by a "|" prefix to the block name, with block 
 specifications preceding over the more general script specifications.
 .br
 To align secondary font size with the main font size visually, the 
 respective alternative font specification can be preceded with "+".
+.br
+The prefix order is as listed above, ">" (repeated), "|", "+".
 
 Examples:
 .ex
@@ -4410,7 +4416,7 @@ Additional information can be found on the wiki on the mintty project page
 
 .SH LICENSE
 
-Copyright (C) 2024 Thomas Wolff, Andy Koppe
+Copyright (C) 2025 Thomas Wolff, Andy Koppe
 
 Mintty is released under the terms of the the \fIGNU General Public License\fP
 version 3.

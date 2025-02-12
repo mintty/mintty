@@ -1306,21 +1306,26 @@ static bool scriptfonts_init = false;
 static bool use_blockfonts = false;
 
 static void
-mapfont(struct rangefont * ranges, uint len, char * script, uchar f)
+mapfont(struct rangefont * ranges, uint len, char * script, uchar f, int shift)
 {
   for (uint i = 0; i < len; i++) {
-    if (0 == strcmp(ranges[i].scriptname, script))
+    if (0 == strcmp(ranges[i].scriptname, script)) {
       ranges[i].font = f;
+      // register glyph shift as configured in setting FontChoice
+      // to be applied as character attribute
+      //ranges[i].shift = shift;
+      ranges[i].font |= shift << 4;
+    }
   }
   if (0 == strcmp(script, "CJK")) {
-    mapfont(ranges, len, "Han", f);
-    mapfont(ranges, len, "Hangul", f);
-    mapfont(ranges, len, "Katakana", f);
-    mapfont(ranges, len, "Hiragana", f);
-    mapfont(ranges, len, "Bopomofo", f);
-    mapfont(ranges, len, "Kanbun", f);
-    mapfont(ranges, len, "Fullwidth", f);
-    mapfont(ranges, len, "Halfwidth", f);
+    mapfont(ranges, len, "Han", f, shift);
+    mapfont(ranges, len, "Hangul", f, shift);
+    mapfont(ranges, len, "Katakana", f, shift);
+    mapfont(ranges, len, "Hiragana", f, shift);
+    mapfont(ranges, len, "Bopomofo", f, shift);
+    mapfont(ranges, len, "Kanbun", f, shift);
+    mapfont(ranges, len, "Fullwidth", f, shift);
+    mapfont(ranges, len, "Halfwidth", f, shift);
   }
 }
 
@@ -1341,10 +1346,18 @@ cfg_apply(char * conf, char * item)
       *sepp = '\0';
 
     if (!item || !strcmp(cmdp, item)) {
+      // determine glyph shift as configured by setting FontChoice
+      uint shift = 0;
+      while (*cmdp == '>') {
+        cmdp ++;
+        if (shift < GLYPHSHIFT_MAX)
+          shift ++;
+      }
+      // setup font for block range (with '|') or script ranges
       if (*cmdp == '|')
-        mapfont(blockfonts, lengthof(blockfonts), cmdp + 1, atoi(paramp));
+        mapfont(blockfonts, lengthof(blockfonts), cmdp + 1, atoi(paramp), shift);
       else
-        mapfont(scriptfonts, lengthof(scriptfonts), cmdp, atoi(paramp));
+        mapfont(scriptfonts, lengthof(scriptfonts), cmdp, atoi(paramp), shift);
     }
 
     if (sepp) {
@@ -1421,13 +1434,22 @@ write_ucschar(wchar hwc, wchar wc, int width)
 {
   cattrflags attr = term.curs.attr.attr;
   ucschar c = hwc ? combine_surrogates(hwc, wc) : wc;
+
+  // determine alternative font
   uchar cf = scriptfont(c);
+  // handle configured glyph shift
+  uint glyph_shift = cf >> 4;  // extract glyph shift
+  cf &= 0xF;  // mask glyph shift
 #ifdef debug_scriptfonts
   if (c && (cf || c > 0xFF))
     printf("write_ucschar %04X scriptfont %d\n", c, cf);
 #endif
+  // set attribute for alternative font
   if (cf && cf <= 10 && !(attr & FONTFAM_MASK))
     term.curs.attr.attr = attr | ((cattrflags)cf << ATTR_FONTFAM_SHIFT);
+  // set attribute to indicate glyph shift
+  glyph_shift &= GLYPHSHIFT_MAX;
+  term.curs.attr.attr |= ((cattrflags)glyph_shift << ATTR_GLYPHSHIFT_SHIFT);
 
   // Auto-expanded glyphs
   if (width == 2

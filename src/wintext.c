@@ -637,7 +637,6 @@ win_init_fontfamily(HDC dc, int findex)
   //printf("fontfamily %d <%ls>\n", findex, ff->name);
 
   trace_resize(("--- init_fontfamily\n"));
-  TEXTMETRIC tm;
 
   for (uint i = 0; i < FONT_BOLDITAL; i++) {
     if (ff->fonts[i])
@@ -693,8 +692,9 @@ win_init_fontfamily(HDC dc, int findex)
   trace_font(("created font %s %d it %d cs %d\n", logfont.lfFaceName, (int)logfont.lfWeight, logfont.lfItalic, logfont.lfCharSet));
   SelectObject(dc, ff->fonts[FONT_NORMAL]);
 
+  TEXTMETRIC tm;
   int tmok = GetTextMetrics(dc, &tm);
-  //printf("GTM %d h %d a %d d %d e %d i %d w %d cs %d\n", tmok, tm.tmHeight, tm.tmAscent, tm.tmDescent, tm.tmExternalLeading, tm.tmInternalLeading, tm.tmAveCharWidth, tm.tmCharSet);
+  //printf("TextMetric[%d] %d h %d a %d d %d e %d i %d w %d cs %d <%ls>\n", findex, tmok, tm.tmHeight, tm.tmAscent, tm.tmDescent, tm.tmExternalLeading, tm.tmInternalLeading, tm.tmAveCharWidth, tm.tmCharSet, ff->name);
   if (!tmok || !tm.tmHeight) {
     // corrupt font installation (e.g. deleted font file)
     font_warning(ff, _("Font installation corrupt, using system substitute"));
@@ -708,6 +708,44 @@ win_init_fontfamily(HDC dc, int findex)
   if (tm.tmAveCharWidth < 0)
     // Panic Sans reports negative char width
     tm.tmAveCharWidth = - tm.tmAveCharWidth;
+
+#ifdef auto_configure_glyph_shift
+#warning glyph_shift is rather implemented as a configured script attribute
+  // check whether CJK font and align to center characters
+  ff->width = tm.tmAveCharWidth;
+  ff->shift = 0;
+  if (findex && tm.tmAveCharWidth > fontfamilies[0].width * 3 / 2) {
+    int shift = (fontfamilies[0].width - tm.tmAveCharWidth) / 2;
+    if (shift > 0)
+      ff->shift = shift;
+  }
+#endif
+
+#ifdef auto_detect_glyph_shift
+  // check font for "narrow" CJK characters (#1312);
+  // problem with this approach:
+  // a font may contain some CJK ranges but not others,
+  // so a script-based approach provides finer-grained distinction;
+  // this is now implemented based on configuration setting FontChoice
+  int cwide = 0; int cnorm = 0;
+  if (*ff->name) {
+    int len = GetFontUnicodeRanges(dc, 0);
+    GLYPHSET * gs = malloc(len);
+    gs->cbThis = len;
+    gs->flAccel = 0;
+    len = GetFontUnicodeRanges(dc, gs);
+    for (uint i = 0; len && i < gs->cRanges; i++) {
+      if (is_wide(gs->ranges[i].wcLow))
+        cwide += gs->ranges[i].cGlyphs;
+      else
+        cnorm += gs->ranges[i].cGlyphs;
+      if (gs->ranges[i].cGlyphs > 9)
+        printf("   %04X/%d <%lc>\n", gs->ranges[i].wcLow, gs->ranges[i].cGlyphs, gs->ranges[i].wcLow);
+    }
+    free(gs);
+  }
+  printf("   wide %d norm %d\n", cwide, cnorm);
+#endif
 
   if (!findex)
     lfont = logfont;
@@ -3094,9 +3132,13 @@ win_text(int tx, int ty, wchar *text, int len, cattr attr, cattr *textattr, usho
   // ff->no_rtl: 1: no R/Hebrew, 2: no AL/Arabic, 4: either
   if (has_rtl & ff->no_rtl) {
     //printf("%d<%ls> %X %X\n", findex, ff->name, has_rtl, ff->no_rtl);
+    // for RTL output, if font does not support RTL, 
+    // fallback to reserved font 11 (configured via FontRTL)
     findex = 11;
     ff = &fontfamilies[findex];
   }
+
+  int glyph_shift = (attr.attr & GLYPHSHIFT_MASK) >> ATTR_GLYPHSHIFT_SHIFT;
 
   trace_line("win_text:");
 
@@ -3869,7 +3911,9 @@ draw:;
   text_out_start(dc, text, len, dxs);
 
   // overstrike loop is for shadow or manual bold mode
-  for (int xoff = 0; xoff < xwidth; xoff++) {
+  for (int xoff0 = 0; xoff0 < xwidth; xoff0++) {
+    // calculate glyph shift from character attribute (0..3)
+    int xoff = xoff0 + glyph_shift * cell_width / 16;
     if ((combining || combining_double) && !has_sea) {
       // Workaround for mangled display of combining characters;
       // Arabic shaping should not be affected as the transformed 
@@ -4780,6 +4824,7 @@ win_check_glyphs(wchar *wcs, uint num, cattrflags attr)
   // recheck for characters affected by FontChoice
   for (uint i = 0; i < num; i++) {
     uchar cf = scriptfont(wcs[i]);
+    cf &= 0xF;  // mask glyph shift
 #ifdef debug_scriptfonts
     if (wcs[i] && cf)
       printf("scriptfont %04X: %d\n", wcs[i], cf);
