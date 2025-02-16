@@ -5069,6 +5069,7 @@ term_do_write(const char *buf, uint len, bool fix_status)
             sub = subs[1];
         }
         if (sub == 0x2592) {
+          // enable self-drawn box as this doesn't pass transformation below
           cattrflags savattr = term.curs.attr.attr;
           term.curs.attr.attr &= ~FONTFAM_MASK;
           term.curs.attr.attr |= (cattrflags)11 << ATTR_FONTFAM_SHIFT;
@@ -5288,6 +5289,7 @@ term_do_write(const char *buf, uint len, bool fix_status)
               }
               else {
                 wc = win_linedraw_char(c - 0x60);
+                // enable self-drawn box as this isn't transformed above
                 if (wc >= 0x2500 && wc <= 0x259F) {
                   term.curs.attr.attr &= ~FONTFAM_MASK;
                   term.curs.attr.attr |= (cattrflags)11 << ATTR_FONTFAM_SHIFT;
