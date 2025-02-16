@@ -352,6 +352,13 @@ architecture, extract its `OpenConsole.exe`, rename it to `conhost.exe`
 and replace the conhost program in your Windows System32 folder with it.
 (Do **not** copy conhost.exe from Windows 11 into Windows 10.)
 
+### Line end copy/paste from WSL and other console-based programs ###
+
+Under the same conditions that cause broken text attribute handling, 
+copying text that wrapped around the terminal width during output 
+would get explicit lineends (CRLF) embedded.
+Also the workaround is the same as above.
+
 ### Signal processing with alien programs ###
 
 The same workaround handles interrupt signals, particularly Control+C, 
