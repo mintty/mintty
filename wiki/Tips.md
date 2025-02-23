@@ -350,6 +350,7 @@ From the [release area](https://github.com/microsoft/terminal/releases),
 among the Assets, download the WindowsTerminalPreview zip file of your 
 architecture, extract its `OpenConsole.exe`, rename it to `conhost.exe` 
 and replace the conhost program in your Windows System32 folder with it.
+Make a backup copy of conhost.exe first, just in case.
 (Do **not** copy conhost.exe from Windows 11 into Windows 10.)
 
 ### Line end copy/paste from WSL and other console-based programs ###
