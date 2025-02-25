@@ -16,6 +16,7 @@ Font configuration:
 
 Configuration:
   * New shift prefix for option FontChoice (#1313).
+  * Propagate TERM config setting to WSL HOSTTERM variable (mintty/wsltty#290, ~mintty/wsltty#278).
 
 ### 3.7.7 (21 December 2024) ###
 

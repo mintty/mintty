@@ -4352,6 +4352,12 @@ MINTTY_MONITOR, MINTTY_ROWS, MINTTY_COLS, MINTTY_MAXIMIZE,
 MINTTY_X, MINTTY_Y, MINTTY_DX, MINTTY_DY, 
 MINTTY_ICON, MINTTY_TABBAR, MINTTY_CLASS, MINTTY_PWD
 
+.TQ
+.B Terminal type information
+In WSL mode, since 3.7.8, mintty does not propagate its TERM setting 
+to WSL anymore, in order to allow WSL local preferences 
+(often xterm-256color). Instead it sets environment variable HOSTTERM.
+
 .SH SCOPE AND LIMITATIONS
 
 .SS Console issue

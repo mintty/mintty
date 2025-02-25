@@ -1,5 +1,5 @@
 // winmain.c (part of mintty)
-// Copyright 2008-13 Andy Koppe, 2015-2024 Thomas Wolff
+// Copyright 2008-13 Andy Koppe, 2015-2025 Thomas Wolff
 // Based on code from PuTTY-0.60 by Simon Tatham and team.
 // Licensed under the terms of the GNU General Public License v3 or later.
 
@@ -7006,8 +7006,14 @@ main(int argc, char *argv[])
 #ifdef wslbridge_t
     *pargv++ = "-t";
 #endif
+#ifdef propagate_TERM_to_WSL
     *pargv++ = "-e";
     *pargv++ = "TERM";
+#else
+    setenv("HOSTTERM", cfg.term, true);
+    *pargv++ = "-e";
+    *pargv++ = "HOSTTERM";
+#endif
     *pargv++ = "-e";
     *pargv++ = "APPDATA";
     if (!cfg.old_locale) {

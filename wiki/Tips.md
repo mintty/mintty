@@ -384,6 +384,12 @@ environment variables for this purpose is not reliable (see
 mintty sets environment variables TERM_PROGRAM and TERM_PROGRAM_VERSION 
 as various other terminals do.
 
+### WSL terminal type ###
+
+In WSL mode, since 3.7.8, mintty does not propagate its TERM setting 
+to WSL anymore, in order to allow WSL local preferences 
+(often xterm-256color). Instead it sets environment variable HOSTTERM.
+
 
 ## Terminal line settings ##
 
