@@ -32,6 +32,7 @@
 .ad b
 .ft 1
 ..
+.char ^ \(ha
 .TH mintty 1 mintty
 
 .ad l
@@ -3513,7 +3514,7 @@ a new tab in same directory as current process on Control+F2, or as a
 new window on Alt+Control+F2
 .en
 .ex
-KeyFunctions=Alt:\(ha[
+KeyFunctions=Alt:^[
 .ee
 will make Alt send the Esc keycode when it is
 pressed and released on its own, for when the Esc key seems too far away from
