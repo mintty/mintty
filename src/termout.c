@@ -1311,7 +1311,7 @@ mapfont(struct rangefont * ranges, uint len, char * script, uchar f, int shift)
   for (uint i = 0; i < len; i++) {
     if (0 == strcmp(ranges[i].scriptname, script)) {
       ranges[i].font = f;
-      // register glyph shift as configured in setting FontChoice
+      // register glyph shift / centering as configured in setting FontChoice
       // to be applied as character attribute
       //ranges[i].shift = shift;
       ranges[i].font |= shift << 4;
@@ -1346,12 +1346,16 @@ cfg_apply(char * conf, char * item)
       *sepp = '\0';
 
     if (!item || !strcmp(cmdp, item)) {
-      // determine glyph shift as configured by setting FontChoice
+      // determine glyph shift / centering as configured by setting FontChoice
       uint shift = 0;
       while (*cmdp == '>') {
         cmdp ++;
+#ifdef configured_glyph_shift
         if (shift < GLYPHSHIFT_MAX)
           shift ++;
+#else
+        shift = 1;
+#endif
       }
       // setup font for block range (with '|') or script ranges
       if (*cmdp == '|')
@@ -1438,8 +1442,8 @@ write_ucschar(wchar hwc, wchar wc, int width)
   // determine alternative font
   uchar cf = scriptfont(c);
   // handle configured glyph shift
-  uint glyph_shift = cf >> 4;  // extract glyph shift
-  cf &= 0xF;  // mask glyph shift
+  uint glyph_shift = cf >> 4;  // extract glyph shift / glyph centering flag
+  cf &= 0xF;                   // mask glyph shift / glyph centering flag
 #ifdef debug_scriptfonts
   if (c && (cf || c > 0xFF))
     printf("write_ucschar %04X scriptfont %d\n", c, cf);
@@ -1447,9 +1451,15 @@ write_ucschar(wchar hwc, wchar wc, int width)
   // set attribute for alternative font
   if (cf && cf <= 10 && !(attr & FONTFAM_MASK))
     term.curs.attr.attr = attr | ((cattrflags)cf << ATTR_FONTFAM_SHIFT);
+#ifdef configured_glyph_shift
   // set attribute to indicate glyph shift
   glyph_shift &= GLYPHSHIFT_MAX;
   term.curs.attr.attr |= ((cattrflags)glyph_shift << ATTR_GLYPHSHIFT_SHIFT);
+#else
+  // set attribute to indicate glyph centering
+  if (glyph_shift)
+    term.curs.attr.attr |= ATTR_GLYPHSHIFT;
+#endif
 
   // Auto-expanded glyphs
   if (width == 2

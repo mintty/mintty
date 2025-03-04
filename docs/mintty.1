@@ -1516,9 +1516,10 @@ will override an earlier one (see CJK example below).
 Finally, special name \fBPrivate\fP covers the Private Use ranges, which are 
 often used for additional icon symbols (e.g. by "Nerd Fonts" or "Powerline" fonts).
 .br
-With a prefix of up to 7 ">", characters mapped from a script range to 
-a font will be shifted horizontally to adjust CJK characters of a smaller 
-font to appear approximately centered in the double-cell space.
+With a prefix of ">", characters mapped from a script range to a font 
+will be shifted horizontally as derived from the font metrics 
+to adjust CJK characters of a smaller font to appear centered in the 
+double-cell space. (If used, this prefix must precede a "|" prefix.)
 .br
 In addition to Unicode scripts, also Unicode blocks can be used 
 to specify a secondary font, by a "|" prefix to the block name, with block 
@@ -1526,13 +1527,11 @@ specifications preceding over the more general script specifications.
 .br
 To align secondary font size with the main font size visually, the 
 respective alternative font specification can be preceded with "+".
-.br
-The prefix order is as listed above, ">" (repeated), "|", "+".
 
 Examples:
 .ex
 .br
-  FontChoice=Hebrew:6;Arabic:7;CJK:5;Han:8;Hangul:9
+  FontChoice=Hebrew:6;Arabic:7;CJK:5;Han:8;>Hangul:9
 .br
   Font6=David
 .br

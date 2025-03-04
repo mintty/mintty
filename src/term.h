@@ -175,13 +175,18 @@ enum {
   DATTR_MASK      = TATTR_RIGHTCURS | TATTR_PASCURS | TATTR_ACTCURS
                     | DATTR_STARTRUN,
 
+#ifdef configured_glyph_shift
   GLYPHSHIFT_MASK = 0x0000070000000000u,
   ATTR_GLYPHSHIFT_SHIFT = 40,
+#define GLYPHSHIFT_MAX (GLYPHSHIFT_MASK >> ATTR_GLYPHSHIFT_SHIFT)
+#else
+  ATTR_GLYPHSHIFT = 0x0000040000000000u, /* alternative font glyph shift */
+#endif
 
   // unassigned bits:
+  //              = 0x0000020000000000u,
+  //              = 0x0000010000000000u,
 };
-
-#define GLYPHSHIFT_MAX (GLYPHSHIFT_MASK >> ATTR_GLYPHSHIFT_SHIFT)
 
 /* Line attributes.
  */

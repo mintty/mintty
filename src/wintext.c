@@ -129,6 +129,8 @@ struct fontfam {
   bool fontflag[FONT_MAXNO];
   bool fontok;
   bool font_dualwidth;
+  int width;
+  int shift;
   struct charpropcache * cpcache[FONT_BOLDITAL + 1];
   uint cpcachelen[FONT_BOLDITAL + 1];
   wchar errch;
@@ -709,17 +711,15 @@ win_init_fontfamily(HDC dc, int findex)
     // Panic Sans reports negative char width
     tm.tmAveCharWidth = - tm.tmAveCharWidth;
 
-#ifdef auto_configure_glyph_shift
-#warning glyph_shift is rather implemented as a configured script attribute
-  // check whether CJK font and align to center characters
+  // set average glyph width and optional horizontal shift (for CJK centering)
   ff->width = tm.tmAveCharWidth;
   ff->shift = 0;
-  if (findex && tm.tmAveCharWidth > fontfamilies[0].width * 3 / 2) {
-    int shift = (fontfamilies[0].width - tm.tmAveCharWidth) / 2;
+  if (findex) {  // #1313
+    // note CJK width gap (to double-width), triggered by script attribute
+    int shift = (2 * fontfamilies[0].width - tm.tmAveCharWidth) / 2;
     if (shift > 0)
       ff->shift = shift;
   }
-#endif
 
 #ifdef auto_detect_glyph_shift
   // check font for "narrow" CJK characters (#1312);
@@ -3138,7 +3138,12 @@ win_text(int tx, int ty, wchar *text, int len, cattr attr, cattr *textattr, usho
     ff = &fontfamilies[findex];
   }
 
+  // set horizontal shift if script-triggered to center CJK (#1313)
+#ifdef configured_glyph_shift
   int glyph_shift = (attr.attr & GLYPHSHIFT_MASK) >> ATTR_GLYPHSHIFT_SHIFT;
+#else
+  int glyph_shift = (attr.attr & ATTR_GLYPHSHIFT) ? ff->shift : 0;
+#endif
 
   trace_line("win_text:");
 
@@ -3912,8 +3917,14 @@ draw:;
 
   // overstrike loop is for shadow or manual bold mode
   for (int xoff0 = 0; xoff0 < xwidth; xoff0++) {
+#ifdef configured_glyph_shift
     // calculate glyph shift from character attribute (0..3)
     int xoff = xoff0 + glyph_shift * cell_width / 16;
+#else
+    // apply centering glyph shift if triggered by attribute (#1313)
+    int xoff = xoff0 + glyph_shift;
+#endif
+
     if ((combining || combining_double) && !has_sea) {
       // Workaround for mangled display of combining characters;
       // Arabic shaping should not be affected as the transformed 
@@ -4824,7 +4835,7 @@ win_check_glyphs(wchar *wcs, uint num, cattrflags attr)
   // recheck for characters affected by FontChoice
   for (uint i = 0; i < num; i++) {
     uchar cf = scriptfont(wcs[i]);
-    cf &= 0xF;  // mask glyph shift
+    cf &= 0xF;  // mask glyph shift / glyph centering flag
 #ifdef debug_scriptfonts
     if (wcs[i] && cf)
       printf("scriptfont %04X: %d\n", wcs[i], cf);
