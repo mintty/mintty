@@ -1899,7 +1899,7 @@ apply_config(bool save)
     win_reset_colours();
     win_invalidate_all(false);
   }
-  else if (*cfg.dark_theme && win_darkmode()) {
+  else if (*cfg.dark_theme && is_win_dark_mode()) {
     load_theme(cfg.dark_theme);
     win_reset_colours();
     win_invalidate_all(false);

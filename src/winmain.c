@@ -299,8 +299,9 @@ getregval(HKEY key, wstring subkey, wstring attribute, uint def)
 }
 
 bool
-win_darkmode(void)
+is_win_dark_mode(void)
 {
+  // or return pShouldAppsUseDarkMode && pShouldAppsUseDarkMode()
   return 0 == getregval(HKEY_CURRENT_USER, 
               W("Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize"),
               W("AppsUseLightTheme"), -1);
@@ -2462,21 +2463,16 @@ win_update_glass(bool opaque)
 void
 win_dark_mode(HWND w)
 {
-  if (pShouldAppsUseDarkMode) {
-    HIGHCONTRASTW hc;
-    hc.cbSize = sizeof hc;
-    pSystemParametersInfo(SPI_GETHIGHCONTRAST, sizeof hc, &hc, 0);
-    //printf("High Contrast scheme <%ls>\n", hc.lpszDefaultScheme);
+  if (pDwmSetWindowAttribute) {
+    BOOL dark = is_win_dark_mode();
 
-    if (!(hc.dwFlags & HCF_HIGHCONTRASTON) && pShouldAppsUseDarkMode()) {
-      pSetWindowTheme(w, W("DarkMode_Explorer"), NULL);
+    // do not use SetWindowTheme anymore (previously on WM_WININICHANGE);
+    // it would cause an asynchronous WM_THEMECHANGED message...
 
-      // set DWMWA_USE_IMMERSIVE_DARK_MODE; needed for titlebar
-      BOOL dark = 1;
-      if (S_OK != pDwmSetWindowAttribute(w, 20, &dark, sizeof dark)) {
-        // this would be the call before Windows build 18362
-        pDwmSetWindowAttribute(w, 19, &dark, sizeof dark);
-      }
+    // set DWMWA_USE_IMMERSIVE_DARK_MODE (20)
+    if (S_OK != pDwmSetWindowAttribute(w, 20, &dark, sizeof dark)) {
+      // this would be the call before Windows build 18362
+      pDwmSetWindowAttribute(w, 19, &dark, sizeof dark);
     }
   }
 }
@@ -4839,10 +4835,16 @@ static struct {
       win_update_tabbar();
       // update dark mode
       if (message == WM_WININICHANGE) {
-        // SetWindowTheme will cause an asynchronous WM_THEMECHANGED message,
-        // so guard it by WM_WININICHANGE;
-        // this will switch from Light to Dark mode immediately but not back!
-        //win_dark_mode(wnd);
+        // adapt window frame colours
+        win_dark_mode(wnd);
+
+        // adapt mintty theme (do not apply_config(false); it would crash)
+        if (*cfg.dark_theme && is_win_dark_mode())
+          load_theme(cfg.dark_theme);
+        else if (*cfg.theme_file)
+          load_theme(cfg.theme_file);
+        win_reset_colours();
+        win_invalidate_all(false);
       }
 
     when WM_DISPLAYCHANGE:
@@ -6915,7 +6917,7 @@ main(int argc, char *argv[])
   copy_config("main after -o", &file_cfg, &cfg);
   if (*cfg.colour_scheme)
     load_scheme(cfg.colour_scheme);
-  else if (*cfg.dark_theme && win_darkmode())
+  else if (*cfg.dark_theme && is_win_dark_mode())
     load_theme(cfg.dark_theme);
   else if (*cfg.theme_file)
     load_theme(cfg.theme_file);

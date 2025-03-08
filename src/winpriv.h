@@ -26,7 +26,6 @@ extern ATOM class_atom;
 
 extern wchar * getregstr(HKEY key, wstring subkey, wstring attribute);
 extern uint getregval(HKEY key, wstring subkey, wstring attribute, uint def);
-extern bool win_darkmode(void);
 
 extern void clear_tabs(void);
 extern void add_tab(uint tabi, HWND wndi);
@@ -182,6 +181,7 @@ extern void win_set_ime_open(bool);
 extern void win_set_ime(bool open);
 extern bool win_get_ime(void);
 
+extern bool is_win_dark_mode(void);
 extern void win_dark_mode(HWND w);
 
 extern void show_message(char * msg, UINT type);
