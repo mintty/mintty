@@ -24,6 +24,10 @@ extern HIMC imc;        // the input method context
 extern HWND config_wnd; // the options window
 extern ATOM class_atom;
 
+extern wchar * getregstr(HKEY key, wstring subkey, wstring attribute);
+extern uint getregval(HKEY key, wstring subkey, wstring attribute, uint def);
+extern bool win_darkmode(void);
+
 extern void clear_tabs(void);
 extern void add_tab(uint tabi, HWND wndi);
 extern void win_tab_left(void);

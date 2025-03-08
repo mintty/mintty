@@ -15,6 +15,7 @@ Font configuration:
   * Handle font metrics errors (#1309).
 
 Configuration:
+  * New option ThemeDark to be used if Windows Darkmode is set (#1305, ~#1303).
   * New glyph centering prefix ">" for option FontChoice (#1313).
   * Propagate TERM config setting to WSL HOSTTERM variable (mintty/wsltty#290, ~mintty/wsltty#278).
 

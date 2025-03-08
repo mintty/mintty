@@ -235,6 +235,78 @@ static BOOL (WINAPI * pGetLayeredWindowAttributes)(HWND, COLORREF *, BYTE *, DWO
 #endif
 
 
+wchar *
+getregstr(HKEY key, wstring subkey, wstring attribute)
+{
+#if CYGWIN_VERSION_API_MINOR < 74
+  (void)key;
+  (void)subkey;
+  (void)attribute;
+  return 0;
+#else
+  // RegGetValueW is easier but not supported on Windows XP
+  HKEY sk = 0;
+  RegOpenKeyW(key, subkey, &sk);
+  if (!sk)
+    return 0;
+  DWORD type;
+  DWORD len;
+  int res = RegQueryValueExW(sk, attribute, 0, &type, 0, &len);
+  if (res)
+    return 0;
+  if (!(type == REG_SZ || type == REG_EXPAND_SZ || type == REG_MULTI_SZ))
+    return 0;
+  wchar * val = malloc (len);
+  res = RegQueryValueExW(sk, attribute, 0, &type, (void *)val, &len);
+  RegCloseKey(sk);
+  if (res) {
+    free(val);
+    return 0;
+  }
+  return val;
+#endif
+}
+
+uint
+getregval(HKEY key, wstring subkey, wstring attribute, uint def)
+{
+#if CYGWIN_VERSION_API_MINOR < 74
+  (void)key;
+  (void)subkey;
+  (void)attribute;
+  return def;
+#else
+  // RegGetValueW is easier but not supported on Windows XP
+  HKEY sk = 0;
+  RegOpenKeyW(key, subkey, &sk);
+  if (!sk)
+    return def;
+  DWORD type;
+  DWORD len;
+  int res = RegQueryValueExW(sk, attribute, 0, &type, 0, &len);
+  if (res)
+    return def;
+  if (type == REG_DWORD) {
+    DWORD val;
+    len = sizeof(DWORD);
+    res = RegQueryValueExW(sk, attribute, 0, &type, (void *)&val, &len);
+    RegCloseKey(sk);
+    if (!res)
+      return (uint)val;
+  }
+  return def;
+#endif
+}
+
+bool
+win_darkmode(void)
+{
+  return 0 == getregval(HKEY_CURRENT_USER, 
+              W("Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize"),
+              W("AppsUseLightTheme"), -1);
+}
+
+
 // WSL path conversion, using wsl.exe
 static char *
 wslwinpath(string path)
@@ -5849,7 +5921,7 @@ getlxssinfo(bool list, wstring wslname, uint * wsl_ver,
     if (list) {
       printf("WSL distribution name [7m%ls[m\n", name);
       printf("-- guid %ls\n", guid);
-      printf("-- flag %u\n", getregval(lxss, guid, W("Flags")));
+      printf("-- flag %u\n", getregval(lxss, guid, W("Flags"), -1));
       printf("-- root %ls\n", rootfs);
       if (pn)
         printf("-- pack %ls\n", pn);
@@ -5859,7 +5931,7 @@ getlxssinfo(bool list, wstring wslname, uint * wsl_ver,
     }
 
     *wsl_icon = icon;
-    *wsl_ver = 1 + ((getregval(lxss, guid, W("Flags")) >> 3) & 1);
+    *wsl_ver = 1 + ((getregval(lxss, guid, W("Flags"), 0) >> 3) & 1);
     *wsl_guid = cs__wcstoutf(guid);
     char * rootdir = path_win_w_to_posix(rootfs);
     struct stat fstat_buf;
@@ -6843,6 +6915,8 @@ main(int argc, char *argv[])
   copy_config("main after -o", &file_cfg, &cfg);
   if (*cfg.colour_scheme)
     load_scheme(cfg.colour_scheme);
+  else if (*cfg.dark_theme && win_darkmode())
+    load_theme(cfg.dark_theme);
   else if (*cfg.theme_file)
     load_theme(cfg.theme_file);
 

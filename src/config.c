@@ -1,5 +1,5 @@
 // config.c (part of mintty)
-// Copyright 2008-2023 Andy Koppe, 2015-2024 Thomas Wolff
+// Copyright 2008-2023 Andy Koppe, 2015-2025 Thomas Wolff
 // Based on code from PuTTY-0.60 by Simon Tatham and team.
 // Licensed under the terms of the GNU General Public License v3 or later.
 
@@ -62,6 +62,7 @@ const config default_cfg = {
   .search_bg_colour = 0x00DDDD,
   .search_current_colour = 0x0099DD,
   .theme_file = W(""),
+  .dark_theme = W(""),
   .background = W(""),
   .colour_scheme = "",
   .transparency = 0,
@@ -364,6 +365,7 @@ options[] = {
   {"SearchBackgroundColour", OPT_COLOUR, offcfg(search_bg_colour)},
   {"SearchCurrentColour", OPT_COLOUR, offcfg(search_current_colour)},
   {"ThemeFile", OPT_WSTRING, offcfg(theme_file)},
+  {"ThemeDark", OPT_WSTRING, offcfg(dark_theme)},
   {"Background", OPT_WSTRING, offcfg(background)},
   {"ColourScheme", OPT_STRING, offcfg(colour_scheme)},
   {"Transparency", OPT_TRANS, offcfg(transparency)},
@@ -1890,10 +1892,15 @@ apply_config(bool save)
   fix_config();
   if (save)
     save_config();
-  bool had_theme = !!*cfg.theme_file;
+  bool had_theme = !!*cfg.theme_file || !!*cfg.dark_theme;
 
   if (*cfg.colour_scheme) {
     load_scheme(cfg.colour_scheme);
+    win_reset_colours();
+    win_invalidate_all(false);
+  }
+  else if (*cfg.dark_theme && win_darkmode()) {
+    load_theme(cfg.dark_theme);
     win_reset_colours();
     win_invalidate_all(false);
   }
@@ -1970,69 +1977,6 @@ closemuicache()
     RegCloseKey(evlabels);
     RegCloseKey(muicache);
   }
-}
-
-wchar *
-getregstr(HKEY key, wstring subkey, wstring attribute)
-{
-#if CYGWIN_VERSION_API_MINOR < 74
-  (void)key;
-  (void)subkey;
-  (void)attribute;
-  return 0;
-#else
-  // RegGetValueW is easier but not supported on Windows XP
-  HKEY sk = 0;
-  RegOpenKeyW(key, subkey, &sk);
-  if (!sk)
-    return 0;
-  DWORD type;
-  DWORD len;
-  int res = RegQueryValueExW(sk, attribute, 0, &type, 0, &len);
-  if (res)
-    return 0;
-  if (!(type == REG_SZ || type == REG_EXPAND_SZ || type == REG_MULTI_SZ))
-    return 0;
-  wchar * val = malloc (len);
-  res = RegQueryValueExW(sk, attribute, 0, &type, (void *)val, &len);
-  RegCloseKey(sk);
-  if (res) {
-    free(val);
-    return 0;
-  }
-  return val;
-#endif
-}
-
-uint
-getregval(HKEY key, wstring subkey, wstring attribute)
-{
-#if CYGWIN_VERSION_API_MINOR < 74
-  (void)key;
-  (void)subkey;
-  (void)attribute;
-  return 0;
-#else
-  // RegGetValueW is easier but not supported on Windows XP
-  HKEY sk = 0;
-  RegOpenKeyW(key, subkey, &sk);
-  if (!sk)
-    return 0;
-  DWORD type;
-  DWORD len;
-  int res = RegQueryValueExW(sk, attribute, 0, &type, 0, &len);
-  if (res)
-    return 0;
-  if (type == REG_DWORD) {
-    DWORD val;
-    len = sizeof(DWORD);
-    res = RegQueryValueExW(sk, attribute, 0, &type, (void *)&val, &len);
-    RegCloseKey(sk);
-    if (!res)
-      return (uint)val;
-  }
-  return 0;
-#endif
 }
 
 static wchar *
@@ -2931,6 +2875,7 @@ theme_handler(control *ctrl, int event)
   // to steer enabled state of Store button properly
   const wstring CFG_DOWNLOADED = W("@/@");
   wstring theme_name = new_cfg.theme_file;
+
   if (event == EVENT_REFRESH) {
     dlg_listbox_clear(ctrl);
     dlg_listbox_add_w(ctrl, NONE);

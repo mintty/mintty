@@ -1282,8 +1282,8 @@ the system ANSI encoding.
 (This does not apply to the same configuration settings when given on the 
 command-line.)
 .br
-Unicode-enabled settings: BellFile, BellFile2..7, ThemeFile, Background, 
-Title, ExitTitle, Icon, Log, SaveFilename, 
+Unicode-enabled settings: BellFile, BellFile2..7, ThemeFile, ThemeDark, 
+Background, Title, ExitTitle, Icon, Log, SaveFilename, 
 Language, Font, Font1..10, FontRTL, FontSample, FontChoice, 
 TekFont, CopyAsRTFFont, 
 SearchBar, Printer, Answerback, SixelClipChars, 
@@ -1298,8 +1298,9 @@ options can obviously be overwritten; if older mintty versions are run
 may even get dropped from the configuration file; mintty versions since 
 261 preserve unknown options and comment lines.
 
-Additional resource files are used for colour schemes (option \fBThemeFile\fP, 
-subdirectory \fIthemes\fP), wave files (option \fBBellFile\fP, subdirectory \fIsounds\fP), 
+Additional resource files are used for colour schemes (options 
+\fBThemeFile\fP and \fBThemeDark\fP, subdirectory \fIthemes\fP), 
+wave files (option \fBBellFile\fP, subdirectory \fIsounds\fP), 
 and localization translation files (option \fBLanguage\fP, subdirectory \fIlang\fP) 
 within the mintty resource directories \fI/usr/share/mintty\fP, 
 \fI$APPDATA/mintty\fP, \fI\(ti/.config/mintty\fP, \fI\(ti/.mintty\fP, 
@@ -1355,6 +1356,10 @@ about this mechanism.
 Note: Mintty also provides the command-line script \fBmintheme\fP which can 
 display the themes available in the mintty configuration directories or 
 activate one of them in the current mintty window.
+
+.en
+\fBDarkmode Theme\fP (ThemeDark=): 
+If this setting is not empty, it is used when the system is configured for darkmode. 
 
 .TQ
 \fBTransparency\fP (Transparency=off)
