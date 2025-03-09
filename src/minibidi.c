@@ -33,6 +33,7 @@
  * - fixed X9 to mask formatters with NSM rather than BN
  * - fixed W7 to fallback to sor
  * - fixed L1 to skip directional markers
+ * - Arabic joining considers ZWJ and ZWNJ formatters
  *
  ************************************************************************/
 
@@ -280,11 +281,9 @@ is_NI(uchar bc)
 int
 do_shape(bidi_char * line, bidi_char * to, int count)
 {
-  int i, tempShape, ligFlag;
-
-  for (ligFlag = i = 0; i < count; i++) {
+  for (int i = 0; i < count; i++) {
     to[i] = line[i];
-    tempShape = STYPE(line[i].wc);
+    int tempShape = STYPE(line[i].wc);
     switch (tempShape) {
       when SR:  // Right-Joining, i.e. has Isolated, Final
         tempShape = (i + 1 < count ? STYPE(line[i + 1].wc) : SU);
@@ -296,6 +295,7 @@ do_shape(bidi_char * line, bidi_char * to, int count)
        /* Make Ligatures */
         tempShape = (i + 1 < count ? STYPE(line[i + 1].wc) : SU);
         if (line[i].wc == 0x644) {
+          int ligFlag = 0;
           if (i > 0)
             switch (line[i - 1].wc) {
               when 0x622:
