@@ -3,11 +3,15 @@
 
 typedef unsigned int ucschar;
 
+#define ZWJ 0x02
+#define ZWNJ 0x01
+
 typedef struct {
   ucschar origwc, wc;
   short index;
-  uchar wide;  // width marker for term_bidi_line()
+  uchar wide: 1;  // width marker for term_bidi_line()
   uchar emojilen: 7;
+  uchar joiners;
 } bidi_char;
 
 int do_bidi(bool autodir, int para_level, bool explicitRTL, bool box_mirror, bidi_char * line, int count);

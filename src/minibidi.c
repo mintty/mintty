@@ -330,6 +330,23 @@ do_shape(bidi_char * line, bidi_char * to, int count)
           }
         }
 
+        // Arabic joining formatters: adapt forms
+        uchar joiners = line[i].joiners & 0xF;
+        uchar prevjoiners = line[i].joiners >> 4;
+        if (prevjoiners == ZWNJ) {
+          to[i].wc = SINITIAL(SISOLATED(line[i].wc));
+        }
+        else if (prevjoiners == (ZWJ | ZWNJ)) {
+          to[i].wc = SMEDIAL(SISOLATED(line[i].wc));
+        }
+        else if (prevjoiners == ZWJ) {
+          to[i].wc = SFINAL(SISOLATED(line[i].wc));
+        }
+        else if (joiners & ZWNJ) {
+          to[i].wc = SISOLATED(line[i].wc);
+        }
+        else
+
         if (tempShape == SL || tempShape == SD || tempShape == SC) {
           tempShape = (i > 0 ? STYPE(line[i - 1].wc) : SU);
           if (tempShape == SR || tempShape == SD || tempShape == SC)
