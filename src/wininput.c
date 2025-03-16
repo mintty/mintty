@@ -1,5 +1,5 @@
 // wininput.c (part of mintty)
-// Copyright 2008-23 Andy Koppe, 2015-2024 Thomas Wolff
+// Copyright 2008-23 Andy Koppe, 2015-2025 Thomas Wolff
 // Licensed under the terms of the GNU General Public License v3 or later.
 
 #include "winpriv.h"
@@ -988,9 +988,9 @@ translate_pos(int x, int y)
     y = max(0, y - term.rows * cell_height);
   }
   return (pos){
-    .x = floorf((x - PADDING) / (float)cell_width),
+    .x = floorf((x - PADDING + horclip()) / (float)cell_width),
     .y = floorf((y - PADDING - OFFSET) / (float)cell_height),
-    .pix = min(max(0, x - PADDING), term.cols * cell_width - 1),
+    .pix = min(max(0, x - PADDING), term.cols * cell_width - 1) + horclip(),
     .piy = min(max(0, y - PADDING - OFFSET), rows * cell_height - 1),
     .r = (cfg.elastic_mouse && !term.mouse_mode)
          ? (x - PADDING) % cell_width > cell_width / 2
