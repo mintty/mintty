@@ -14,6 +14,9 @@ Character rendering
 Keyboard handling
   * Enforce Ctrl as held down (except with AltGr) (~#1266, ~#1273).
 
+Window handling
+  * Fix frame adjustment when disabling darkmode.
+
 Font configuration:
   * Handle font metrics errors (#1309).
 

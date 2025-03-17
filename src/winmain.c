@@ -216,7 +216,7 @@ static BOOL (WINAPI * pSystemParametersInfo)(UINT, UINT, PVOID, UINT) = 0;
 
 static BOOLEAN (WINAPI * pShouldAppsUseDarkMode)(void) = 0; /* undocumented */
 static DWORD (WINAPI * pSetPreferredAppMode)(DWORD) = 0; /* undocumented */
-static HRESULT (WINAPI * pSetWindowTheme)(HWND, const wchar_t *, const wchar_t *) = 0;
+static HRESULT (WINAPI * pSetWindowTheme)(HWND, const wchar *, const wchar *) = 0;
 
 #define HTHEME HANDLE
 static COLORREF (WINAPI * pGetThemeSysColor)(HTHEME hth, int colid) = 0;
@@ -2466,13 +2466,20 @@ win_dark_mode(HWND w)
   if (pDwmSetWindowAttribute) {
     BOOL dark = is_win_dark_mode();
 
-    // do not use SetWindowTheme anymore (previously on WM_WININICHANGE);
-    // it would cause an asynchronous WM_THEMECHANGED message...
-
+    // DwmSetWindowAttribute needs to be called to adjust the title bar
     // set DWMWA_USE_IMMERSIVE_DARK_MODE (20)
     if (S_OK != pDwmSetWindowAttribute(w, 20, &dark, sizeof dark)) {
       // this would be the call before Windows build 18362
       pDwmSetWindowAttribute(w, 19, &dark, sizeof dark);
+    }
+
+    // SetWindowTheme needs to be called to adjust the scrollbar
+    // it causes WM_THEMECHANGED sent
+    if (pSetWindowTheme) {
+      if (dark)
+        pSetWindowTheme(w, W("DarkMode_Explorer"), NULL);
+      else
+        pSetWindowTheme(w, 0, NULL);
     }
   }
 }
@@ -4836,7 +4843,7 @@ static struct {
       // update dark mode
       if (message == WM_WININICHANGE) {
         // adapt window frame colours
-        win_dark_mode(wnd);
+        win_dark_mode(wnd);  // causes WM_THEMECHANGED sent
 
         // adapt mintty theme (do not apply_config(false); it would crash)
         if (*cfg.dark_theme && is_win_dark_mode())
