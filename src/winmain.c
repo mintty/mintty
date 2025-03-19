@@ -3928,16 +3928,27 @@ static struct {
   {IDC_WAIT, W("wait")},
 };
 
-static HCURSOR cursors[2] = {0, 0};
+static HCURSOR cursors[3] = {0, 0, 0};
+
+bool
+is_mouse_mode_by_pixels(void)
+{
+  return (term.mouse_mode && term.mouse_enc == ME_PIXEL_CSI)
+         || (term.locator_by_pixels && 
+             (term.mouse_mode == MM_LOCATOR || term.locator_1_enabled));
+}
 
 HCURSOR
 win_get_cursor(bool appmouse)
 {
-  return cursors[appmouse];
+  int cursidx = appmouse;
+  if (cursidx && is_mouse_mode_by_pixels())
+    cursidx = 2;
+  return cursors[cursidx];
 }
 
 void
-set_cursor_style(bool appmouse, wchar * style)
+set_cursor_style(int appmouse, wstring style)
 {
   HCURSOR c = 0;
   if (wcschr(style, '.')) {
@@ -3962,11 +3973,17 @@ set_cursor_style(bool appmouse, wchar * style)
         break;
       }
   if (!c)
-    c = LoadCursor(null, appmouse ? IDC_ARROW : IDC_IBEAM);
+    c = LoadCursor(null, appmouse 
+                         ? (is_mouse_mode_by_pixels() ? IDC_CROSS : IDC_ARROW)
+                         : IDC_IBEAM);
 
-  if (!IS_INTRESOURCE(cursors[appmouse]))
-    DestroyCursor(cursors[appmouse]);
-  cursors[appmouse] = c;
+  int cursidx = appmouse;
+  if (cursidx && is_mouse_mode_by_pixels())
+    cursidx = 2;
+
+  if (!IS_INTRESOURCE(cursors[cursidx]))
+    DestroyCursor(cursors[cursidx]);
+  cursors[cursidx] = c;
   SetClassLongPtr(wnd, GCLP_HCURSOR, (LONG_PTR)c);
   SetCursor(c);
 }
@@ -3974,8 +3991,19 @@ set_cursor_style(bool appmouse, wchar * style)
 static void
 win_init_cursors()
 {
-  set_cursor_style(true, W("arrow"));
-  set_cursor_style(false, W("ibeam"));
+  if (*cfg.appmouse_pointer)
+    set_cursor_style(1, cfg.appmouse_pointer);
+  else
+    set_cursor_style(1, W("arrow"));
+  if (*cfg.pixmouse_pointer)
+    set_cursor_style(2, cfg.pixmouse_pointer);
+  else
+    set_cursor_style(2, W("cross"));
+  // this must be last:
+  if (*cfg.mouse_pointer)
+    set_cursor_style(0, cfg.mouse_pointer);
+  else
+    set_cursor_style(0, W("ibeam"));
 }
 
 

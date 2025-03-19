@@ -881,7 +881,7 @@ The sequence also affects the vertical line cursor.
 
 The following _OSC_ ("operating system command") sequence (xterm 367) 
 can be used to set the mouse pointer shape of the current mouse mode 
-(mintty maintains two different mouse pointer shapes, to distinguish 
+(mintty maintains three different mouse pointer shapes, to distinguish 
 application mouse reporting modes).
 Valid values are Windows predefined cursor names 
 (appstarting, arrow, cross, hand, help, ibeam, icon, no, size, sizeall, sizenesw, sizens, sizenwse, sizewe, uparrow, wait) 

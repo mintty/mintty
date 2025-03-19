@@ -137,8 +137,6 @@ extern void win_show_tip(int x, int y, int cols, int rows);
 extern void win_destroy_tip(void);
 
 extern void taskbar_progress(int percent);
-extern HCURSOR win_get_cursor(bool appmouse);
-extern void set_cursor_style(bool appmouse, wchar * style);
 
 extern void win_init_menus(void);
 extern void win_update_menus(bool callback);
@@ -149,6 +147,10 @@ extern bool win_mouse_click(mouse_button, LPARAM);
 extern void win_mouse_release(mouse_button, LPARAM);
 extern void win_mouse_wheel(POINT wpos, bool horizontal, int delta);
 extern void win_mouse_move(bool nc, LPARAM);
+
+extern bool is_mouse_mode_by_pixels(void);
+extern HCURSOR win_get_cursor(bool appmouse);
+extern void set_cursor_style(int appmouse, wstring style);
 
 extern mod_keys get_mods(void);
 extern void win_key_reset(void);

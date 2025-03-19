@@ -927,6 +927,7 @@ static void
 update_mouse(mod_keys mods)
 {
 static bool last_app_mouse = false;
+static bool last_pix_mouse = false;
 
   // unhover (end hovering) if hover modifiers are withdrawn
   if (term.hovering && (char)(mods & ~cfg.click_target_mod) != cfg.opening_mod) {
@@ -940,13 +941,15 @@ static bool last_app_mouse = false;
     && !term.show_other_screen
     // disable app mouse pointer while not targetting app
     && (cfg.clicks_target_app ^ ((mods & cfg.click_target_mod) != 0));
+  bool new_pix_mouse = is_mouse_mode_by_pixels();
 
-  if (new_app_mouse != last_app_mouse) {
+  if (new_app_mouse != last_app_mouse || new_pix_mouse != last_pix_mouse) {
     //HCURSOR cursor = LoadCursor(null, new_app_mouse ? IDC_ARROW : IDC_IBEAM);
     HCURSOR cursor = win_get_cursor(new_app_mouse);
     SetClassLongPtr(wnd, GCLP_HCURSOR, (LONG_PTR)cursor);
     SetCursor(cursor);
     last_app_mouse = new_app_mouse;
+    last_pix_mouse = new_pix_mouse;
   }
 }
 

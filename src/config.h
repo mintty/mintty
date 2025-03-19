@@ -138,6 +138,7 @@ typedef struct {
   int lines_per_notch;
   wstring mouse_pointer;
   wstring appmouse_pointer;
+  wstring pixmouse_pointer;
   // Selection
   bool input_clears_selection;
   bool copy_on_select;

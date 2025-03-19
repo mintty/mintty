@@ -2473,12 +2473,16 @@ set_modes(bool state)
           term.report_focus = state;
         when 1005: /* Xterm's UTF8 encoding for mouse positions */
           term.mouse_enc = state ? ME_UTF8 : 0;
+          win_update_mouse();  // reset pixel pointer
         when 1006: /* Xterm's CSI-style mouse encoding */
           term.mouse_enc = state ? ME_XTERM_CSI : 0;
+          win_update_mouse();  // reset pixel pointer
         when 1016: /* Xterm's CSI-style mouse encoding with pixel resolution */
           term.mouse_enc = state ? ME_PIXEL_CSI : 0;
+          win_update_mouse();  // set pixel pointer
         when 1015: /* Urxvt's CSI-style mouse encoding */
           term.mouse_enc = state ? ME_URXVT_CSI : 0;
+          win_update_mouse();  // reset pixel pointer
         when 1037:
           term.delete_sends_del = state;
         when 1042:
@@ -4683,9 +4687,9 @@ do_cmd(void)
         }
       }
     when 22: {  // set mouse pointer style
-      wchar * ps = cs__mbstowcs(s);
+      wstring ps = cs__mbstowcs(s);
       set_cursor_style(term.mouse_mode || term.locator_1_enabled, ps);
-      free(ps);
+      delete(ps);
     }
     when 7750:
       set_arg_option("Emojis", strdup(s));

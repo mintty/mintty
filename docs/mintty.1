@@ -847,7 +847,7 @@ remote side does not change the client side towards mintty.
 When an application activates mouse tracking, mouse events are sent to the
 application rather than being treated as window events.
 This is indicated by the mouse pointer changing from an \fBI\fP shape to an
-arrow.
+arrow, or to a haircross pointer if the mouse mode reports pixel coordinates.
 Holding down \fBShift\fP overrides mouse tracking mode and sends mouse
 events to the window instead, so that e.g. text can be selected and the 
 context menu can be accessed.
@@ -3828,9 +3828,9 @@ process terminated, this option prefixes the window title with its string,
 for example \-o ExitTitle="TERMINATED: ".
 
 .TQ
-\fBMouse pointer styles\fP (MousePointer=ibeam, AppMousePointer=arrow)
+\fBMouse pointer styles\fP (MousePointer=ibeam, AppMousePointer=arrow, PixMousePointer=cross)
 This setting defines the mouse position indicator (i.e. not the text cursor) 
-from the given resource. Note that mintty maintains two different mouse 
+from the given resource. Note that mintty maintains three different mouse 
 pointer shapes, to distinguish application mouse reporting modes.
 Valid values are Windows predefined cursor names 
 (appstarting, arrow, cross, hand, help, ibeam, icon, no, size, sizeall, sizenesw, sizens, sizenwse, sizewe, uparrow, wait).

@@ -16,6 +16,7 @@ Keyboard handling
 
 Window handling
   * Fix frame adjustment when disabling darkmode.
+  * Display hair cross mouse pointer in pixel-grained mouse reporting modes.
 
 Font configuration:
   * Handle font metrics errors (#1309).
@@ -24,6 +25,7 @@ Configuration:
   * New option ThemeDark to be used if Windows Darkmode is set (#1305, ~#1303).
   * New glyph centering prefix ">" for option FontChoice (#1313).
   * Propagate TERM config setting to WSL HOSTTERM variable (mintty/wsltty#290, ~mintty/wsltty#278).
+  * New option PixMousePointer.
 
 ### 3.7.7 (21 December 2024) ###
 
