@@ -5,6 +5,7 @@ Terminal features
   * Fix graphics (image/sixel) and emoji display to adapt to horizontal scrolling.
   * Fix mouse position click coordinates to adapt to horizontal scrolling.
   * Fix reflow to avoid vanishing graphics on terminal resizing.
+  * Changed image size limit from 1MB to configurable value, default > 4MB.
 
 Character rendering
   * Fix overhang rendering for some characters, clipped in 3.7.7 (#1304).
@@ -27,6 +28,7 @@ Configuration:
   * New glyph centering prefix ">" for option FontChoice (#1313).
   * Propagate TERM config setting to WSL HOSTTERM variable (mintty/wsltty#290, ~mintty/wsltty#278).
   * New option PixMousePointer.
+  * New option MaxImageSize.
 
 ### 3.7.7 (21 December 2024) ###
 

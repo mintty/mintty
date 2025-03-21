@@ -304,6 +304,7 @@ const config default_cfg = {
     [BOLD_WHITE_I]   = { RGB(255, 255, 255), RGB(255, 255, 255) }
 #endif
   },
+  .max_image_size = 4444444,
   .sixel_clip_char = W(" "),
   .baud = 0,
   .bloom = 0,
@@ -601,6 +602,7 @@ options[] = {
   {"WordChars", OPT_STRING, offcfg(word_chars)},
   {"WordCharsExcl", OPT_STRING, offcfg(word_chars_excl)},
   {"IMECursorColour", OPT_COLOUR, offcfg(ime_cursor_colour)},
+  {"MaxImageSize", OPT_INT, offcfg(max_image_size)},
   {"SixelClipChars", OPT_WSTRING, offcfg(sixel_clip_char)},
   {"OldBold", OPT_BOOL, offcfg(old_bold)},
   {"ShortLongOpts", OPT_BOOL, offcfg(short_long_opts)},
