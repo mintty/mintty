@@ -1525,7 +1525,12 @@ term_reflow(int newrows, int newcols, bool quick_reflow)
 #endif
     freeline(line);
   }
-  term.virtuallines = term.sblines - newrows;
+
+  // What was the idea of this assignment?
+  // It spoils graphics references and makes graphics vanish 
+  // on resize with reflow.
+  //term.virtuallines = term.sblines - newrows;
+
 #ifdef debug_reflow
   ulong t3 = mtime();
 #endif

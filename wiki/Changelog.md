@@ -4,6 +4,7 @@ Terminal features
   * Arabic joining considers ZWJ and ZWNJ formatters.
   * Fix graphics (image/sixel) and emoji display to adapt to horizontal scrolling.
   * Fix mouse position click coordinates to adapt to horizontal scrolling.
+  * Fix reflow to avoid vanishing graphics on terminal resizing.
 
 Character rendering
   * Fix overhang rendering for some characters, clipped in 3.7.7 (#1304).
