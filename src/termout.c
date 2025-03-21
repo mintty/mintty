@@ -22,7 +22,7 @@
 
 #define TERM_CMD_BUF_INC_STEP 128
 //#define TERM_CMD_BUF_MAX_SIZE (1024 * 1024)
-#define TERM_CMD_BUF_MAX_SIZE (uint)(1024 + cfg.max_image_size)
+#define TERM_CMD_BUF_MAX_SIZE max(2222, (uint)cfg.max_image_size)
 
 #define SUB_PARS (1 << (sizeof(*term.csi_argv) * 8 - 1))
 
