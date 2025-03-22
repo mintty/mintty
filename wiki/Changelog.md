@@ -1,3 +1,5 @@
+### 3.7.8 (22 March 2025) ###
+
 Terminal features
   * SUB and CAN controls terminate ESC sequences and are displayed (DEC, xterm 397).
   * LAM/ALEF single-cell joining mode (DECSET 2521).
