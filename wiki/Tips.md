@@ -337,7 +337,8 @@ the Windows program.
 ### Text attribute handling from WSL and other Windows programs ###
 
 When running native Windows programs, like `wsl` access program to WSL, 
-or `cmd` and `powershell`, the `conhost` console layer of Windows interferes 
+or `cmd` and `powershell`, or MinGW-compiled Windows console applications, 
+the `conhost` console layer of Windows interferes 
 with escape sequence controls; even for WSL, it does not pass them through 
 transparently but imposes its own idea of terminal capabilities, mangling 
 basic controls like bold and reverse attributes, so bold text is enforced 
@@ -352,6 +353,12 @@ architecture, extract its `OpenConsole.exe`, rename it to `conhost.exe`
 and replace the conhost program in your Windows System32 folder with it.
 Make a backup copy of conhost.exe first, just in case.
 (Do **not** copy conhost.exe from Windows 11 into Windows 10.)
+
+### Mouse interaction in console-based programs ###
+
+Under the same conditions that cause broken text attribute handling, 
+mouse reporting modes may be inhibited so mouse control would not work.
+Also the workaround is the same as above.
 
 ### Line end copy/paste from WSL and other console-based programs ###
 
