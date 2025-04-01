@@ -1,3 +1,6 @@
+Terminal features
+  * Fix darkmode/wakeup refresh to not override dynamic OSC colour settings.
+
 ### 3.7.8 (22 March 2025) ###
 
 Terminal features

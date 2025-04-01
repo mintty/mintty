@@ -4878,7 +4878,8 @@ static struct {
           load_theme(cfg.dark_theme);
         else if (*cfg.theme_file)
           load_theme(cfg.theme_file);
-        win_reset_colours();
+        // do not win_reset_colours(), in order to
+        // keep dynamic OSC colour definitions
         win_invalidate_all(false);
       }
 
