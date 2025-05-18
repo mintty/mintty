@@ -3459,12 +3459,25 @@ do_csi(uchar c)
           }
         child_printf("\e\\");
       }
-    when CPAIR('>', 'm'):     /* xterm XTMODKEYS: modifier key setting */
+    when CPAIR('>', 'm'): {   /* xterm XTMODKEYS: modifier key setting */
       /* only the modifyOtherKeys setting is implemented */
-      if (!arg0)
-        term.modify_other_keys = 0;
-      else if (arg0 == 4)
-        term.modify_other_keys = arg1;
+        int Pp = arg0;
+        uint iPv = 1;
+        int Pv = 0;
+        //int modify_mask = 0;
+        if (term.csi_argv[0] & SUB_PARS) {
+          // ignore modifier mask but accept its escape sequence (xterm 398)
+          Pp = term.csi_argv[0] & ~SUB_PARS;
+          iPv ++;
+          //modify_mask = term.csi_argv[1];
+        }
+        if (iPv < term.csi_argc)
+          Pv = term.csi_argv[iPv];
+        if (!Pp)  // reset all
+          term.modify_other_keys = 0;
+        else if (Pp == 4)  // modifyOtherKeys
+          term.modify_other_keys = Pv;
+      }
     when CPAIR('?', 'm'):     /* xterm XTQMODKEYS: query XTMODKEYS */
       /* only the modifyOtherKeys setting is implemented */
       if (arg0 == 4)
