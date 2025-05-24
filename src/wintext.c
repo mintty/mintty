@@ -3780,10 +3780,15 @@ draw:;
   else
 
  /* Underline */
+#define selfdrawn() (vt52fraction || boxpower || dectcs || boxcoded)
   if (!ldisp2 && lattr != LATTR_TOP &&
-      (force_manual_underline ||
-       nfont & FONT_UNDERLINE ||  // ensure underline of self-drawn characters
-       (attr.attr & (ATTR_DOUBLYUND | ATTR_BROKENUND)) ||
+      (force_manual_underline
+       ||
+       // ensure underline of self-drawn characters
+       ((nfont & FONT_UNDERLINE) && selfdrawn())
+       ||
+       (attr.attr & (ATTR_DOUBLYUND | ATTR_BROKENUND))
+       ||
        ((attr.attr & UNDER_MASK) == ATTR_UNDER &&
         (ff->und_mode == UND_LINE || (attr.attr & ATTR_ULCOLOUR)))
       )
