@@ -4,6 +4,9 @@ Terminal features
   * Accept (but ignore) XTMODKEYS subparameters (xterm 398).
   * Fix doubled underline (since 3.7.8).
 
+Configuration
+  * Changing default setting UnderlineManual=true for consistent line placement.
+
 ### 3.7.8 (22 March 2025) ###
 
 Terminal features

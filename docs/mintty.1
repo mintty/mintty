@@ -1581,12 +1581,14 @@ value 0 selects a built-in inline font chooser.
 .RE
 
 .TQ
-\fBText lines\fP (UnderlineManual=false)
-By enabling this hidden setting, text attributes underline, doubly underline, 
-strikeout and overline are enforced to be drawn manually. 
-The default is to use Windows font variants for strikeout and for 
+\fBText lines\fP (UnderlineManual=true) [DEPRECATED]
+With this hidden setting, text attributes underline, doubly underline, 
+strikeout and overline are drawn manually. 
+Setting this to false uses Windows font variants for strikeout and for 
 underline, unless mintty detects that the underlined font would not 
-display properly.
+display properly. However, mixing font-generated and manual lines 
+(e.g. when some are coloured) results in inconsistent placement, 
+so the default was changed to true in 3.7.9.
 Note that font smoothing may be affected by Windows-generated underline modes.
 
 .TQ
