@@ -14,6 +14,9 @@ extern void winimg_lazyinit(imglist * img);
 extern void winimgs_paint(void);
 extern void winimgs_clear(void);
 
+// override suppression of repetitive image painting
+extern bool force_imgs;
+
 extern void win_emoji_show(int x, int y, wchar * efn, void * * bufpoi, int * buflen, int elen, ushort lattr, bool italic);
 
 extern void save_img(HDC, int x, int y, int w, int h, wstring fn);

@@ -407,6 +407,8 @@ typedef struct imglist {
   // position within scrollback
   long long int top;  // includes offset term.virtuallines
   int left;
+  // last painted position on screen, to avoid repetitive painting
+  short x, y;
 
   // image area (cell units)
   int width, height;

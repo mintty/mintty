@@ -1983,6 +1983,8 @@ horex(char tag)
 static void
 do_horflush(void)
 {
+  force_imgs = true;  // override suppression of repetitive image painting
+
   // could limit this to newly visible columns
   term_invalidate(0, 0, term.cols - 1, term.rows - 1);
   win_schedule_update();
@@ -2018,6 +2020,8 @@ horflush(void)
 static void
 horflush(void)
 {
+  force_imgs = true;  // override suppression of repetitive image painting
+
   // could limit this to newly visible columns
   term_invalidate(0, 0, term.cols - 1, term.rows - 1);
   win_schedule_update();
@@ -4891,6 +4895,7 @@ static struct {
 
     when WM_PAINT:
       //printsb("WS_PAINT");
+      force_imgs = true;  // override suppression of repetitive image painting
       win_paint();
 
 #ifdef handle_default_size_asynchronously
