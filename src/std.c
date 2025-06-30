@@ -1,5 +1,5 @@
 // std.c (part of mintty)
-// Copyright 2010-11 Andy Koppe
+// Copyright 2010-11 Andy Koppe, 2025 Thomas Wolff
 // Licensed under the terms of the GNU General Public License v3 or later.
 
 void
@@ -147,7 +147,7 @@ argz_stringify(char *argz, size_t argz_len, int sep)
 #endif
 
 
-#if CYGWIN_VERSION_API_MINOR < 93
+#if CYGWIN_VERSION_API_MINOR < 93 || defined (debug_forkpty)
 
 /*-
  * Copyright (c) 1990, 1993
@@ -182,7 +182,9 @@ argz_stringify(char *argz, size_t argz_len, int sep)
 #include <termios.h>
 #include <sys/ioctl.h>
 
+#ifndef TTY_NAME_MAX
 #define TTY_NAME_MAX 32
+#endif
 
 int
 login_tty(int fd)
@@ -211,7 +213,7 @@ login_tty(int fd)
   return 0;
 }
 
-int
+static int
 openpty(int *amaster, int *aslave, char *name,
         const struct termios *termp, const struct winsize *winp)
 {
