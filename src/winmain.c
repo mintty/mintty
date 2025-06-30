@@ -7058,49 +7058,63 @@ main(int argc, char *argv[])
 
 #define dont_debug_wsl
 
-  bool wslbridge2 = access("/bin/wslbridge2", X_OK) == 0
-                 || access("/bin/wslbridge", X_OK) < 0;
+  int wslbridge = cfg.wslbridge;
+  if (wslbridge == 2 && access("/bin/wslbridge2", X_OK) < 0)
+    wslbridge = 1;
+  if (wslbridge == 1 && access("/bin/wslbridge", X_OK) < 0)
+    wslbridge = 0;
 
   // Work out what to execute.
   argv += optind;
   if (wsl_guid && wsl_launch) {
     argc -= optind;
     char * cmd0;
-    if (wslbridge2) {
+    if (wslbridge == 2) {
 # ifndef __x86_64__
       argc += 2;  // -V 1/2
 # endif
       cmd = "/bin/wslbridge2";
       cmd0 = "-wslbridge2";
     }
-    else {
+    else if (wslbridge == 1) {
       cmd = "/bin/wslbridge";
       cmd0 = "-wslbridge";
     }
-    bool login_dash = false;
+    else {
+      cmd = "wsl";
+      cmd0 = "-wsl";
+    }
+    bool login_shell = false;
     if (*argv && !strcmp(*argv, "-") && !argv[1]) {
-      login_dash = true;
+      login_shell = true;
       argv++;
       //argc--;
       //argc++; // for "-l"
+      if (!wslbridge)
+        argc++;
     }
-    if (wslbridge2)
+    if (wslbridge != 1)
       argc += start_home;
-    argc += 10;  // -e parameters
+    if (wslbridge)
+      argc += 10;  // -e parameters
 
     char ** new_argv = newn(char *, argc + 8 + start_home + (wsltty_appx ? 2 : 0));
     char ** pargv = new_argv;
-    if (login_dash) {
+    if (login_shell) {
       *pargv++ = cmd0;
 #ifdef wslbridge_supports_l
 #warning redundant option wslbridge -l not needed
       *pargv++ = "-l";
 #endif
+      if (!wslbridge) {
+        *pargv++ = "--shell-type";
+        *pargv++ = "login";
+      }
     }
     else
       *pargv++ = cmd;
 # ifndef __x86_64__
-    if (wslbridge2) {
+    if (wslbridge == 2) {
       *pargv++ = "-V";
       if (wsl_ver > 1)
         *pargv++ = "2";
@@ -7109,7 +7123,7 @@ main(int argc, char *argv[])
     }
 # endif
     if (*wsl_guid) {
-      if (wslbridge2) {
+      if (wslbridge != 1) {
         if (*wslname) {
           *pargv++ = "-d";
           *pargv++ = cs__wcstombs(wslname);
@@ -7123,31 +7137,40 @@ main(int argc, char *argv[])
 #ifdef wslbridge_t
     *pargv++ = "-t";
 #endif
+
+    // propagate environment variables
+    if (wslbridge) {
 #ifdef propagate_TERM_to_WSL
-    *pargv++ = "-e";
-    *pargv++ = "TERM";
+      *pargv++ = "-e";
+      *pargv++ = "TERM";
 #else
-    setenv("HOSTTERM", cfg.term, true);
-    *pargv++ = "-e";
-    *pargv++ = "HOSTTERM";
+      setenv("HOSTTERM", cfg.term, true);
+      *pargv++ = "-e";
+      *pargv++ = "HOSTTERM";
 #endif
-    *pargv++ = "-e";
-    *pargv++ = "APPDATA";
-    if (!cfg.old_locale) {
       *pargv++ = "-e";
-      *pargv++ = "LANG";
-      *pargv++ = "-e";
-      *pargv++ = "LC_CTYPE";
-      *pargv++ = "-e";
-      *pargv++ = "LC_ALL";
+      *pargv++ = "APPDATA";
+      if (!cfg.old_locale) {
+        *pargv++ = "-e";
+        *pargv++ = "LANG";
+        *pargv++ = "-e";
+        *pargv++ = "LC_CTYPE";
+        *pargv++ = "-e";
+        *pargv++ = "LC_ALL";
+      }
     }
+
     if (start_home) {
-      if (wslbridge2) {
+      if (wslbridge == 2) {
         *pargv++ = "--wsldir";
         *pargv++ = "~";
       }
-      else
+      else if (wslbridge == 1)
         *pargv++ = "-C~";
+      else {
+        *pargv++ = "--cd";
+        *pargv++ = "~";
+      }
     }
 
 #if CYGWIN_VERSION_API_MINOR >= 74
@@ -7188,7 +7211,7 @@ main(int argc, char *argv[])
 
     if (wsltty_appx && lappdata && *lappdata) {
       char * wslbridge_backend;
-      if (wslbridge2) {
+      if (wslbridge == 2) {
         wslbridge_backend = asform("%s/wslbridge2-backend", lappdata);
         copyfile("/bin/wslbridge2-backend", wslbridge_backend, true);
       }
@@ -7208,6 +7231,7 @@ main(int argc, char *argv[])
     *pargv = 0;
     argv = new_argv;
 #ifdef debug_wsl
+    printf("argc %d\n", argc);
     while (*new_argv)
       printf("<%s>\n", *new_argv++);
 #endif

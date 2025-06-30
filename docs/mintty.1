@@ -365,26 +365,23 @@ Locale modification (@cjk...) is not set to the environment variables.
 
 .TQ
 \fB\-\-WSL\fP=\fIWSL DISTRIBUTION NAME\fP
-Run a WSL session, setting other parameters as appropriate and involving 
-the \fIwslbridge2\fP gateway implicitly 
-(which should be installed in /bin for this purpose; 
-fallback to legacy wslbridge on older Windows is supported).
+Run a WSL session, set up WSL mode for some features and launch WSL, 
+using a gateway as selected by option \fBWSLbridge\fP, with 
+proper arguments as determined from the selected WSL distribution, 
+in login mode if requested and home directory preference if requested.
+
 If the distribution name is empty, the default WSL installation is run; 
 otherwise, it refers to the installed WSL packages as listed by the 
 Windows tool \fBwslconfig /l\fP or \fBwsl \-l\fP.
 Implies \fB\-\-wsl\fP, \fB\-\-rootfs=\fP...,
 and \fB\-\-icon=\fP... if a respective icon file exists for the distribution.
-Also sets up the gateway to propagate locale settings LANG, LC_CTYPE, LC_ALL 
-and environment variable APPDATA to the WSL session.
 
 .TQ
 \fB\-\-WSLmode\fP=\fIWSL DISTRIBUTION NAME\fP
 Setup a WSL session for the given distribution (like \fB\-\-WSL\fP) but 
 do not actually launch WSL which must be achieved with explicit 
 invocation of a suitable gateway.
-The preferred option is \fB\-\-WSL\fP which invokes \fI/bin/wslbridge2\fP 
-with proper arguments as determined from the selected WSL distribution, 
-in login mode if requested and home directory preference if requested.
+The preferred option is \fB\-\-WSL\fP which also launches WSL.
 
 .TQ
 \fB\-\-rootfs\fP \fIROOTFOLDER\fP
@@ -1219,6 +1216,18 @@ in a resource subdirectory \fIsounds\fP or addressed by pathname.
 Tone playing by DECPS is supported via the \fIlibao\fP audio output library 
 if installed. Setting \fBPlayTone\fP can preselect a tone style.
 See the Control Sequences wiki page \fIhttps://github.com/mintty/mintty/wiki/CtrlSeqs#audio\-support\fP.
+
+.SS WSL support
+
+With 3.7.9, mintty supports WSL sessions out of the box, 
+dropping the wslbridge gateways by default, since there were 
+notoriously frequent cases where they would have failed to work.
+Launching WSL with the Windows built-in default launcher, however, 
+used to be a crook solution as it obstructed transparent terminal operation 
+by hooking the Windows \fIconhost\fP layer into the workflow.
+This deficiency can now be compensated by patching an updated \fIconhost.exe\fP 
+into Windows; 
+see \fIhttps://github.com/mintty/mintty/wiki/Tips#wsl\-sessions\fP for details.
 
 .SS Diagnostic support
 
@@ -2972,6 +2981,26 @@ Also there is another escape sequence to disable bidi per screen line.
 .en
 \fB2\fP Enable bidi (default).
 ./ul
+
+.TQ
+\fBWSL launcher/bridge gateway\fP (WSLbridge=0)
+This option selects the launch gateway if running WSL via command-line 
+option \fB--WSL\fP:
+.ul
+.en
+\fB2\fP Use \fI/bin/wslbridge2\fP.
+.en
+\fB1\fP Use \fI/bin/wslbridge\fP (the original WSL bridge gateway, still needed on older Windows versions.
+.en
+\fB0\fP Use Windows \fIwsl.exe\fP.
+./ul
+
+The wslbridge gateway is also set up to propagate locale settings 
+LANG, LC_CTYPE, LC_ALL and environment variable APPDATA to the WSL session.
+
+The deficiencies of the native wsl.exe gateway should be compensated 
+by patching an updated Windows \fIconhost\fP program into Windows; 
+see \fIhttps://github.com/mintty/mintty/wiki/Tips#wsl\-sessions\fP for details.
 
 .TQ
 \fBApplication ID\fP (AppID=)

@@ -186,12 +186,24 @@ installed, mintty can be called from cygwin to run a WSL terminal session:
 * `mintty --WSL=Ubuntu`
 * `mintty --WSL` (for the Default distribution as set with `wslconfig /s` or `wsl -s`)
 
-Note, the `wslbridge2` gateways need to be installed in `/bin` for this purpose 
-(see below for details). (Fallback to legacy wslbridge on older Windows is supported.)
-
 A WSL terminal session can be configured for the mintty session launcher 
 in the config file, like:
 * `SessionCommands=Ubuntu:--WSL=Ubuntu`
+
+### WSL sessions ###
+
+Option `WSLbridge` selects the WSL launcher / bridge gateway to be used.
+The `wslbridge2` or older `wslbridge` gateways need to be installed in 
+`/bin` for this purpose (see below for details).
+
+With 3.7.9, however, mintty supports WSL sessions out of the box, 
+dropping the wslbridge gateways by default, since there were 
+notoriously frequent cases where they would have failed to work.
+Launching WSL with the Windows built-in default launcher, however, 
+used to be a crook solution as it obstructed transparent terminal operation 
+by hooking the Windows \fIconhost\fP layer into the workflow.
+This deficiency can now be compensated by patching an updated `conhost.exe` 
+into Windows; see instructions about `conhost` further below.
 
 ### WSLtty, the standalone WSL mintty terminal ###
 
@@ -199,14 +211,14 @@ For a standalone mintty deployment as a WSL terminal, also providing
 desktop and start menu shortcuts, command line launch scripts, and 
 optional Windows Explorer integration, install 
 [wsltty](https://github.com/mintty/wsltty),
-using either the wsltty installer, a Chocolatey package, or a Windows Appx package.
+using various installation options listed there.
 
-### Manual setup of WSL terminal ###
+### Manual setup of a WSL launcher / bridge gateway ###
 
 To help reproduce the installation manually, for users of cygwin or msys2:
 * Download from the https://github.com/Biswa96/wslbridge2 repository
 * Install package dependencies `make`, `g++`, `linux-headers` in WSL
-* Build the wslbridge2 gateways with
+* Build the wslbridge2 client and server gateways with
   * `make RELEASE=1` for the frontends (e.g. from cygwin)
   * `wsl make RELEASE=1` or `wsl -d` _distro_ `make RELEASE=1` for the backends
 * From subdirectory `bin`, install the gateway tools `wslbridge2.exe` and `wslbridge2-backend` into your `/bin` directory
@@ -352,6 +364,7 @@ among the Assets, download the WindowsTerminalPreview zip file of your
 architecture, extract its `OpenConsole.exe`, rename it to `conhost.exe` 
 and replace the conhost program in your Windows System32 folder with it.
 Make a backup copy of conhost.exe first, just in case.
+Then remove the original conhost.exe if it cannot be renamed.
 (Do **not** copy conhost.exe from Windows 11 into Windows 10.)
 
 ### Mouse interaction in console-based programs ###
@@ -1625,6 +1638,4 @@ checking environment variable `TERM` and the locale variables and invokes
 `stty raw -echo` to enable direct character-based I/O and disable 
 non-compatible signal handling. For this purpose, stty and its library 
 dependencies need to be bundled with the installation as well.
-
-To run WSL, use `wslbridge2` as a gateway (see above).
 

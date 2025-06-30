@@ -309,6 +309,7 @@ const config default_cfg = {
   .baud = 0,
   .bloom = 0,
   .old_xbuttons = false,
+  .wslbridge = 0,
   .options_font = W(""),
   .options_fontsize = 0,
   .old_options = ""
@@ -616,6 +617,7 @@ options[] = {
   {"StatusLine", OPT_BOOL, offcfg(status_line)},
   {"StatusDebug", OPT_INT, offcfg(status_debug)},
   {"OldXButtons", OPT_BOOL, offcfg(old_xbuttons)},
+  {"WSLbridge", OPT_BOOL, offcfg(wslbridge)},
   {"OptionsFont", OPT_WSTRING, offcfg(options_font)},
   {"OptionsFontSize", OPT_INT | OPT_LEGACY, offcfg(options_fontsize)},
   {"OptionsFontHeight", OPT_INT, offcfg(options_fontsize)},

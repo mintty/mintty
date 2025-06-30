@@ -5,8 +5,13 @@ Terminal features
   * Fix doubled underline (since 3.7.8).
   * Avoid repetitive painting of images.
 
+WSL support
+  * New mode to run WSL directly with Windows default access gateway wsl.exe.
+  * Drop wslbridge gateways by default.
+
 Configuration
   * Changing default setting UnderlineManual=true for consistent line placement.
+  * New option WSLbridge, default 0 to use wsl.exe to launch WSL.
 
 ### 3.7.8 (22 March 2025) ###
 
