@@ -4200,7 +4200,8 @@ static struct {
 # ifdef debug_only_input_messages
     if (strstr(wm_name, "MOUSE") || strstr(wm_name, "BUTTON") || strstr(wm_name, "CURSOR") || strstr(wm_name, "KEY"))
 # endif
-    printf("[%d]->%8p %04X %s (%08X %08X)\n", (int)time(0), wnd, message, wm_name, (unsigned)wp, (unsigned)lp);
+    if (strchr(mintty_debug, 'M'))
+      printf("[%d]->%8p %04X %s (%08X %08X)\n", (int)time(0), wnd, message, wm_name, (unsigned)wp, (unsigned)lp);
 #endif
 
   switch (message) {
@@ -4372,7 +4373,8 @@ static struct {
           idm_name = idm_names[i].idm_name;
           break;
         }
-      printf("                           %04X %s\n", (int)wp, idm_name);
+      if (strchr(mintty_debug, 'M'))
+        printf("                           %04X %s\n", (int)wp, idm_name);
 # endif
       if ((wp & ~0xF) >= 0xF000)
         ; // skip WM_SYSCOMMAND from Windows here (but process own ones)
@@ -5410,7 +5412,8 @@ static int olddelta;
       DWORD new = ((STYLESTRUCT *)lp)->styleNew;
       DWORD off = old & ~new;
       DWORD on = new & ~old;
-      printf("%sSTYLE%s %08X -> %08X, off %08X on %08X\n", which, what, old, new, off, on);
+      if (strchr(mintty_debug, 'M'))
+        printf("%sSTYLE%s %08X -> %08X, off %08X on %08X\n", which, what, old, new, off, on);
 
 typedef struct {
   DWORD st;
