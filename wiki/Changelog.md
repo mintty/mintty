@@ -4,6 +4,7 @@ Terminal features
   * Accept (but ignore) XTMODKEYS subparameters (xterm 398).
   * Fix doubled underline (since 3.7.8).
   * Avoid repetitive painting of images.
+  * Fix selection highlighting in configured colours on emojis.
 
 WSL support
   * New mode to run WSL directly with Windows default access gateway wsl.exe.

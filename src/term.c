@@ -3359,15 +3359,21 @@ term_paint(void)
           tattr.truebg = bg;
           tattr.attr = (tattr.attr & ~ATTR_BGMASK) | (TRUE_COLOUR << ATTR_BGSHIFT);
 
-          colour fg = win_get_colour(SEL_TEXT_COLOUR_I);
-          if (fg == (colour)-1)
-            fg = apply_attr_colour(tattr, ACM_SIMPLE).truefg;
-          static uint mindist = 22222;
-          bool too_close = colour_dist(fg, tattr.truebg) < mindist;
-          if (too_close)
-            fg = brighten(fg, tattr.truebg, false);
-          tattr.truefg = fg;
-          tattr.attr = (tattr.attr & ~ATTR_FGMASK) | (TRUE_COLOUR << ATTR_FGSHIFT);
+          if (tattr.attr & TATTR_EMOJI) {
+            // do not tamper with foreground when 
+            // being reused (abused) as emoji index
+          }
+          else {
+            colour fg = win_get_colour(SEL_TEXT_COLOUR_I);
+            if (fg == (colour)-1)
+              fg = apply_attr_colour(tattr, ACM_SIMPLE).truefg;
+            static uint mindist = 22222;
+            bool too_close = colour_dist(fg, tattr.truebg) < mindist;
+            if (too_close)
+              fg = brighten(fg, tattr.truebg, false);
+            tattr.truefg = fg;
+            tattr.attr = (tattr.attr & ~ATTR_FGMASK) | (TRUE_COLOUR << ATTR_FGSHIFT);
+          }
         }
         else
           tattr.attr ^= ATTR_REVERSE;
