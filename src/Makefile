@@ -36,17 +36,26 @@ ifdef TARGET
 else
   CC := gcc
   RC := windres
-  TARGET := $(shell $(CC) -dumpmachine)
+  #TARGET := $(shell $(CC) -dumpmachine)
+  TARGET := $(shell uname -o)-$(shell uname -m)
 endif
 
 ifeq ($(TARGET), i686-pc-cygwin)
   platform := cygwin32
   cygport_opts := --32
-  zip_files := ../docs/readme.html ../scripts/create_shortcut.js
+  zip_files := ../docs/readme.html
+else ifeq ($(TARGET), Cygwin-i686)
+  platform := cygwin32
+  cygport_opts := --32
+  zip_files := ../docs/readme.html
 else ifeq ($(TARGET), x86_64-pc-cygwin)
   platform := cygwin64
   cygport_opts := --64
-  zip_files := ../docs/readme.html ../scripts/create_shortcut.js
+  zip_files := ../docs/readme.html
+else ifeq ($(TARGET), Cygwin-x86_64)
+  platform := cygwin64
+  cygport_opts := --64
+  zip_files := ../docs/readme.html
 else ifeq ($(TARGET), i686-pc-msys)
   MSYS=$(shell uname -r | sed -e 's,\..*,,')
   ifeq ("$(MSYS)", "1")
@@ -55,7 +64,18 @@ else ifeq ($(TARGET), i686-pc-msys)
     platform := msys32
   endif
   zip_files := ../docs/readme-msys.html
+else ifeq ($(TARGET), Msys-i686)
+  MSYS=$(shell uname -r | sed -e 's,\..*,,')
+  ifeq ("$(MSYS)", "1")
+    platform := msys
+  else
+    platform := msys32
+  endif
+  zip_files := ../docs/readme-msys.html
 else ifeq ($(TARGET), x86_64-pc-msys)
+  platform := msys64
+  zip_files := ../docs/readme-msys.html
+else ifeq ($(TARGET), Msys-x86_64)
   platform := msys64
   zip_files := ../docs/readme-msys.html
 else
