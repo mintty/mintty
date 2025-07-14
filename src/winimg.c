@@ -651,6 +651,17 @@ winimgs_paint(void)
 {
   imglist * img;
 
+  /* mitigate a glitch in the suppression of repetitive image painting:
+     when selection highlighting is cancelled, images need to be repainted;
+     rather than setting a token whenever that happens, we remember the 
+     previous selection state here and force repainting if it changed
+  */
+static bool previously_selected = false;
+  if (term.selected != previously_selected) {
+    force_imgs = true;
+    previously_selected = term.selected;
+  }
+
   /* free disk space if number of tempfile exceeds TEMPFILE_MAX_NUM */
   while (tempfile_num > TEMPFILE_MAX_NUM && term.imgs.first) {
     img = term.imgs.first;
