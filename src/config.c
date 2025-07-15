@@ -2470,6 +2470,7 @@ bellfile_handler(control *ctrl, int event)
 }
 
 static control * theme = null;
+static control * dheme = null;
 static control * store_button = null;
 
 static void
@@ -2872,15 +2873,28 @@ scheme_return:
 static void
 theme_handler(control *ctrl, int event)
 {
-  //__ terminal theme / colour scheme
-  const wstring NONE = _W("◇ None ◇");  // ♢◇
+  wstring * themeref;
+  wstring * newthemeref;
+  wstring NONE;
+  if (ctrl->context == &new_cfg.theme_file) {
+    newthemeref = &new_cfg.theme_file;
+    themeref = &cfg.theme_file;
+    //__ terminal theme / colour scheme
+    NONE = _W("◇ None ◇");  // ♢◇
+  }
+  else {
+    newthemeref = &new_cfg.dark_theme;
+    themeref = &cfg.dark_theme;
+    //__ terminal theme / colour scheme used in dark mode
+    NONE = _W("◇ Same ◇");  // ♢◇
+  }
   const wstring CFG_NONE = W("");
   //__ indicator of unsaved downloaded colour scheme
   const wstring DOWNLOADED = _W("downloaded / give me a name!");
   // downloaded theme indicator must contain a slash
   // to steer enabled state of Store button properly
   const wstring CFG_DOWNLOADED = W("@/@");
-  wstring theme_name = new_cfg.theme_file;
+  wstring theme_name = *newthemeref;
 
   if (event == EVENT_REFRESH) {
     dlg_listbox_clear(ctrl);
@@ -2901,14 +2915,14 @@ theme_handler(control *ctrl, int event)
     else
       dlg_editbox_get_w(ctrl, &theme_name);
 
-    new_cfg.theme_file = theme_name;
+    *newthemeref = theme_name;
     // clear pending colour scheme
     strset(&new_cfg.colour_scheme, "");
     enable_widget(store_button, false);
   }
   else if (event == EVENT_VALCHANGE) {  // pasted or typed-in
     dlg_editbox_get_w(ctrl, &theme_name);
-    new_cfg.theme_file = theme_name;
+    *newthemeref = theme_name;
     enable_widget(store_button,
                   *new_cfg.colour_scheme && *theme_name
                   && !wcschr(theme_name, L'/') && !wcschr(theme_name, L'\\')
@@ -2921,7 +2935,7 @@ theme_handler(control *ctrl, int event)
     if (wcsncmp(W("data:text/plain,"), dragndrop, 16) == 0) {
       // indicate availability of downloaded scheme to be stored
       dlg_editbox_set_w(ctrl, DOWNLOADED);
-      wstrset(&new_cfg.theme_file, CFG_DOWNLOADED);
+      wstrset(newthemeref, CFG_DOWNLOADED);
       // un-URL-escape scheme description
       char * scheme = cs__wcstoutf(&dragndrop[16]);
       char * url = scheme;
@@ -2972,7 +2986,7 @@ theme_handler(control *ctrl, int event)
           // set theme name proposal to url base name
           urlpoi++;
           dlg_editbox_set_w(ctrl, urlpoi);
-          wstrset(&new_cfg.theme_file, urlpoi);
+          wstrset(newthemeref, urlpoi);
           // set scheme
           strset(&new_cfg.colour_scheme, sch);
 
@@ -2988,12 +3002,12 @@ theme_handler(control *ctrl, int event)
     }
     else {
       dlg_editbox_set_w(ctrl, dragndrop);
-      wstrset(&new_cfg.theme_file, dragndrop);
+      wstrset(newthemeref, dragndrop);
       enable_widget(store_button, false);
     }
   }
   // apply changed theme immediately
-  if (strcmp(new_cfg.colour_scheme, cfg.colour_scheme) || wcscmp(new_cfg.theme_file, cfg.theme_file))
+  if (strcmp(new_cfg.colour_scheme, cfg.colour_scheme) || wcscmp(*newthemeref, *themeref))
   {
 #ifdef debug_theme
     printf("theme_handler: apply\n");
@@ -3696,8 +3710,19 @@ setup_config_box(controlbox * b)
   )->column = 2;
   theme = ctrl_combobox(
     //__ Options - Looks:
-    s, _("&Theme"), 80, theme_handler, &new_cfg.theme_file
+    s, _("&Theme"), 75, theme_handler, &new_cfg.theme_file
   );
+#if 0
+#warning
+  // we cannot enable this yet as the effect of downloaded colour schemes 
+  // on theme configuration still needs to be tuned for two themes
+  dheme = ctrl_combobox(
+    //__ Options - Looks:
+    s, _("&Darkmode"), 75, theme_handler, &new_cfg.dark_theme
+  );
+#else
+  (void)dheme;
+#endif
   ctrl_columns(s, 1, 100);  // reset column stuff so we can rearrange them
   ctrl_columns(s, 2, 80, 20);
   //__ Options - Looks: name of web service
