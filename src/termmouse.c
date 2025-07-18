@@ -1,5 +1,5 @@
 // termmouse.c (part of mintty)
-// Copyright 2008-2023 Andy Koppe, 2017-2024 Thomas Wolff
+// Copyright 2008-2023 Andy Koppe, 2017-2025 Thomas Wolff
 // Based on code from PuTTY-0.60 by Simon Tatham and team.
 // Licensed under the terms of the GNU General Public License v3 or later.
 
@@ -245,6 +245,7 @@ sel_drag(pos selpoint)
 {
   //printf("sel_drag %d+%d/2 (anchor %d+%d/2)\n", selpoint.x, selpoint.r, term.sel_anchor.x, term.sel_anchor.r);
   term.selected = true;
+  term.selection_eq_clipboard = false;
   if (!term.sel_rect) {
    /*
     * For normal selection, we set (sel_start,sel_end) to
@@ -609,6 +610,7 @@ term_mouse_click(mouse_button b, mod_keys mods, pos p, int count)
         p = get_selpoint(box_pos(p));
         term.mouse_state = MS_OPENING;
         term.selected = true;
+        term.selection_eq_clipboard = false;
         term.sel_rect = false;
         term.sel_start = term.sel_end = term.sel_anchor = p;
         sel_spread();
@@ -634,6 +636,7 @@ term_mouse_click(mouse_button b, mod_keys mods, pos p, int count)
       else {
         // Double or triple-click: select whole word or line
         term.selected = true;
+        term.selection_eq_clipboard = false;
         term.sel_rect = false;
         term.sel_start = term.sel_end = term.sel_anchor = p;
         sel_spread();

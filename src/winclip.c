@@ -1,5 +1,5 @@
 // winclip.c (part of mintty)
-// Copyright 2008-23 Andy Koppe, 2018 Thomas Wolff
+// Copyright 2008-23 Andy Koppe, 2018-2025 Thomas Wolff
 // Adapted from code from PuTTY-0.60 by Simon Tatham and team.
 // Licensed under the terms of the GNU General Public License v3 or later.
 
@@ -1059,6 +1059,9 @@ win_copy_as(const wchar *data, cattr *cattrs, int len, char what)
 #endif
 
     CloseClipboard();
+
+    // trigger full selection highlighting
+    term.selection_eq_clipboard = true;
   }
   else {
     GlobalFree(clipdata);

@@ -2890,6 +2890,7 @@ C	M	+C	+A	"	"
       }
       //printf("->sel %d:%d .. %d:%d\n", term.sel_start.y, term.sel_start.x, term.sel_end.y, term.sel_end.x);
       term.selected = true;
+      term.selection_eq_clipboard = false;
       win_update(true);
     }
     if (selection_pending)

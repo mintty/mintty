@@ -1,5 +1,5 @@
 // termclip.c (part of mintty)
-// Copyright 2008-23 Andy Koppe, 2024 Thomas Wolff
+// Copyright 2008-23 Andy Koppe, 2024-2025 Thomas Wolff
 // Adapted from code from PuTTY-0.60 by Simon Tatham and team.
 // Licensed under the terms of the GNU General Public License v3 or later.
 
@@ -484,6 +484,7 @@ term_select_all(void)
   term.sel_start = (pos){-sblines(), 0, 0, 0, false};
   term.sel_end = (pos){term_last_nonempty_line(), term.cols, 0, 0, true};
   term.selected = true;
+  term.selection_eq_clipboard = false;
   if (cfg.copy_on_select)
     term_copy();
 }

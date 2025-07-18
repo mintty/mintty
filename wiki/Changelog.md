@@ -5,6 +5,7 @@ Terminal features
   * Fix doubled underline (since 3.7.8).
   * Avoid repetitive painting of images.
   * Fix selection highlighting in configured colours on emojis.
+  * Full or dimmed selection highlighting depending on clipboard contents (#1322).
 
 WSL support
   * New mode to run WSL directly with Windows default access gateway wsl.exe.
@@ -13,6 +14,7 @@ WSL support
 Configuration
   * Changing default setting UnderlineManual=true for consistent line placement.
   * New option WSLbridge, default 0 to use wsl.exe to launch WSL.
+  * New option SelectionMode.
 
 ### 3.7.8 (22 March 2025) ###
 

@@ -4814,10 +4814,19 @@ static struct {
     // Try to clear selection when clipboard content is updated (#742)
     when WM_CLIPBOARDUPDATE:
       if (clipboard_token)
+        // skip 1 event to avoid immediate clear-after-copy
         clipboard_token = false;
-      else {
-        term.selected = false;
-        win_update(false);
+      else if (cfg.selection_mode > 1) {
+        if (term.selected && term.selection_eq_clipboard) {
+          term.selection_eq_clipboard = false;
+          win_update(false);
+        }
+      }
+      else if (cfg.selection_mode < 1 || cfg.copy_on_select) {
+        if (term.selected) {
+          term.selected = false;
+          win_update(false);
+        }
       }
       return 0;
 

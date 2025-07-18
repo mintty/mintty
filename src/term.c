@@ -398,6 +398,7 @@ term_reset(bool full)
 
   if (full) {
     term.selected = false;
+    term.selection_eq_clipboard = false;
     term.hovering = false;
     term.hoverlink = -1;
     term.on_alt_screen = false;
@@ -3321,6 +3322,7 @@ term_paint(void)
       scrpos.x = backward ? backward[j] : j;
       wchar tchar = d->chr;
       cattr tattr = d->attr;
+      //printf("%2d:%2d: %02X %08llX\n", i, j, tchar, tattr.attr);
 
      /* Many Windows fonts don't have the Unicode hyphen, but groff
       * uses it for man pages, so display it as the ASCII version.
@@ -3356,6 +3358,17 @@ term_paint(void)
 
         colour bg = win_get_colour(SEL_COLOUR_I);
         if (bg != (colour)-1) {
+          // enable ATTR_DIM to be applied to the effective background:
+          // (we could exchange assigned background and foreground values 
+          //  and exchange them back with ATTR_REVERSE,
+          //  but that would mangle emoji highlighting)
+          // we dim bg explicitly
+          if (cfg.selection_mode > 1) {
+            if (!term.selection_eq_clipboard)
+              // dim if selected && not in clipboard
+              bg = ((bg & 0xFEFEFEFE) >> 1) + ((win_get_colour(BG_COLOUR_I) & 0xFEFEFEFE) >> 1);
+          }
+
           tattr.truebg = bg;
           tattr.attr = (tattr.attr & ~ATTR_BGMASK) | (TRUE_COLOUR << ATTR_BGSHIFT);
 
@@ -3375,8 +3388,17 @@ term_paint(void)
             tattr.attr = (tattr.attr & ~ATTR_FGMASK) | (TRUE_COLOUR << ATTR_FGSHIFT);
           }
         }
-        else
+        else {
           tattr.attr ^= ATTR_REVERSE;
+          if (cfg.selection_mode > 1) {
+            if (!term.selection_eq_clipboard)
+              // dim if selected && not in clipboard
+              tattr.attr |= ATTR_DIM;
+            else
+              // work around old/new state glitch
+              tattr.attr &= ~ATTR_DIM;
+          }
+        }
       }
 
       if (term.hovering &&
@@ -3734,7 +3756,11 @@ term_paint(void)
               disp = cfg.disp_tab;
             }
           }
-          tattr.attr &= ~(ATTR_BOLD | ATTR_DIM);
+          if (selected && cfg.selection_mode > 1)
+            // do not spoil dimmed selection highlighting
+            tattr.attr &= ~ATTR_BOLD;
+          else
+            tattr.attr &= ~(ATTR_BOLD | ATTR_DIM);
 
           if (!(cfg.disp_clear & 8))
             tattr.attr &= ~TATTR_CLEAR;
@@ -4144,6 +4170,13 @@ term_paint(void)
                 bg = eattr.attr & ATTR_REVERSE
                           ? win_get_colour(BG_COLOUR_I)
                           : win_get_colour(FG_COLOUR_I);
+
+              if (cfg.selection_mode > 1) {
+                if (!term.selection_eq_clipboard)
+                  // dim if selected && not in clipboard
+                  bg = ((bg & 0xFEFEFEFE) >> 1) + ((win_get_colour(BG_COLOUR_I) & 0xFEFEFEFE) >> 1);
+              }
+
               eattr.truebg = bg;
               eattr.attr = (eattr.attr & ~ATTR_BGMASK) | (TRUE_COLOUR << ATTR_BGSHIFT);
               eattr.attr &= ~ATTR_REVERSE;

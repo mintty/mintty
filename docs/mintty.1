@@ -542,6 +542,12 @@ Shell quoting is added to file names that contain spaces or special characters.
 Selection highlighting is cleared on input by default. This can be disabled
 with option \fBClearSelectionOnInput=false\fP.
 
+Selection highlighting with respect to the clipbaord can be configured with 
+option \fBSelectionMode\fP. Default is full selection highlighting 
+whenever the selection contents is the same as the clipboard contents, 
+dimmed highlighting otherwise. Both copy to clipboard actions and 
+external clipboard changes can affect the highlighting mode.
+
 The current selection size can optionally been indicated with a popup, 
 enabled with option \fBSelectionShowSize\fP.
 
@@ -2116,6 +2122,19 @@ Settings controlling mouse support.
 \fBCopy on select\fP (CopyOnSelect=yes)
 If enabled, the region selected with the mouse is copied to the clipboard as
 soon as the mouse button is released, thus emulating X Window behaviour.
+
+.TQ
+\fBSelection highlighting mode\fP (SelectionMode=2)
+This option selects how selection highlighting is applied with respect 
+to the clipboard.
+.ul
+.en
+\fB0\fP: selection highlighting is cleared if clipboard gets changed
+.en
+\fB1\fP: cleared by clipboard only if CopyOnSelect is enabled
+.en
+\fB2\fP: local highlighting is dimmed, full highlighting if identical with clipboard
+./ul
 
 .TQ
 \fBCopy with TABs\fP (CopyTab=no)

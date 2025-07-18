@@ -148,6 +148,7 @@ const config default_cfg = {
   // Selection
   .input_clears_selection = true,
   .copy_on_select = true,
+  .selection_mode = 2,
   .copy_tabs = false,
   .copy_as_rtf = true,
   .copy_as_html = 0,
@@ -478,6 +479,7 @@ options[] = {
   // Selection
   {"ClearSelectionOnInput", OPT_BOOL, offcfg(input_clears_selection)},
   {"CopyOnSelect", OPT_BOOL, offcfg(copy_on_select)},
+  {"SelectionMode", OPT_BOOL, offcfg(selection_mode)},
   {"CopyTab", OPT_BOOL, offcfg(copy_tabs)},
   {"CopyAsRTF", OPT_BOOL, offcfg(copy_as_rtf)},
   {"CopyAsHTML", OPT_BOOL, offcfg(copy_as_html)},

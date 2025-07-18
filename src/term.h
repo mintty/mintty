@@ -670,6 +670,7 @@ struct term {
   int locator_top, locator_left, locator_bottom, locator_right;
 
   bool selected, sel_rect;
+  bool selection_eq_clipboard;
   pos sel_start, sel_end, sel_anchor;
   bool hovering;
   int hoverlink;
