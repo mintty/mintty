@@ -7076,6 +7076,17 @@ main(int argc, char *argv[])
   if (wslbridge == 1 && access("/bin/wslbridge", X_OK) < 0)
     wslbridge = 0;
 
+  if (wslbridge == 0) {
+    setenv("HOSTTERM", cfg.term, true);
+    setenv("HOSTLANG", getlocenvcat("LC_CTYPE"), true);
+    char * envs_to_wsl_exe = getenv("WSLENV");
+    if (envs_to_wsl_exe)
+      envs_to_wsl_exe = asform("%s::HOSTTERM::HOSTLANG");
+    else
+      envs_to_wsl_exe = "HOSTTERM::HOSTLANG";
+    setenv("WSLENV", envs_to_wsl_exe, true);
+  }
+
   // Work out what to execute.
   argv += optind;
   if (wsl_guid && wsl_launch) {
@@ -7110,7 +7121,7 @@ main(int argc, char *argv[])
     if (wslbridge)
       argc += 10;  // -e parameters
 
-    char ** new_argv = newn(char *, argc + 8 + start_home + (wsltty_appx ? 2 : 0));
+    char ** new_argv = newn(char *, argc + 10 + start_home + (wsltty_appx ? 2 : 0));
     char ** pargv = new_argv;
     if (login_shell) {
       *pargv++ = cmd0;
@@ -7152,14 +7163,12 @@ main(int argc, char *argv[])
 
     // propagate environment variables
     if (wslbridge) {
-#ifdef propagate_TERM_to_WSL
-      *pargv++ = "-e";
-      *pargv++ = "TERM";
-#else
       setenv("HOSTTERM", cfg.term, true);
+      setenv("HOSTLANG", getlocenvcat("LC_CTYPE"), true);
       *pargv++ = "-e";
       *pargv++ = "HOSTTERM";
-#endif
+      *pargv++ = "-e";
+      *pargv++ = "HOSTLANG";
       *pargv++ = "-e";
       *pargv++ = "APPDATA";
       if (!cfg.old_locale) {
@@ -7221,7 +7230,7 @@ main(int argc, char *argv[])
 # endif
     }
 
-    if (wsltty_appx && lappdata && *lappdata) {
+    if (wsltty_appx && wslbridge && lappdata && *lappdata) {
       char * wslbridge_backend;
       if (wslbridge == 2) {
         wslbridge_backend = asform("%s/wslbridge2-backend", lappdata);

@@ -3014,8 +3014,11 @@ option \fB--WSL\fP:
 \fB0\fP Use Windows \fIwsl.exe\fP.
 ./ul
 
-The wslbridge gateway is also set up to propagate locale settings 
-LANG, LC_CTYPE, LC_ALL and environment variable APPDATA to the WSL session.
+Mintty propagates information about the terminal type and the 
+character encoding (effective LC_CTYPE setting) in the environment variables 
+HOSTTERM and HOSTLANG to the WSL session. It does not propagate TERM or 
+locale variables directly as they may have values that the WSL environment 
+does not support.
 
 The deficiencies of the native wsl.exe gateway should be compensated 
 by patching an updated Windows \fIconhost\fP program into Windows; 
