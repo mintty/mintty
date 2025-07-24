@@ -1,30 +1,59 @@
 NAME=mintty
 #VERSION= # derived from filename of copied cygport file
 #RELEASE= # derived from filename of copied cygport file
-CATEGORY="Base Shells"
-SUMMARY="Cygwin Terminal – terminal emulator with native Windows look and feel"
-DESCRIPTION="Mintty is a terminal emulator for Cygwin. It is based on code
-from PuTTY 0.60 by Simon Tatham and team, and features from xterm.
+CATEGORY="Shells Base"
+SUMMARY="Terminal emulator with native Windows look and feel"
+DESCRIPTION="\
+Mintty is a terminal emulator for Cygwin.
 
-Features include:
-* Xterm-compatible terminal emulation.
-* Full Unicode support.
-* Native Windows user interface that tries to keep things simple.
-* Graphical options dialog. Options stored in a text file.
-* Drag & drop and copy & paste of text, files and folders.
-* Extensive mouse support.
-* Window transparency."
+Terminal display features
+* Xterm-compatible terminal emulation, coverage of all DEC terminal series screen control features.
+* 256 colours and True-Colour support, optional CMYK colour specification.
+* Full Unicode support, comprehensive character encoding support and wide character handling.
+* Bidirectional rendering, flexible bidi controls.
+* Full character attributes support, including italic, underline styles and colours, overline, strikeout, rapid blinking.
+* Extended character attributes support: shadowed, subscript, superscript (terminfo) and overstrike.
+* Alternative fonts: simultaneous display of multiple fonts.
+* Secondary fonts: script-specific alternative font usage.
+* Image display support.
+* Sixel graphics support.
+* Emoji support.
+* Tektronix 4014 vector graphics emulation.
+
+Terminal input and interaction features
+* Character composition support includes dead keys, Compose key, Windows IME.
+* Keyboard workarounds for certain buggy virtual keyboards.
+* Extensive mouse support, including pixel-grained DEC locator mode.
+* Text selection with mouse or keyboard.
+* Easy copy & paste. Drag & drop of text, files and folders.
+* Ability to open files and URLs with Ctrl+click, explicit hyperlinks.
+* Fast rendering and scrolling, fast keyboard feedback.
+* HTML export and clipboard format support.
+* Image screenshot export.
+
+Window handling features and desktop integration
+* Colour schemes / Theme file support. Background texture and image support.
+* Virtual Tabs / session switcher and launcher.
+* Tabbar to switch virtual tabs for a tabbed window experience.
+* Taskbar tasks (“jump list”) configuration. Task grouping configuration.
+* Flexible fullscreen, fullsize and border options.
+* Screen and scrollback buffer search.
+* Multiple monitor support, changing DPI support.
+* Window transparency.
+
+Configuration features and system support
+* Native Windows user interface with a lean options dialog.
+* User interface language localization support.
+* User-defined key shortcuts and menu functions.
+* Flexible configuration and resource folder options.
+* Switchable terminal logging, switchable character information.
+* Options stored in a text file. No registry entries."
 
 HOMEPAGE="http://mintty.github.io/"
+LICENSE="GPL-3.0-or-later"
+
 # URL for download, basename used by cygport for local reference:
 SRC_URI="https://github.com/${NAME}/${NAME}/archive/${VERSION}/${NAME}-${VERSION}.tar.gz"
-# deprecated:
-# with non-gz format, a dummy URL with proper filename as locally available 
-# would provide a proper filename reference for cygport to make it work:
-#SRC_URI="${NAME}-${VERSION}-src.tar.bz2"
-# alternatively, this is supposed to work:
-#GIT_URI="https://github.com/mintty/mintty.git"
-#GIT_TAG=${VERSION}
 
 BUILD_REQUIRES="gcc-core make"
 
