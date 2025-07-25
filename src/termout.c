@@ -5154,6 +5154,8 @@ term_do_write(const char *buf, uint len, bool fix_status)
           continue;
         }
 
+        bool lockingshift = false;
+
         // handle NRC single shift and NRC GR invocation;
         // maybe we should handle control characters first?
         short cset = term.curs.csets[term.curs.gl];
@@ -5164,8 +5166,12 @@ term_do_write(const char *buf, uint len, bool fix_status)
         else if (term.curs.gr
               //&& (term.decnrc_enabled || !term.decnrc_enabled)
               && term.curs.csets[term.curs.gr] != CSET_ASCII
-              && !term.curs.oem_acs && !term.curs.utf
-              && c >= 0x80 && c < 0xFF
+              && !term.curs.oem_acs
+              // dropped previous && !term.curs.utf because
+              // ESC%G UTF-8 mode does not override locking shift in xterm,
+              // and it would spoil vttest 3.10.
+              && c >= 0x80
+              // dropped previous && c < 0xFF which spoiled locking shift ÿ
                 )
         {
           // tune C1 behaviour to mimic xterm
@@ -5174,6 +5180,9 @@ term_do_write(const char *buf, uint len, bool fix_status)
 
           c &= 0x7F;
           cset = term.curs.csets[term.curs.gr];
+
+          // suppress GR-mapped character code conversion
+          lockingshift = true;
         }
 
         if (term.vt52_mode) {
@@ -5185,6 +5194,10 @@ term_do_write(const char *buf, uint len, bool fix_status)
         else if (cset == CSET_DECSUPP)
           cset = term.curs.decsupp;
 
+        if (lockingshift)
+          // suppress GR-mapped character code conversion
+          wc = c;
+        else
         switch (cs_mb1towc(&wc, c)) {
           when 0: // NUL or low surrogate
             if (wc)
