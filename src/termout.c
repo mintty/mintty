@@ -860,6 +860,7 @@ write_primary_da(void)
 {
   string primary_da = primary_da4;
   char * vt = strstr(cfg.term, "vt");
+  bool extend_da = true;
   if (vt) {
     unsigned int ver;
     if (sscanf(vt + 2, "%u", &ver) == 1) {
@@ -871,11 +872,20 @@ write_primary_da(void)
         primary_da = primary_da3;
       else if (ver >= 200)
         primary_da = primary_da2;
-      else
+      else {
         primary_da = primary_da1;
+        extend_da = false;
+      }
     }
   }
-  child_write(primary_da, strlen(primary_da));
+  if (extend_da) {
+    child_write(primary_da, strlen(primary_da) - 1);  // strip final 'c'
+    if (cfg.allow_set_selection)
+      child_write(";52", 3);
+    child_write("c", 1);
+  }
+  else
+    child_write(primary_da, strlen(primary_da));
 }
 
 
