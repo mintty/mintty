@@ -4491,7 +4491,7 @@ do_clipboard(void)
     if (!b64)
       return;
 
-    child_printf("\e]52;;%s%s", b64, osc_fini());
+    child_printf("\e]52;c;%s%s", b64, osc_fini());
 
     free(b64);
     return;

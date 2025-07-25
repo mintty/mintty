@@ -7,6 +7,7 @@ Terminal features
   * Fix selection highlighting in configured colours on emojis.
   * Full or dimmed selection highlighting depending on clipboard contents (#1322).
   * Fix GR-mapped character sets in locking shift mode (vttest 3.10.).
+  * Fix OSC 52 response clipboard indication (#1327).
 
 WSL support
   * New mode to run WSL directly with Windows default access gateway wsl.exe.
