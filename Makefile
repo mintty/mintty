@@ -86,8 +86,8 @@ release: check-x11 cop check _ ver
 	echo -e "$(hint)Last: make upload; make ann; mail cygwin-announce$(norm)"
 	echo -e "$(hint)Also: github release$(norm)"
 checkrelease: committed tag checkver tar
-cygport := $(name_ver)-$(REL).cygport
-pkg: release checkrelease srcpkg binpkg binver
+
+pkg: release checkrelease cygpkg binver
 
 binver:
 	$(DIST)/$(name_ver)-$(REL).$(arch)/inst/usr/bin/mintty -V | grep "mintty $(version) "
@@ -122,7 +122,7 @@ arch_files += src/[!_]*.t src/mk*
 arch_files += tools/mintheme tools/getemojis tools/getflags
 arch_files += lang/*.pot lang/*.po
 arch_files += themes/*[!~] sounds/*.wav sounds/*.WAV sounds/*.md
-arch_files += cygwin/*.cygport cygwin/README cygwin/setup.hint cygwin/mintty-debuginfo.hint
+arch_files += cygwin/*.cygport
 arch_files += docs/*.1 docs/*.html icon/*
 arch_files += wiki/*
 #arch_files += scripts/*
@@ -145,41 +145,17 @@ $(src): $(arch_files)
 	tar czf $@ --exclude="*~" $(TARUSER) $(name_ver)
 	rm -rf $(name_ver)
 
-binpkg:
+cygport := $(name_ver)-$(REL).cygport
+cygpkg:
 	cp cygwin/mintty.cygport $(DIST)/$(cygport)
 	cd $(DIST); cygport $(cygport) prep
-	cd $(DIST); cygport $(cygport) compile install
-	# cygport packages would reveal user information;
-	# with $$(TARUSER) in $${TAR_OPTIONS}, they are reduced to numeric, 
-	# but strangely still the local ids:
-	#cd $(DIST); TAR_OPTIONS="$(TARUSER)" cygport $(cygport) package
-	# this succeeds to record owner/group "0/0" in the archives:
-	#cd $(DIST); TAR_OPTIONS="--owner=0 --group=0" cygport $(cygport) package
-	# but we've already established the explicit archive build,
-	# which records owner/group "mintty/cygwin" in the archives:
-	# binary package:
-	cd $(DIST)/$(name_ver)-$(REL).$(arch)/inst; tar cJf ../$(name_ver)-$(REL).tar.xz $(TARUSER) usr/bin etc usr/share
-	# debug package:
-	cd $(DIST)/$(name_ver)-$(REL).$(arch)/inst; tar cJf ../$(NAME)-debuginfo-$(version)-$(REL).tar.xz $(TARUSER) usr/lib/debug usr/src/debug
-
-srcpkg: $(DIST)/$(name_ver)-$(REL)-src.tar.xz
-
-# deprecated:
-#$(DIST)/$(name_ver)-$(REL)-src.tar.xz: $(DIST)/$(name_ver)-src.tar.bz2
-#	cp cygwin/mintty.cygport $(DIST)/$(cygport)
-#	cd $(DIST); tar cJf $(name_ver)-$(REL)-src.tar.xz $(TARUSER) $(name_ver)-src.tar.bz2 $(name_ver)-$(REL).cygport
-
-# let's make the source package a .tar.gz (not -src.tar.bz2) to be 
-# consistent with github and support cygport magic package name handling:
-$(DIST)/$(name_ver)-$(REL)-src.tar.xz: $(DIST)/$(name_ver).tar.gz
-	cp cygwin/mintty.cygport $(DIST)/$(cygport)
-	cd $(DIST); tar cJf $(name_ver)-$(REL)-src.tar.xz $(TARUSER) $(name_ver).tar.gz $(name_ver)-$(REL).cygport
+	cd $(DIST); cygport $(cygport) compile install package
 
 #############################################################################
 # cygwin
 
 upload:
-	REL=$(REL) cygwin/upload.sftp
+	cd $(DIST); SSH_KEY=$${ID_RSA-$$HOME/.ssh/id_rsa} cygport $(cygport) upload
 
 announcement=cygwin/announcement.$(version)
 

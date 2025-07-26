@@ -1,5 +1,0 @@
-category: Debug
-requires: cygwin-debuginfo
-external-source: mintty
-sdesc: "Debug info for mintty"
-ldesc: "Files for debugging mintty with gdb."
