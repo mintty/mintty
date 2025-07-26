@@ -53,6 +53,8 @@ typedef UINT_PTR uintptr_t;
 #include <sys/stat.h>
 #include <fcntl.h>  // open flags
 #include <sys/utsname.h>
+#include <dirent.h>
+
 
 #ifndef INT16
 #define INT16 short
@@ -508,7 +510,6 @@ guardpath(string path, int level)
         // if tcgetpgrp / foreground_pid() / foreground_cwd() fails,
         // check for processes $p where /proc/$p/ctty is child_tty()
         // whether the checked filename is below their /proc/$p/cwd
-#include <dirent.h>
         DIR * d = opendir("/proc");
         if (d) {
           char * tty = child_tty();
@@ -5905,14 +5906,16 @@ getlxssinfo(bool list, wstring wslname, uint * wsl_ver,
 
   int getlxssdistinfo(bool list, HKEY lxss, wchar * guid)
   {
-    wchar * rootfs;
+    wchar * rootfs = 0;
     wchar * icon = 0;
 
     wchar * bp = getregstr(lxss, guid, W("BasePath"));
     if (!bp)
       return 3;
 
+    wchar * name = getregstr(lxss, guid, W("DistributionName"));
     wchar * pn = getregstr(lxss, guid, W("PackageFamilyName"));
+
     wchar * pfn = 0;
     if (pn) {  // look for installation directory and icon file
       rootfs = newn(wchar, wcslen(bp) + 8);
@@ -5923,9 +5926,50 @@ getlxssinfo(bool list, wstring wslname, uint * wsl_ver,
       pfn = getregstr(package, W("Schemas"), W("PackageFullName"));
       regclose(package);
       regclose(appdata);
-      // "%ProgramW6432%/WindowsApps/<PackageFullName>/images/icon.ico"
+      char * lad = getenv("LOCALAPPDATA");
       char * prf = getenv("ProgramW6432");
-      if (prf && pfn) {
+
+      // check "%LOCALAPPDATA%/Microsoft/WindowsApps/<launcher>.exe"
+      if (lad && pfn) {
+        char * winapps = asform("%s/Microsoft/WindowsApps", lad);
+        // we are looking for the launcher for the selected WSL distro, 
+        // in order to use it as an icon resource file;
+        // we cannot check the installation directory directly 
+        // as it is not readable for normal users, so we do this instead:
+        //
+        // we browse through all *.exe in the user Windows apps folder;
+        // weird enough, launcher names often do not match distro names,
+        // so we determine each launcher shortcut's link target,
+        // then we check whether the PackageFullName is part of the target,
+        // in which case we have found the specific launcher 
+        // and use it as an icon resource file
+        DIR * d = opendir(winapps);
+        if (d) {
+          char * pack = cs__wcstombs(pfn);
+          struct dirent * e;
+          while ((e = readdir(d))) {
+            if (strstr(e->d_name, ".exe")) {
+              char target [MAX_PATH + 1];
+              strcpy(target, "???");
+              char * link = asform("%s/%s", winapps, e->d_name);
+              int ret = readlink (link, target, sizeof (target) - 1);
+              free(link);
+              if (ret > 0) {
+                target [ret] = '\0';
+                if (strstr(target, pack)) {
+                  icon = path_posix_to_win_w(target);
+                  break;
+                }
+              }
+            }
+          }
+          closedir(d);
+          free(winapps);
+        }
+      }
+
+      // check "%ProgramW6432%/WindowsApps/<PackageFullName>/images/icon.ico"
+      if (!icon && prf && pfn) {
         icon = cs__mbstowcs(prf);
         icon = renewn(icon, wcslen(icon) + wcslen(pfn) + 30);
         wcscat(icon, W("\\WindowsApps\\"));
@@ -5937,27 +5981,38 @@ getlxssinfo(bool list, wstring wslname, uint * wsl_ver,
         // mintty cannot check that here
       }
     }
-    else {  // legacy
-      rootfs = newn(wchar, wcslen(bp) + 8);
-      wcscpy(rootfs, bp);
-      wcscat(rootfs, W("\\rootfs"));
+    else {  // imported or legacy distro
+      // check "%BasePath%/../<Distroname>.exe" launcher
+      char * base = path_win_w_to_posix(bp);
+      char * distname = cs__wcstombs(name);
+      char * launcher = asform("%s/%s.exe", base, distname);
+      free(base);
+      free(distname);
+      if (access(launcher, R_OK) == 0)
+        icon = path_posix_to_win_w(launcher);
+      free(launcher);
 
-      char * rootdir = path_win_w_to_posix(rootfs);
-      struct stat fstat_buf;
-      if (stat (rootdir, & fstat_buf) == 0 && S_ISDIR (fstat_buf.st_mode)) {
-        // non-app or imported deployment
-      }
-      else {
-        // legacy Bash on Windows
-        free(rootfs);
-        rootfs = wcsdup(bp);
-      }
-      free(rootdir);
+      if (!icon) {  // legacy
+        rootfs = newn(wchar, wcslen(bp) + 8);
+        wcscpy(rootfs, bp);
+        wcscat(rootfs, W("\\rootfs"));
 
-      icon = legacy_icon();
+        char * rootdir = path_win_w_to_posix(rootfs);
+        struct stat fstat_buf;
+        if (stat (rootdir, & fstat_buf) == 0 && S_ISDIR (fstat_buf.st_mode)) {
+          // non-app or imported deployment
+        }
+        else {
+          // legacy Bash on Windows
+          free(rootfs);
+          rootfs = wcsdup(bp);
+        }
+        free(rootdir);
+
+        icon = legacy_icon();
+      }
     }
 
-    wchar * name = getregstr(lxss, guid, W("DistributionName"));
 #ifdef use_wsl_getdistconf
     // this has currently no benefit, and it does not work in 32-bit cygwin
     if (pWslGetDistributionConfiguration) {
