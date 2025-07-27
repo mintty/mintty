@@ -14,6 +14,7 @@ WSL support
   * New mode to run WSL directly with Windows default access gateway wsl.exe.
   * Drop wslbridge gateways by default.
   * Derive default icon from WSL launcher shortcut (mintty/wsltty#110).
+  * Fix WSL icons in session launcher menu entries, also extracted from WSL launchers.
 
 Configuration
   * Changing default setting UnderlineManual=true for consistent line placement.

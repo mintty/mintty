@@ -161,17 +161,24 @@ append_commands(HMENU menu, wstring commands, UINT_PTR idm_cmd, bool add_icons, 
       MENUITEMINFOW mi;
       mi.cbSize = sizeof(MENUITEMINFOW);
       mi.fMask = MIIM_BITMAP;
+
       wchar * params = cs__utftowcs(paramp);
       wstring iconfile = wslicon(params);  // default: 0 (no icon)
       free(params);
       HICON icon;
-      if (iconfile)
-        icon = (HICON) LoadImageW(0, iconfile,
-                                  IMAGE_ICON, 0, 0,
-                                  LR_DEFAULTSIZE | LR_LOADFROMFILE
-                                  | LR_LOADTRANSPARENT);
+      if (iconfile) {
+#include <shellapi.h>
+        if (wcsstr(iconfile, W(".exe")))
+          ExtractIconExW(iconfile, 0, &icon, 0, 1);
+        else
+          icon = (HICON) LoadImageW(0, iconfile,
+                                    IMAGE_ICON, 0, 0,
+                                    LR_DEFAULTSIZE | LR_LOADFROMFILE
+                                    | LR_LOADTRANSPARENT);
+      }
       else
         icon = LoadIcon(inst, MAKEINTRESOURCE(IDI_MAINICON));
+
       HBITMAP bitmap = icon_bitmap(icon);
       mi.hbmpItem = bitmap;
       SetMenuItemInfoW(menu, idm_cmd + n, 0, &mi);
