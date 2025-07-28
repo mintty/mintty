@@ -10,6 +10,9 @@ Terminal features
   * Indicate enabled OSC 52 in primary DA response (#1324).
   * Fix OSC 52 response clipboard indication (#1327).
 
+Keyboard handling
+  * Avoid sticky Ctrl state also after closing menu (~#1273, ~#1266).
+
 WSL support
   * New mode to run WSL directly with Windows default access gateway wsl.exe.
   * Drop wslbridge gateways by default.

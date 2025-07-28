@@ -4956,6 +4956,9 @@ static struct {
       win_adapt_term_size(false, false);
 #endif
 
+    when WM_UNINITMENUPOPUP or WM_EXITMENULOOP:
+      win_key_reset();
+
     when WM_SETFOCUS:
       trace_resize(("# WM_SETFOCUS VK_SHIFT %02X\n", (uchar)GetKeyState(VK_SHIFT)));
       term_set_focus(true, false);
