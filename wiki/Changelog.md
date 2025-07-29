@@ -23,6 +23,7 @@ Configuration
   * Changing default setting UnderlineManual=true for consistent line placement.
   * New option WSLbridge, default 0 to use wsl.exe to launch WSL.
   * New option SelectionMode.
+  * New user-definable function toggle-reverse-video.
 
 ### 3.7.8 (22 March 2025) ###
 

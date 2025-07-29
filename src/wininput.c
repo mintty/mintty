@@ -1757,6 +1757,19 @@ toggle_tabbar()
     win_close_tabbar();
 }
 
+static void
+toggle_reverse_video()
+{
+  term.rvideo = !term.rvideo;
+  win_invalidate_all(false);
+}
+
+static uint
+mflags_reverse_video()
+{
+  return term.rvideo ? MF_CHECKED : MF_UNCHECKED;
+}
+
 static void hor_left_1() { horscroll(-1); }
 static void hor_right_1() { horscroll(1); }
 static void hor_out_1() { horsizing(1, false); }
@@ -1868,6 +1881,7 @@ static struct function_def cmd_defs[] = {
   {"refresh", {.fct = refresh}, 0},
   {"toggle-dim-margins", {.fct = toggle_dim_margins}, mflags_dim_margins},
   {"toggle-status-line", {.fct = toggle_status_line}, mflags_status_line},
+  {"toggle-reverse-video", {.fct = toggle_reverse_video}, mflags_reverse_video},
 
   {"super", {.fct_key = super_down}, 0},
   {"hyper", {.fct_key = hyper_down}, 0},
