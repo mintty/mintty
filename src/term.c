@@ -3264,8 +3264,9 @@ term_paint(void)
               d[1].attr.attr |= TATTR_OVERHANG;
             }
 
-            d->attr.attr &= ~ATTR_FGMASK;
-            d->attr.attr |= TATTR_EMOJI | e.len;
+            // emoji length is encoded in font family
+            d->attr.attr &= ~FONTFAM_MASK;
+            d->attr.attr |= TATTR_EMOJI | ((cattrflags)e.len << ATTR_FONTFAM_SHIFT);
 
             //d->attr.truefg = (uint)e;
             struct emoji * ee = &e;
@@ -3543,8 +3544,9 @@ term_paint(void)
               d[1].attr.attr |= TATTR_OVERHANG;
             }
 
-            d->attr.attr &= ~ATTR_FGMASK;
-            d->attr.attr |= TATTR_EMOJI | e.len;
+            // emoji length is encoded in font family
+            d->attr.attr &= ~FONTFAM_MASK;
+            d->attr.attr |= TATTR_EMOJI | ((cattrflags)e.len << ATTR_FONTFAM_SHIFT);
 
             //d->attr.truefg = (uint)e;
             struct emoji * ee = &e;
@@ -4147,9 +4149,12 @@ term_paint(void)
       }
 #endif
       if (attr.attr & TATTR_EMOJI) {
-        int elen = attr.attr & ATTR_FGMASK;
+        // emoji length is encoded in font family
+        int elen = (attr.attr & FONTFAM_MASK) >> ATTR_FONTFAM_SHIFT;
+
         cattr eattr = attr;
         eattr.attr &= ~(TATTR_WIDE | TATTR_COMBINING);
+
         wchar esp[] = W("        ");
         if (elen) {
           if (!overlaying) {

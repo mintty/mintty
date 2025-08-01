@@ -9,6 +9,7 @@ Terminal features
   * Fix GR-mapped character sets in locking shift mode (vttest 3.10.).
   * Indicate enabled OSC 52 in primary DA response (#1324).
   * Fix OSC 52 response clipboard indication (#1327).
+  * Fix emoji background in reverse mode.
 
 Keyboard handling
   * Avoid sticky Ctrl state also after closing menu (~#1273, ~#1266).
