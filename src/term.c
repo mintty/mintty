@@ -4100,7 +4100,6 @@ term_paint(void)
 #if defined(debug_dirty) && debug_dirty > 1
     printf("dirty ini %d:* lin %d run %d\n", i, dirty_line, dirty_run);
 #endif
-    cattr attr = CATTR_DEFAULT;
     int start = 0;
 
     displine->lattr = line->lattr;
@@ -4279,6 +4278,7 @@ term_paint(void)
    /*
     * Third loop, for actual drawing.
     */
+    cattr attr = CATTR_DEFAULT;
     for (int j = 0; j < term.cols; j++) {
       termchar *d = chars + j;
       cattr tattr = newchars[j].attr;
