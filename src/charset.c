@@ -1,5 +1,5 @@
 // charset.c (part of mintty)
-// Copyright 2008-11 Andy Koppe, 2024 Thomas Wolff
+// Copyright 2008-11 Andy Koppe, 2024-2025 Thomas Wolff
 // Based on code from PuTTY-0.60 by Simon Tatham and team.
 // Licensed under the terms of the GNU General Public License v3 or later.
 
@@ -37,6 +37,7 @@ bool cs_single_forced = false;
 static uint codepage = 0;
 static int default_codepage;
 static bool gb18030 = false;
+static bool is_utf8 = false;
 
 static wchar cp_default_wchar;
 static char cp_default_char[4];
@@ -348,6 +349,13 @@ update_mode(void)
   cs_mb1towc(0, 0);
 
   child_update_charset();
+#if CYGWIN_VERSION_API_MINOR >= 66
+  // flag whether we are using UTF-8;
+  // we do not consider NRCS mappings here, 
+  // because GL-mapped characters will be passed transparently 
+  // and GR-mapped characters are not sent through function cs_mb1towc
+  is_utf8 = strcmp(nl_langinfo(CODESET), "UTF-8") == 0;
+#endif
 }
 
 void
@@ -902,9 +910,105 @@ cs__utftombs(char * s)
   }
 }
 
+static size_t
+utfrtowc(wchar_t * wc, char * s, size_t n, void * dum)
+{
+  (void)n; (void)dum;
+  unsigned char c = *s;
+
+  static int buflen = 0;
+  static int utflen = 0;
+  //static unsigned char ubuf[4];
+  static unsigned int val;
+
+  if (!wc) {
+    // clear decoder state
+    buflen = 0;
+    utflen = 0;
+    return 0;
+  }
+
+  if (!(c & 0x80)) {
+    *wc = c;
+    buflen = 0;
+    return 1;
+  }
+  else if ((c & 0xC0) == 0x80) {
+    if (!utflen) {
+      //errno = EILSEQ;
+      return -1;
+    }
+    //ubuf[buflen] = c;
+    buflen++;
+    val = (val << 6) | (c & 0x3F);
+    if (buflen < utflen) {
+      if (buflen == 3) {
+        // non-BMP: generate high surrogate
+        val -= 0x10000 >> 6;
+        *wc = 0xD800 | (val >> 4);
+        // prepare low surrogate
+        val = (val & (0x03FF >> 6)) | (0xDC00 >> 6);
+        return 1;
+      }
+      else
+        return -2;
+    }
+    else {
+      *wc = val;
+      buflen = 0;
+      utflen = 0;
+      return 1;
+    }
+  }
+  else if ((c & 0xE0) == 0xC0) {
+    utflen = 2;
+    val = c & 0x1F;
+    //ubuf[0] = c;
+    buflen = 1;
+    return -2;
+  }
+  else if ((c & 0xF0) == 0xE0) {
+    utflen = 3;
+    val = c & 0x0F;
+    //ubuf[buflen] = c;
+    buflen = 1;
+    return -2;
+  }
+  else if ((c & 0xF8) == 0xF0) {
+    utflen = 4;
+    val = c & 0x07;
+    //ubuf[buflen] = c;
+    buflen = 1;
+    return -2;
+  }
+#if 0
+#warning 5-byte and 6-byte UTF-8 sequences are not supported by Unicode
+  else if ((c & 0xFC) == 0xF8) {
+    utflen = 5;
+    ...
+  }
+  else if ((c & 0xFE) == 0xFC) {
+    utflen = 6;
+    ...
+  }
+#endif
+  else {
+    buflen = 0;
+    utflen = 0;
+    //errno = EILSEQ;
+    return -1;
+  }
+}
+
 int
 cs_mb1towc(wchar *pwc, char c)
 {
+  if (is_utf8) {
+    // non-BMP multibyte decoding in mbrtowc is broken in cygwin 3.6.4
+    // therefore we perform our own decoding at least for UTF-8
+    return utfrtowc(pwc, &c, 1, 0);
+  }
+
 #if HAS_LOCALES
   if (use_locale)
     return mbrtowc(pwc, &c, 1, 0);
