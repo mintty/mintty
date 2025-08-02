@@ -168,7 +168,8 @@ append_commands(HMENU menu, wstring commands, UINT_PTR idm_cmd, bool add_icons, 
       HICON icon;
       if (iconfile) {
 #include <shellapi.h>
-        if (wcsstr(iconfile, W(".exe")))
+        int iflen = wcslen(iconfile);
+        if (iflen > 4 && wcscmp(iconfile + iflen - 4, W(".exe")))
           ExtractIconExW(iconfile, 0, &icon, 0, 1);
         else
           icon = (HICON) LoadImageW(0, iconfile,
