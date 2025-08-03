@@ -3267,7 +3267,8 @@ C	M	+C	+A	"	"
   }
   void other_code(wchar c) {
 #if CYGWIN_VERSION_API_MINOR >= 74
-    if (shift)
+    bool iscap = shift ^ (GetKeyState(VK_CAPITAL) & 1);
+    if (iscap)
       c = towupper(c);
     else
       c = towlower(c);
