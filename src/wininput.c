@@ -3508,6 +3508,18 @@ static struct {
 #ifdef debug_key
     printf("modf wc %04X (ctrl %d key %02X)\n", wc, ctrl, key);
 #endif
+
+    if (!wc && key >= 'A' && key <= 'Z') {
+      // support right-Alt if AltGr unmapped (#1108)
+      // like without modifyOtherKeys mode
+      wc = key - 'A' + 'a';
+      if (altgr) {
+        // turn AltGr into Alt
+        mods |= MDK_ALT;
+        altgr = false;
+      }
+    }
+
     if (wc) {
       if (altgr && !is_key_down(VK_LMENU))
         mods &= ~ MDK_ALT;
@@ -3922,6 +3934,7 @@ static struct {
       if (!layout())
         return false;
     otherwise:
+      trace_key("other");
       if (!layout())
         return false;
   }
