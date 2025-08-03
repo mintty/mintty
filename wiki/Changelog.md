@@ -17,6 +17,7 @@ Character handling
 Keyboard handling
   * Avoid sticky Ctrl state also after closing menu (~#1273, ~#1266).
   * Support modifier combinations with right-Alt in modifyOtherKeys mode (#1108).
+  * Adapt character code to Shift state in modifyOtherKeys mode (xterm).
 
 WSL support
   * New mode to run WSL directly with Windows default access gateway wsl.exe.

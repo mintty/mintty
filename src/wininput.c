@@ -3266,6 +3266,12 @@ C	M	+C	+A	"	"
     len = sprintf(buf, mods ? "\e[%i;%u~" : "\e[%i~", code, mods + 1);
   }
   void other_code(wchar c) {
+#if CYGWIN_VERSION_API_MINOR >= 74
+    if (shift)
+      c = towupper(c);
+    else
+      c = towlower(c);
+#endif
     trace_key("other");
     if (cfg.format_other_keys)
       // xterm "formatOtherKeys: 1": CSI 64 ; 2 u
