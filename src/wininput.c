@@ -3510,16 +3510,32 @@ static struct {
       if (mods & MDK_SHIFT) {
         kbd[VK_SHIFT] = 0;
         wc = undead_keycode();
+#ifdef debug_key
+        printf("modf - SHFT -> %04X\n", wc);
+#endif
       }
     }
 #ifdef debug_key
     printf("modf wc %04X (ctrl %d key %02X)\n", wc, ctrl, key);
 #endif
 
-    if (!wc && key >= 'A' && key <= 'Z') {
+    if (!wc && (
+                   (key >= 'A' && key <= 'Z')
+                || (key >= VK_OEM_1 && key <= VK_OEM_102)
+               )
+       )
+    {
       // support right-Alt if AltGr unmapped (#1108)
       // like without modifyOtherKeys mode
-      wc = key - 'A' + 'a';
+      if (mods & MDK_CTRL) {
+        // determine non-ASCII letters
+        kbd[VK_CONTROL] = 0;
+        wc = undead_keycode();
+#ifdef debug_key
+        printf("modf - CTRL -> %04X\n", wc);
+#endif
+      }
+
       if (altgr) {
         // turn AltGr into Alt
         mods |= MDK_ALT;
