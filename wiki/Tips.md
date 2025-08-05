@@ -998,12 +998,11 @@ Character width can be modified by a number of configuration or dynamic settings
 * `Font`: may affect CJK ambiguous-width handling if locale support fails
 * `PrintableControls`: makes C1 or C0 control characters visible (width 1)
 * [DECSET 2521](https://github.com/mintty/mintty/wiki/CtrlSeqs#lamalef-joining): renders Arabic LAM/ALEF ligatures in single-cell width
-* [DECSET 2027](https://github.com/mintty/mintty/wiki/CtrlSeqs#emoji-width-mode): 2-cell “emoji width” mode
+* [DECSET 2027](https://github.com/mintty/mintty/wiki/CtrlSeqs#emoji-width-mode): “emoji width” mode, enforcing 2-cell wide emojis
 * [OSC 701](https://github.com/mintty/mintty/wiki/CtrlSeqs#locale): changes locale/charset, may affect ambiguous width handling
 * OSC 50: changes font, may affect ambiguous width handling (with `Locale`)
 * [OSC 77119](https://github.com/mintty/mintty/wiki/CtrlSeqs#wide-characters): turns some character ranges to wide characters
 * [PEC](https://github.com/mintty/mintty/wiki/CtrlSeqs#explicit-character-width): explicit character width attribute
-* [Emoji width mode](https://github.com/mintty/mintty/wiki/CtrlSeqs#emoji-width-mode): forces emojis to double-cell width
 
 See the [mintty manual](http://mintty.github.io/mintty.1.html) and
 [Control Sequences](https://github.com/mintty/mintty/wiki/CtrlSeqs)
@@ -1236,6 +1235,8 @@ enforce 2-cell display width of emojis.
 
 Mintty does not bundle actual emoji graphics with its package.
 You will have to download and deploy them yourself.
+Mintty would however use emojis as installed by a distinct package 
+in a subdirectory of /usr/share/emojis.
 Expert options are described here, see also the next section 
 for a Quick Guide to emoji installation.
 

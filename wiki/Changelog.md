@@ -13,6 +13,7 @@ Terminal features
 
 Character handling
   * Workaround (for cygwin 3.6.4) for non-BMP characters in UTF-8 mode (#1325, #1326).
+  * Emoji icons are also looked up in /usr/share/emojis, to support common package deployment.
 
 Keyboard handling
   * Avoid sticky Ctrl state also after closing menu (~#1273, ~#1266).

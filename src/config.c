@@ -1203,7 +1203,7 @@ init_config_dirs(void)
   if (config_dirs)
     return;
 
-  int ncd = 3;
+  int ncd = 4;
   char * appdata = getenv("APPDATA");
   if (appdata)
     ncd++;
@@ -1212,6 +1212,7 @@ init_config_dirs(void)
   config_dirs = newn(string, ncd);
 
   // /usr/share/mintty , $APPDATA/mintty , ~/.config/mintty , ~/.mintty
+  config_dirs[++last_config_dir] = "/usr/share";  // for "/emojis" only
   config_dirs[++last_config_dir] = "/usr/share/mintty";
   if (appdata) {
     appdata = newn(char, strlen(appdata) + 8);
@@ -2046,7 +2047,10 @@ do_file_resources(control *ctrl, wstring pattern, bool list_dirs, str_fn fnh)
   init_config_dirs();
   //printf("add_file_resources <%ls> dirs %d\n", pattern, list_dirs);
 
-  for (int i = last_config_dir; i >= 0; i--) {
+  int base = 1;
+  if (0 == wcsncmp(W("emojis/"), pattern, 7))
+    base = 0;  // also look up distinct emojis packages in /usr/share/emojis
+  for (int i = last_config_dir; i >= base; i--) {
 #ifdef use_findfile
     (void)fnh;  // CYGWIN_VERSION_API_MINOR < 74
 

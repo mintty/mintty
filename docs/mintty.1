@@ -1176,7 +1176,8 @@ Tek mode text output supports Unicode.
 Mintty supports display of emojis as defined by Unicode using 
 emoji presentation, emoji style variation and emoji sequences.
 The option \fBEmojis\fP can choose among sets of emoji graphics if 
-deployed in a mintty configuration directory.
+deployed in a mintty configuration directory, or if deployed as 
+common emoji data in \fI/usr/share/emojis\fP.
 See the Tips wiki page \fIhttps://github.com/mintty/mintty/wiki/Tips#emojis\fP 
 about deployment of emoji graphics for mintty.
 Extended flag emojis (not listed by Unicode) are supported dynamically.
@@ -1324,6 +1325,8 @@ and localization translation files (option \fBLanguage\fP, subdirectory \fIlang\
 within the mintty resource directories \fI/usr/share/mintty\fP, 
 \fI$APPDATA/mintty\fP, \fI\(ti/.config/mintty\fP, \fI\(ti/.mintty\fP, 
 or as specified with command line option \fB\-\-configdir\fP.
+Emoji icons are additionally looked up in \fI/usr/share/emojis\fP 
+to support common emoji data installed by distinct packages.
 
 The following sections explain the settings on each pane of the options
 dialog, followed by settings that do not appear in the dialog.
