@@ -1272,11 +1272,16 @@ Emoji flags graphics (extending Unicode) can be found at the following sources:
   and extract emoji data (call it without parameters for instructions).
   * Deploy common/*.png into `common`
 
-To “Clone” with limited download volume, use the command `git clone --depth 1`.
-To download only the desired subdirectory from `github.com`, use `subversion`, 
-for example:
+To limit the download size and download the desired subtree only,
+either use subversion, for example:
   * `svn export https://github.com/googlefonts/noto-emoji/trunk/png/128 noto`
   * `svn export https://github.com/iamcal/emoji-data/trunk/img-apple-160 apple`
+or a more complex command combination of git, for example:
+  * `git clone --depth 1 -n --filter=blob:none https://github.com/googlefonts/noto-emoji`
+  * `cd noto-emoji`
+  * `git sparse-checkout set --no-cone png/128`
+  * `git checkout`
+  * `mv png/128 ../noto`
 
 “Deploy” above means move, link, copy or hard-link the respective subdirectory 
 into mintty configuration resource subdirectory `emojis`, e.g.
@@ -1287,6 +1292,14 @@ into mintty configuration resource subdirectory `emojis`, e.g.
 Use your preferred configuration directory, e.g.
 * `cp -rl noto-emoji/png/128 "$APPDATA"/mintty/emojis/noto`
 * `cp -rl noto-emoji/png/128 /usr/share/mintty/emojis/noto`
+
+Note: If the configuration directory is on a network drive 
+(e.g. your home directory may be on a network in enterprise or lab environments),
+loading emoji icons may be noticeably slow. Better deploy them to one 
+of the other options in that case, e.g. $APPDATA/mintty or /usr/share/mintty.
+Deploying into $APPDATA further has the advantage of a common deployment 
+for multiple installations of cygwin, MSYS2, Git-for-Windows, or embedded 
+cygwin-based packages.
 
 ### Quick Guide to emoji installation ###
 
