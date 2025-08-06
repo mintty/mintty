@@ -31,6 +31,8 @@ Configuration
   * New option WSLbridge, default 0 to use wsl.exe to launch WSL.
   * New option SelectionMode.
   * New user-definable function toggle-reverse-video.
+  * Logfile placeholders $h or $p are replaced with hostname or process ID.
+  * Enable logging toggling by default: Log=mintty.$h.%Y-%m-%d_%H-%M-%S.$p.log Logging=no (~#1167).
 
 ### 3.7.8 (22 March 2025) ###
 

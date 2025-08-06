@@ -166,6 +166,8 @@ Like \fB\-\-log\fP but with logging initially disabled, so just
 specifying a potential log file name in case logging is enabled from 
 the extended context menu.
 (Equivalent to combining \fB\-\-log\fP with \fB\-o Logging=no\fP.)
+Note that since mintty 3.7.9 a default log file name pattern is preset, 
+which can be overridden with this setting. See option \fBLog\fP.
 
 .TQ
 \fB\-o\fP, \fB\-\-option\fP \fINAME\fP=\fIVALUE\fP
@@ -1245,6 +1247,8 @@ A couple of options are available to enable logging initially
 a log file name for later logging (\fBLog=...\fP combined with \fBLogging=no\fP, 
 or \fB\-\-logfile ...\fP on the command line).
 In either case, logging can be toggled from the extended context menu.
+Since mintty 3.7.9 a default log file name pattern is preset.
+See option \fBLog\fP for details.
 
 .TQ
 .B Character information display
@@ -2748,15 +2752,20 @@ For interaction problems of icon, shortcut, and the Windows taskbar,
 see the note for the \-i option above.
 
 .TQ
-\fBLog file\fP (Log=)
+\fBLog file\fP (Log=mintty.$h.%Y-%m-%d_%H-%M-%S.$p.log)
 The \fBLog\fP setting can be used to specify a log file that all output is
-copied into.  If it is empty, as it is by default, no logging is done.
-If it contains \fB%d\fP it will be substituted with the process ID.
+copied into.  If it is empty, no logging is done.
+Since mintty 3.7.9 a default log file name pattern is preset, 
+which creates a log file in the working directory from which mintty was 
+started as soon as logging is enabled from the extended context menu.
+If it contains a single \fB%d\fP it will be substituted with the process ID.
 If it contains \fB%\fP placeholders other than a single \fB%d\fP, 
 the log file name will be constructed by calling strftime(3) on the 
 pattern; note that this is likely to fail if a placeholder expands with 
 "/" (%D).
-Example:
+In addition, placeholders $h or $p will be replaced with the hostname 
+or the process ID respectively.
+Example, using only a timestamp and placing the logs in the home directory:
 .ul
 .ex
 Log=\(ti/mintty.%Y\-%m\-%d_%H\-%M\-%S.log
@@ -2779,9 +2788,10 @@ Note that logging can be toggled from the extended context menu.
 See also the \fIscript\fP(1) utility for a more flexible logging solution.
 
 .TQ
-\fBLogging initially enabled\fP (Logging=yes)
-Disabling this setting disables logging initially.
-If a log file name is specified with \fBLog=...\fP and \fBLogging=no\fP,
+\fBLogging initially enabled\fP (Logging=no)
+This setting selects whether logging is enabled initially.
+If a log file name is specified with \fBLog=...\fP and \fBLogging=no\fP 
+(the default since mintty 3.7.9),
 logging can be enabled (and toggled) from the extended context menu.
 
 .TQ
