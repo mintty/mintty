@@ -1237,7 +1237,12 @@ get_resource_file(wstring sub, wstring res, bool towrite)
 {
   init_config_dirs();
   int fd;
-  for (int i = last_config_dir; i >= 0; i--) {
+
+  bool lookup_emojis = 0 == wcscmp(W("emojis"), sub);
+  // also look up emojis in /usr/share/emojis
+  int base = !lookup_emojis;  // base = 0 to look up emojis, 1 otherwise
+
+  for (int i = last_config_dir; i >= base; i--) {
     wchar * rf = path_posix_to_win_w(config_dirs[i]);
     int len = wcslen(rf);
     rf = renewn(rf, len + wcslen(sub) + wcslen(res) + 3);
@@ -2048,8 +2053,10 @@ do_file_resources(control *ctrl, wstring pattern, bool list_dirs, str_fn fnh)
   //printf("add_file_resources <%ls> dirs %d\n", pattern, list_dirs);
 
   int base = 1;
-  if (0 == wcsncmp(W("emojis/"), pattern, 7))
-    base = 0;  // also look up distinct emojis packages in /usr/share/emojis
+  bool lookup_emojis = 0 == wcsncmp(W("emojis/"), pattern, 7);
+  if (lookup_emojis)
+    base = 0;  // also consider distinct emojis packages in /usr/share/emojis
+
   for (int i = last_config_dir; i >= base; i--) {
 #ifdef use_findfile
     (void)fnh;  // CYGWIN_VERSION_API_MINOR < 74
