@@ -1196,6 +1196,7 @@ matchconf(char * conf, char * item)
 
 static string * config_dirs = 0;
 static int last_config_dir = -1;
+static char * config_emojis = 0;
 
 static void
 init_config_dirs(void)
@@ -1210,6 +1211,10 @@ init_config_dirs(void)
   if (config_dir)
     ncd++;
   config_dirs = newn(string, ncd);
+  // init indication whether config dirs have emojis to unknown
+  config_emojis = newn(char, ncd);
+  for (int i = 0; i < ncd; i++)
+    config_emojis[i] = -1;
 
   // /usr/share/mintty , $APPDATA/mintty , ~/.config/mintty , ~/.mintty
   config_dirs[++last_config_dir] = "/usr/share";  // for "/emojis" only
@@ -1241,8 +1246,18 @@ get_resource_file(wstring sub, wstring res, bool towrite)
   bool lookup_emojis = 0 == wcscmp(W("emojis"), sub);
   // also look up emojis in /usr/share/emojis
   int base = !lookup_emojis;  // base = 0 to look up emojis, 1 otherwise
+  // emojis loading shortcut:
+  // when we look up for emojis in one of the resource directories 
+  // for the first time, we check whether an emojis subdirectory exists 
+  // (the requested resource is checked first and the flag set then),
+  // so we can later skip those config directories that don't have emojis, 
+  // noticeably reducing delay in case the config is on a network drive
 
   for (int i = last_config_dir; i >= base; i--) {
+    if (config_emojis[i] == 0)
+      // skip if config dir has been checked to not contain emojis
+      continue;
+
     wchar * rf = path_posix_to_win_w(config_dirs[i]);
     int len = wcslen(rf);
     rf = renewn(rf, len + wcslen(sub) + wcslen(res) + 3);
@@ -1270,11 +1285,28 @@ get_resource_file(wstring sub, wstring res, bool towrite)
     }
 #endif
     if (fd >= 0) {
+      if (lookup_emojis)
+        config_emojis[i] = 1;
       close(fd);
       return resfn;
     }
+    int errno_code = errno;
     free(resfn);
-    if (errno == EACCES || errno == EEXIST)
+
+    if (lookup_emojis && config_emojis[i] == -1) {
+      // check and remember whether config directory has subdirectory emojis
+      char * emojis_dir = asform("%s/emojis", config_dirs[i]);
+      int fd = open(emojis_dir, O_DIRECTORY);
+      if (fd >= 0) {
+        config_emojis[i] = 1;
+        close(fd);
+      }
+      else
+        config_emojis[i] = 0;
+      free(emojis_dir);
+    }
+
+    if (errno_code == EACCES || errno_code == EEXIST)
       break;
   }
   return null;
