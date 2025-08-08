@@ -7092,6 +7092,11 @@ main(int argc, char *argv[])
   }
   if (getenv("MINTTY_TABBAR")) {
     cfg.tabbar = max(cfg.tabbar, atoi(getenv("MINTTY_TABBAR")));
+    unsetenv("MINTTY_TABBAR");
+  }
+  if (getenv("MINTTY_SYNC")) {
+    cfg.geom_sync = max(cfg.geom_sync, atoi(getenv("MINTTY_SYNC")));
+    unsetenv("MINTTY_SYNC");
   }
 #ifndef support_horizontal_scrollbar_with_tabbar
   if (cfg.tabbar)

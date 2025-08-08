@@ -26,6 +26,9 @@ WSL support
   * Derive default icon from WSL launcher shortcut (mintty/wsltty#110).
   * Fix WSL icons in session launcher menu entries, also extracted from WSL launchers.
 
+Window handling
+  * Integrate sessions launched from session launcher into tab set.
+
 Configuration
   * Changing default setting UnderlineManual=true for consistent line placement.
   * New option WSLbridge, default 0 to use wsl.exe to launch WSL.

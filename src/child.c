@@ -1214,6 +1214,7 @@ setup_sync(bool in_tabs)
     }
     if (cfg.tabbar) {
       setenvi("MINTTY_TABBAR", cfg.tabbar);
+      setenvi("MINTTY_SYNC", cfg.geom_sync);
       // enforce proper grouping, i.e. either new tab or window, as requested
       if (in_tabs && *cfg.class) {
         char * class = cs__wcstoutf(cfg.class);
@@ -1427,6 +1428,8 @@ child_fork(int argc, char *argv[], int moni, bool config_size, bool in_cwd, bool
 void
 child_launch(int n, int argc, char * argv[], int moni)
 {
+  setup_sync(true);
+
   if (*cfg.session_commands) {
     char * cmds = cs__wcstombs(cfg.session_commands);
     char * cmdp = cmds;
