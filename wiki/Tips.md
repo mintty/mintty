@@ -1464,6 +1464,29 @@ For example to use keys Alt+Win+Left/Right:
 KeyFunctions=AW+Left:tab-left;AW+Right:tab-right
 ```
 
+### Tab session management ###
+
+To start a tabbed terminal session, simply add command-line parameter 
+`--tabbar`. 
+You may also add that parameter to your desktop or start menu 
+shortcuts to make tabbed experience the default, or achieve the same 
+effect with two settings in the config file:
+```
+TabBar=yes
+SessionGeomSync=2
+```
+
+The shortcut Alt+F2, if invoked within a tab set, will implicitly 
+start the new session within that tab set. (To spawn a new tab set, 
+you can use Alt+Shift+Shift+F2 instead, with both Shift keys held.) 
+The system menu (top-left corner on title bar) gets an additional item 
+New Tab within a tab set. Session invocations from the session 
+launcher in the extended context menu (see manual) are also targeted 
+to the tab set.
+
+Note that hotkey or other software may have remapped some of the 
+function key combinations for other purposes, hiding them from mintty.
+
 
 ## Multi-monitor support ##
 

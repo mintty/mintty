@@ -29,6 +29,9 @@ WSL support
 Window handling
   * Integrate sessions launched from session launcher into tab set.
 
+Documentation
+  * Manual and wiki Tips: sections on tab session management (~#1284, ~#1201).
+
 Configuration
   * Changing default setting UnderlineManual=true for consistent line placement.
   * New option WSLbridge, default 0 to use wsl.exe to launch WSL.

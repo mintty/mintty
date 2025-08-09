@@ -245,6 +245,7 @@ A window move can still be done with Ctrl+Alt+click-drag.
 Activate tabbar for tab-based session switching among virtual tabs.
 This sets \fBTabBar=1\fP and \fBSessionGeomSync=\fP\fIlevel\fP.
 Without given value the default window synchronization level is 2.
+See section \fBVirtual Tabs\fP below for further features.
 
 .TQ
 \fB\-\-newtabs\fP
@@ -791,6 +792,26 @@ achieve a tabbed window behaviour.
 
 The tabbar can be reordered with user-definable functions tab\-(left|right) 
 or interactively via drag-and-drop on the tabs.
+
+.TQ
+.B Tab session management
+Mintty can be launched with tab experience using command-line option 
+\fB\-\-tabbar\fP which can also be added in desktop shortcuts, or the 
+following two settings can be added to the config file to set up 
+tabbed invocation by default:
+.ex
+.br
+TabBar=yes
+.br
+SessionGeomSync=2
+.ee
+
+Within a tab set, \fBAlt+F2\fP will launch the new terminal session 
+in the same tab set.
+See wiki page
+.br
+\fIhttps://github.com/mintty/mintty/wiki/Tips#tab\-session\-management\fP 
+for more details.
 
 .SS Horizontal scrolling of terminal view and horizontal scrollbar
 
