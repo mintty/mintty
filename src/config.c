@@ -1293,6 +1293,7 @@ get_resource_file(wstring sub, wstring res, bool towrite)
     int errno_code = errno;
     free(resfn);
 
+#if CYGWIN_VERSION_API_MINOR >= 194
     if (lookup_emojis && config_emojis[i] == -1) {
       // check and remember whether config directory has subdirectory emojis
       char * emojis_dir = asform("%s/emojis", config_dirs[i]);
@@ -1305,6 +1306,7 @@ get_resource_file(wstring sub, wstring res, bool towrite)
         config_emojis[i] = 0;
       free(emojis_dir);
     }
+#endif
 
     if (errno_code == EACCES || errno_code == EEXIST)
       break;

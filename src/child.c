@@ -161,6 +161,9 @@ open_logfile(bool toggling)
       }
       // also expand placeholders $h or $p with hostname or pid
       if ((format = strstr(log, "$h"))) {
+#ifndef HOST_NAME_MAX
+#define HOST_NAME_MAX 255
+#endif
         char hostname[HOST_NAME_MAX + 1];
         if (0 == gethostname(hostname, HOST_NAME_MAX)) {
           *format = '%'; *++format = 's';
