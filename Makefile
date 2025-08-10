@@ -65,7 +65,7 @@ ver:
 	cd src; $(MAKE) releasever
 
 checkver:
-	echo checking same version in changelog, source, and git
+	echo "checking same version in changelog, source (appinfo.h), and git"
 	test "$(version)" = "$(changelogversion)"
 	test "$(version)" = "$(gitversion)"
 

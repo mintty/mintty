@@ -1,3 +1,5 @@
+### 3.7.9 (10 August 2025) ###
+
 Terminal features
   * Fix darkmode/wakeup refresh to not override dynamic OSC colour settings.
   * Fix emoji invisible and blinking attributes.
