@@ -190,6 +190,33 @@ A WSL terminal session can be configured for the mintty session launcher
 in the config file, like:
 * `SessionCommands=Ubuntu:--WSL=Ubuntu`
 
+### WSL support ###
+
+As also described in the manual, mintty adapts certain features 
+for WSL interaction:
+* Cygwin CJK extensions of locale modifiers are not applied.
+* Pathname handling for OSC 7 directory cloning.
+* Pathname transformation for copy/paste and file link opening.
+* Setup of configuration directories and files.
+* Terminal types for Options menu are offered as they exist on WSL.
+* Shortcut start directory fallback handling.
+* Handling of option GuardNetworkPaths.
+* Handling of option ExitCommands..
+* Handling of option DropCommands..
+* Handling of option UserCommands..
+* Display of start or exit error messages.
+* Handling of foreground working directory.
+
+Mintty adjusts its icon (including in the session launcher) according 
+to the selected WSL distribution.
+
+Mintty can adjust taskbar grouping as well as tab set grouping to 
+your preferences, for example:
+* `Class=wsl-class-%5$s` to group sessions of each WSL distribution
+
+or
+* `AppID=@` to group WSL sessions automatically
+
 ### WSL sessions ###
 
 Option `WSLbridge` selects the WSL launcher / bridge gateway to be used.
@@ -362,10 +389,14 @@ as distributed with the Windows Terminal project.
 From the [release area](https://github.com/microsoft/terminal/releases), 
 among the Assets, download the WindowsTerminalPreview zip file of your 
 architecture, extract its `OpenConsole.exe`, rename it to `conhost.exe` 
-and replace the conhost program in your Windows System32 folder with it.
-Make a backup copy of conhost.exe first, just in case.
-Then remove the original conhost.exe if it cannot be renamed.
+and replace the conhost program in your Windows System32 folder with it:
+* Make a backup copy of conhost.exe first, just in case.
+* Then remove the original conhost.exe, or rename it as a backup.
+* Then copy the OpenConsole.exe binary to conhost.exe.
+
 (Do **not** copy conhost.exe from Windows 11 into Windows 10.)
+(Do **not** use cygwin `unlink` to remove conhost.exe or you'll need 
+to restore it with Windows explorer.)
 
 ### Mouse interaction in console-based programs ###
 

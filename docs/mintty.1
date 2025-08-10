@@ -813,6 +813,32 @@ See wiki page
 \fIhttps://github.com/mintty/mintty/wiki/Tips#tab\-session\-management\fP 
 for more details.
 
+.SS WSL support
+
+Mintty supports Windows Subsystem for Linux sessions. See command-line 
+parameter \fB\-\-WSL\fP for invocation.
+
+With 3.7.9, mintty supports WSL sessions out of the box, 
+using the Windows-native wsl.exe gateway to run a WSL session.
+(For older Windows systems, the previous wslbridge gateways can be 
+configured with option \fBWSLbridge\fP.)
+However, for fully transparent application access to all terminal features, 
+a recent version of the Windows conhost layer is needed, as provided 
+by the \fIOpenConsole\fP conhost replacement as described in the Tips 
+wiki page \fIhttps://github.com/mintty/mintty/wiki/Tips\fP.
+(This needs to be patched manually into Windows 11 until the updated 
+version gets released with Windows 11, or into Windows 10.)
+
+Mintty adapts certain features for WSL interaction, particularly 
+pathname handling for copy/paste. See the wiki Tips page for details.
+
+Mintty adjusts its icon (including in the session launcher) according 
+to the selected WSL distribution.
+
+Mintty can adjust taskbar grouping as well as tab set grouping to 
+your preferences, using options \fBClass\fP or \fBAppID\fP.
+Special setting \fBAppID=@\fP groups mintty sessions by each WSL distribution.
+
 .SS Horizontal scrolling of terminal view and horizontal scrollbar
 
 Mintty provides an optional horizontal scrollbar, which can be enabled 
@@ -1246,18 +1272,6 @@ in a resource subdirectory \fIsounds\fP or addressed by pathname.
 Tone playing by DECPS is supported via the \fIlibao\fP audio output library 
 if installed. Setting \fBPlayTone\fP can preselect a tone style.
 See the Control Sequences wiki page \fIhttps://github.com/mintty/mintty/wiki/CtrlSeqs#audio\-support\fP.
-
-.SS WSL support
-
-With 3.7.9, mintty supports WSL sessions out of the box, 
-dropping the wslbridge gateways by default, since there were 
-notoriously frequent cases where they would have failed to work.
-Launching WSL with the Windows built-in default launcher, however, 
-used to be a crook solution as it obstructed transparent terminal operation 
-by hooking the Windows \fIconhost\fP layer into the workflow.
-This deficiency can now be compensated by patching an updated \fIconhost.exe\fP 
-into Windows; 
-see \fIhttps://github.com/mintty/mintty/wiki/Tips#wsl\-sessions\fP for details.
 
 .SS Diagnostic support
 
@@ -3038,7 +3052,7 @@ Also there is another escape sequence to disable bidi per screen line.
 .TQ
 \fBWSL launcher/bridge gateway\fP (WSLbridge=0)
 This option selects the launch gateway if running WSL via command-line 
-option \fB--WSL\fP:
+option \fB\-\-WSL\fP:
 .ul
 .en
 \fB2\fP Use \fI/bin/wslbridge2\fP.
@@ -4482,6 +4496,18 @@ Mintty has two \fItermcap\fP or \fIterminfo\fP entries, \fBmintty\fP and
 However, it sets the environment variable \fBTERM\fP to \fBxterm\fP 
 by default in order to provide maximal seamless compatibility also in case 
 of remote login.
+
+.SS WSL interaction
+
+With 3.7.9, mintty supports WSL sessions out of the box, 
+dropping the wslbridge gateways by default, since there were 
+notoriously frequent cases where they would have failed to work.
+Launching WSL with the Windows built-in default launcher, however, 
+used to be a crook solution as it obstructed transparent terminal operation 
+by hooking the Windows \fIconhost\fP layer into the workflow.
+This deficiency can now be compensated by patching an updated \fIconhost.exe\fP 
+into Windows (see also section WSL support above); 
+see \fIhttps://github.com/mintty/mintty/wiki/Tips#wsl\-sessions\fP for details.
 
 .SS Screen control features, DEC and xterm compatibility
 

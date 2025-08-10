@@ -31,6 +31,7 @@ Window handling
 
 Documentation
   * Manual and wiki Tips: sections on tab session management (~#1284, ~#1201).
+  * Manual and wiki Tips: enhanced description of WSL support.
 
 Configuration
   * Changing default setting UnderlineManual=true for consistent line placement.
