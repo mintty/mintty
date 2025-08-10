@@ -1120,6 +1120,29 @@ For symbol characters and emojis that are single-width by definition
 if the character is followed by an adjacent single-width space character.
 
 
+## Screen text layout and line rendering ##
+
+### Line reflow ###
+
+Mintty automatically readjusts auto-wrap line breaking after resize 
+by default. (This may however spoil image display.)
+
+### Bidi support ###
+
+Mintty support birectional rendering by default, with automatic 
+direction detection (according to the Unicode Bidi algorithm), 
+including support for Arabic joining formatters for Arabic shaping.
+
+It supports additional ECMA-48 bidi modes and private bidi modes to control 
+switchable bidi behaviour per line and partially per paragraph (i.e. within 
+an auto-wrapped line), as listed in the [[CtrlSeqs]] wiki page.
+
+Among those features are optional LAM/ALEF single-cell joining and 
+context-related disabling of bidi autodetection to support 
+box layout with right-to-left text, using Unicode Box Drawing characters 
+or DEC line drawing.
+
+
 ## Font rendering and geometry ##
 
 Mintty can make use of advanced Windows font fallback as provided via the Uniscribe API, 

@@ -32,6 +32,7 @@ Window handling
 Documentation
   * Manual and wiki Tips: sections on tab session management (~#1284, ~#1201).
   * Manual and wiki Tips: enhanced description of WSL support.
+  * Manual and wiki: enhanced description of text layout (reflow and bidi).
 
 Configuration
   * Changing default setting UnderlineManual=true for consistent line placement.

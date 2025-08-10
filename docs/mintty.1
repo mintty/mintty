@@ -492,6 +492,12 @@ Mintty supports a switchable terminal mode so that Arabic LAM/ALEF ligatures
 are rendered in a single terminal cell.
 See \fIhttps://github.com/mintty/mintty/wiki/CtrlSeqs#lamalef\-joining\fP.
 
+.TQ
+.B Box layout with right-to-left text
+Bidi autodetection would by default spoil boxes formed with Unicode 
+Box Drawing characters or with DEC line drawing. Autodetection disabling 
+escape sequence DECRST 2501 (`\\e[?2501l`) prevents that.
+
 .SS Menus
 
 The context menu can be opened by right-clicking the mouse (with Shift 

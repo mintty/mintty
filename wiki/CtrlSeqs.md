@@ -176,7 +176,7 @@ and some control sequences to adjust the behaviour.
 | `^[[8h`       | BDSM (ECMA-48): implicit bidi mode (bidi-enabled lines) |
 | `^[[8l`       | BDSM (ECMA-48): explicit bidi mode (bidi-disabled lines) |
 | `^[[?2501h`   | enable bidi autodetection (default) |
-| `^[[?2501l`   | disable bidi autodetection |
+| `^[[?2501l`   | disable bidi autodetection (*) |
 | `^[[1 k`      | SCP (ECMA-48): set lines to LTR paragraph embedding level |
 | `^[[2 k`      | SCP (ECMA-48): set lines to RTL paragraph embedding level |
 | `^[[0 k`      | SCP (ECMA-48): default direction handling: autodetection with LTR fallback |
@@ -189,12 +189,18 @@ Note: ECMA-48 bidi modes and private bidi modes are experimental.
 They follow the current status of the bidi mode model of the 
 [«BiDi in Terminal Emulators» recommendation](https://terminal-wg.pages.freedesktop.org/bidi/).
 
+Note: Disabling autodetection prevents spoiled table layout when 
+Unicode Box Drawing characters or DEC line drawing are used.
+
 Note: Box mirroring means a number of graphic characters are added to the 
 set of bidi-mirrored characters as specified by Unicode.
 These are the unsymmetric characters from ranges Box Drawing (U+2500-U+257F) 
 and Block Elements (U+2580-U+259F). Others may be added in future versions.
 
 Note: SPD is a deprecated fun feature.
+
+Note: Except for the global bidi enable/disable sequences, bidi sequences 
+apply to whole lines as long as they are effective.
 
 ### LAM/ALEF joining ###
 
