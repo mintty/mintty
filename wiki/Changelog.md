@@ -1,3 +1,6 @@
+WSL support
+  * Set up HOSTERM, HOSTLANG only if launching WSL.
+
 ### 3.7.9 (10 August 2025) ###
 
 Terminal features

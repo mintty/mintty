@@ -7141,7 +7141,7 @@ main(int argc, char *argv[])
   if (wslbridge == 1 && access("/bin/wslbridge", X_OK) < 0)
     wslbridge = 0;
 
-  if (wslbridge == 0) {
+  if (support_wsl && !wslbridge) {
     setenv("HOSTTERM", cfg.term, true);
     setenv("HOSTLANG", getlocenvcat("LC_CTYPE"), true);
     char * envs_to_wsl_exe = getenv("WSLENV");
