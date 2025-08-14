@@ -74,6 +74,8 @@ HINSTANCE inst;
 HWND wnd;
 HIMC imc;
 ATOM class_atom;
+HICON large_icon = 0;
+HICON small_icon = 0;
 
 static char **main_argv;
 static int main_argc;
@@ -1249,6 +1251,18 @@ win_set_scrollview(int pos, int len, int height)
 void
 win_set_icon(char * s, int icon_index)
 {
+  if (!*s) {
+deficon:
+    // if OSC icon name is empty (!*s)
+    // or icon loading fails (e.g. file not found, from below)
+    // restore default (or configured) icon
+    HICON _large_icon = large_icon ?: LoadIcon(inst, MAKEINTRESOURCE(IDI_MAINICON));
+    // set the icon
+    SetClassLongPtr(wnd, GCLP_HICONSM, (LONG_PTR)small_icon);
+    SetClassLongPtr(wnd, GCLP_HICON, (LONG_PTR)_large_icon);
+    return;
+  }
+
   char * iconpath = guardpath(s, 1);
   if (iconpath) {
     // TODO: should we resolve a symbolic link here?
@@ -1258,6 +1272,12 @@ win_set_icon(char * s, int icon_index)
       HICON large_icon = 0, small_icon = 0;
       ExtractIconExW(icon_file, icon_index, &large_icon, &small_icon, 1);
       delete(icon_file);
+
+      if (!large_icon && !small_icon) {
+        // if icon loading fails (e.g. file not found)
+        // restore default (or configured) icon
+        goto deficon;
+      }
 
       // set the icon
       SetClassLongPtr(wnd, GCLP_HICONSM, (LONG_PTR)small_icon);
@@ -7375,7 +7395,8 @@ main(int argc, char *argv[])
   }
 
   // Load icon if specified.
-  HICON large_icon = 0, small_icon = 0;
+  // icon variables are now global for use as fallback in win_set_icon
+  //HICON large_icon = 0, small_icon = 0;
   if (*cfg.icon) {
     //string icon_file = strdup(cfg.icon);
     // could use path_win_w_to_posix(cfg.icon) to avoid the locale trick below
@@ -7513,6 +7534,10 @@ main(int argc, char *argv[])
     }
   }
 
+  // Load icon from resource if none configured
+  if (!large_icon)
+    large_icon = LoadIcon(inst, MAKEINTRESOURCE(IDI_MAINICON));
+
   // The window class.
   class_atom = RegisterClassExW(&(WNDCLASSEXW){
     .cbSize = sizeof(WNDCLASSEXW),
@@ -7521,7 +7546,7 @@ main(int argc, char *argv[])
     .cbClsExtra = 0,
     .cbWndExtra = 0,
     .hInstance = inst,
-    .hIcon = large_icon ?: LoadIcon(inst, MAKEINTRESOURCE(IDI_MAINICON)),
+    .hIcon = large_icon,
     .hIconSm = small_icon,
     .hCursor = LoadCursor(null, IDC_IBEAM),
     .hbrBackground = null,

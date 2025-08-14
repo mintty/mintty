@@ -3,6 +3,7 @@ WSL support
 
 Desktop integration
   * Reestablish small icon support (dropped in 3.7.9) (#1329).
+  * Restore default/configured icon on invalid icon change sequence.
 
 ### 3.7.9 (10 August 2025) ###
 
