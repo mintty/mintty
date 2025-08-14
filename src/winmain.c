@@ -1249,21 +1249,29 @@ win_set_scrollview(int pos, int len, int height)
 void
 win_set_icon(char * s, int icon_index)
 {
-  HICON large_icon = 0;
-
   char * iconpath = guardpath(s, 1);
   if (iconpath) {
     // TODO: should we resolve a symbolic link here?
     wstring icon_file = path_posix_to_win_w(iconpath);
     //printf("win_set_icon <%ls>,%d\n", icon_file, icon_index);
     if (icon_file) {
-      ExtractIconExW(icon_file, icon_index, &large_icon, 0, 1);
+      HICON large_icon = 0, small_icon = 0;
+      ExtractIconExW(icon_file, icon_index, &large_icon, &small_icon, 1);
       delete(icon_file);
-      //SetClassLongPtr(wnd, GCLP_HICONSM, (LONG_PTR)small_icon);
+
+      // set the icon
+      SetClassLongPtr(wnd, GCLP_HICONSM, (LONG_PTR)small_icon);
       SetClassLongPtr(wnd, GCLP_HICON, (LONG_PTR)large_icon);
+      // or
       //SendMessage(wnd, WM_SETICON, ICON_SMALL, (LPARAM)small_icon);
       //SendMessage(wnd, WM_SETICON, ICON_BIG, (LPARAM)large_icon);
-      DestroyIcon(large_icon);
+
+      // according to
+      // https://learn.microsoft.com/is-is/windows/win32/api/winuser/nf-winuser-destroyicon
+      // there is no need to DestroyIcon after ExtractIcon, otherwise 
+      // it should only be called on next call of win_set_icon (#1329)
+      //DestroyIcon(large_icon);
+      //DestroyIcon(small_icon);
     }
     free(iconpath);
   }

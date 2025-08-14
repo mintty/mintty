@@ -1,6 +1,9 @@
 WSL support
   * Set up HOSTERM, HOSTLANG only if launching WSL.
 
+Desktop integration
+  * Reestablish small icon support (dropped in 3.7.9) (#1329).
+
 ### 3.7.9 (10 August 2025) ###
 
 Terminal features
