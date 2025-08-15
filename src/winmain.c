@@ -1269,7 +1269,17 @@ deficon:
     wstring icon_file = path_posix_to_win_w(iconpath);
     //printf("win_set_icon <%ls>,%d\n", icon_file, icon_index);
     if (icon_file) {
-      HICON large_icon = 0, small_icon = 0;
+static HICON large_icon = 0, small_icon = 0;
+      // icon handle management
+      if (large_icon) {
+        DestroyIcon(large_icon);
+        large_icon = 0;
+      }
+      if (small_icon) {
+        DestroyIcon(small_icon);
+        small_icon = 0;
+      }
+
       ExtractIconExW(icon_file, icon_index, &large_icon, &small_icon, 1);
       delete(icon_file);
 
@@ -1289,7 +1299,9 @@ deficon:
       // according to
       // https://learn.microsoft.com/is-is/windows/win32/api/winuser/nf-winuser-destroyicon
       // there is no need to DestroyIcon after ExtractIcon, otherwise 
-      // it should only be called on next call of win_set_icon (#1329)
+      // it should only be called on next call of win_set_icon (#1329);
+      // on the other hand, testing shows that icon handles acquired with 
+      // ExtractIcon do exhaust (#1329), so manage them above
       //DestroyIcon(large_icon);
       //DestroyIcon(small_icon);
     }
