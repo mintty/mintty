@@ -1256,7 +1256,7 @@ deficon:
     // if OSC icon name is empty (!*s)
     // or icon loading fails (e.g. file not found, from below)
     // restore default (or configured) icon
-    HICON _large_icon = large_icon ?: LoadIcon(inst, MAKEINTRESOURCE(IDI_MAINICON));
+    HICON _large_icon = large_icon;
     // set the icon
     SetClassLongPtr(wnd, GCLP_HICONSM, (LONG_PTR)small_icon);
     SetClassLongPtr(wnd, GCLP_HICON, (LONG_PTR)_large_icon);
