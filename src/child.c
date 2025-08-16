@@ -992,7 +992,31 @@ get_foreground_cwd()
   if (fg_pid > 0) {
     char proc_cwd[32];
     sprintf(proc_cwd, "/proc/%u/cwd", fg_pid);
-    return realpath(proc_cwd, 0);
+    char * rp = realpath(proc_cwd, 0);
+    //printf("/proc/%u/cwd: %s\n", fg_pid, rp);
+
+    // we have kind of a race condition here as the foreground process 
+    // just determined may already have terminated when we try to 
+    // retrieve its working directory - 
+    // this may particularly happen if dynamic setting of window icon 
+    // or window background is done by a service tool;
+    // so we do a single retry in this case, likely getting the 
+    // working directory of the shell or other parent process
+    if (!rp) {
+      // ... however, even though the failed realpath() above 
+      // would suggest the (previous) foreground process to be terminated, 
+      // occasionally the subsequent foreground_pid returned the same 
+      // process id again (mysterious);
+      // so we add a tiny delay here which seems to mitigate the glitch
+      usleep(2000);
+      fg_pid = foreground_pid();
+
+      if (fg_pid > 0) {
+        sprintf(proc_cwd, "/proc/%u/cwd", fg_pid);
+        rp = realpath(proc_cwd, 0);
+      }
+    }
+    return rp;
   }
 #endif
   return 0;
