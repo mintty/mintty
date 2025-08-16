@@ -1265,7 +1265,6 @@ deficon:
 
   char * iconpath = guardpath(s, 1);
   if (iconpath) {
-    // TODO: should we resolve a symbolic link here?
     wstring icon_file = path_posix_to_win_w(iconpath);
     //printf("win_set_icon <%ls>,%d\n", icon_file, icon_index);
     if (icon_file) {
@@ -1296,14 +1295,18 @@ static HICON large_icon = 0, small_icon = 0;
       //SendMessage(wnd, WM_SETICON, ICON_SMALL, (LPARAM)small_icon);
       //SendMessage(wnd, WM_SETICON, ICON_BIG, (LPARAM)large_icon);
 
-      // according to
-      // https://learn.microsoft.com/is-is/windows/win32/api/winuser/nf-winuser-destroyicon
-      // there is no need to DestroyIcon after ExtractIcon, otherwise 
-      // it should only be called on next call of win_set_icon (#1329);
-      // on the other hand, testing shows that icon handles acquired with 
-      // ExtractIcon do exhaust (#1329), so manage them above
-      //DestroyIcon(large_icon);
-      //DestroyIcon(small_icon);
+      // the description of DestroyIcon
+      // https://learn.microsoft.com/en-gb/windows/win32/api/winuser/nf-winuser-destroyicon
+      // does not mention ExtractIcon, but the description of ExtractIcon
+      // https://learn.microsoft.com/en-gb/windows/win32/api/shellapi/nf-shellapi-extracticonexw
+      // clarifies that DestroyIcon must be called for extracted icons;
+      // also, testing shows that icon handles acquired with 
+      // ExtractIcon do exhaust (#1329) otherwise -
+      // on the other hand, destroying them here may prevent their usage,
+      // so they should be destroyed on next call of win_set_icon (#1329),
+      // see "icon handle management" above
+      // do not yet DestroyIcon(large_icon);
+      // do not yet DestroyIcon(small_icon);
     }
     free(iconpath);
   }
