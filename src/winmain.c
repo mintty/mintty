@@ -6263,6 +6263,19 @@ wstring
 wslicon(wchar * params)
 {
   wstring icon = 0;  // default: no icon
+
+  char * iconfile = 0;
+  char * systemroot = getenv("SYSTEMROOT");
+  if (systemroot && wcsstr(params, W("-e cmd")))
+    iconfile = asform("%s\\System32\\cmd.exe", systemroot);
+  else if (systemroot && wcsstr(params, W("-e powershell")))
+    iconfile = asform("%s\\System32\\WindowsPowerShell\\v1.0\\powershell.exe", systemroot);
+  if (iconfile) {
+    icon = cs__mbstowcs(iconfile);
+    free(iconfile);
+    return icon;
+  }
+
 #if CYGWIN_VERSION_API_MINOR >= 74
   wchar * wsl = wcsstr(params, W("--WSL"));
   if (wsl) {

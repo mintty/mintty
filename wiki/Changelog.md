@@ -7,6 +7,7 @@ Desktop integration
   * Restore default/configured icon on invalid icon change sequence.
   * Support many dynamic icon changes by handle resource management (#1329).
   * Stabilise dynamic icon changes in border cases (~#1329).
+  * Session launcher: support icons for cmd and powershell.
 
 ### 3.7.9 (10 August 2025) ###
 
