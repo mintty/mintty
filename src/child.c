@@ -1258,7 +1258,7 @@ setup_sync(bool in_tabs)
   Called from Alt+F2 (or session launcher via child_launch).
  */
 static void
-do_child_fork(int argc, char *argv[], int moni, bool launch, bool config_size, bool in_cwd)
+do_child_fork(int argc, char *argv[], int moni, bool launch, bool config_size, bool in_cwd, bool cloning)
 {
   trace_dir(asform("do_child_fork: %s", getcwd(malloc(MAX_PATH), MAX_PATH)));
 
@@ -1411,7 +1411,7 @@ extern int horsqueeze(void);  // should become horsqueeze_cols in win.h
     //setenv("MINTTY_CHILD", "1", true);
 
 #if CYGWIN_VERSION_DLL_MAJOR >= 1005
-    if (shortcut) {
+    if (cloning && shortcut) {
       trace_dir(asform("Starting <%s>", cs__wcstoutf(shortcut)));
       shell_exec(shortcut);
       //show_info("Started");
@@ -1422,6 +1422,7 @@ extern int horsqueeze(void);  // should become horsqueeze_cols in win.h
     trace_dir(asform("Starting exe <%s %s>", argv[0], argv[1]));
     execv("/proc/self/exe", argv);
 #else
+    (void)cloning;
     // /proc/self/exe isn't available before Cygwin 1.5, so use argv[0] instead.
     // Strip enclosing quotes if present.
     char *path = argv[0];
@@ -1444,7 +1445,7 @@ void
 child_fork(int argc, char *argv[], int moni, bool config_size, bool in_cwd, bool in_tabs)
 {
   setup_sync(in_tabs);
-  do_child_fork(argc, argv, moni, false, config_size, in_cwd);
+  do_child_fork(argc, argv, moni, false, config_size, in_cwd, true);
   // prevent wrong control of subsequent child_fork
   unsetenv("MINTTY_CLASS");
 }
@@ -1491,7 +1492,7 @@ child_launch(int n, int argc, char * argv[], int moni)
           }
         }
         new_argv[argc] = 0;
-        do_child_fork(argc, new_argv, moni, true, true, false);
+        do_child_fork(argc, new_argv, moni, true, true, false, false);
         free(new_argv);
         break;
       }

@@ -1,5 +1,6 @@
 WSL support
-  * Set up HOSTERM, HOSTLANG only if launching WSL.
+  * Set up HOSTTERM, HOSTLANG only if launching WSL.
+  * Fix WSL session launcher from terminal started from desktop shortcut.
 
 Desktop integration
   * Reestablish small icon support (dropped in 3.7.9) (#1329).
