@@ -9,6 +9,9 @@ Desktop integration
   * Stabilise dynamic icon changes in border cases (~#1329).
   * Session launcher: support icons for cmd and powershell.
 
+Window handling
+  * Avoid tab colour to stick to "moving" indication.
+
 ### 3.7.9 (10 August 2025) ###
 
 Terminal features

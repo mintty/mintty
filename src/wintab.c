@@ -164,13 +164,22 @@ create_tabbar_font()
 static LRESULT CALLBACK
 container_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 {
-  //printf("tabbar con_proc %03X\n", msg);
+  //printf("[%ld] tabbar con_proc %03X\n", mtime(), msg);
 static int dragidx = -1;
 static int dragini = -1;  // initial drag tab, where it was clicked on
 static int targpro = -1;
 static int xstart = 0;  // origin position of moved tab
 static int xswipe = 0;  // swipe offset with swipe_tab feature
 static HCURSOR hcursor = NULL;
+
+static UINT msg_2 = -1;
+static UINT msg_1 = -1;
+static UINT msg_0 = -1;
+
+  // keep track of sequence of recent events
+  msg_2 = msg_1;
+  msg_1 = msg_0;
+  msg_0 = msg;
 
   if (msg == WM_MOUSEACTIVATE) {
     //printf("WM_MOUSEACTIVATE lo %02X hi %02X\n", LOWORD(lp), HIWORD(lp));
@@ -356,7 +365,7 @@ static HCURSOR hcursor = NULL;
 
     HBRUSH tabbr;
     colour tabbg = (colour)-1;
-    if (tabinfo[itemID].wnd == wnd) {
+    if (tabinfo[itemID].wnd == wnd) { // same as dis->itemState & ODS_SELECTED
       //tabbr = GetSysColorBrush(COLOR_ACTIVECAPTION);
       //SetTextColor(hdc, GetSysColor(COLOR_CAPTIONTEXT));
       tabbr = GetSysColorBrush(COLOR_HIGHLIGHT);
@@ -389,6 +398,17 @@ static HCURSOR hcursor = NULL;
         //tabbg = RGB(g, b, r);
         tabbg = RGB(g, r, b);
         //tabbg = RGB(b, r, g);
+
+        // sometimes Windows does not deliver an event message 
+        // when the mouse is released, so the "moving" colour 
+        // may remain, and may even be set by just clicking the tab 
+        // without moving it;
+        // this workaround mitigates the unpleasant wrong colour -
+        // it restricts setting of tuned background (as calculated above) 
+        // to the sequences WM_MOUSEMOVE followed by 2 WM_DRAWITEM
+        // (also works somehow with WM_CAPTURECHANGED)
+        if (msg_2 != WM_MOUSEMOVE)
+          tabbg = bg1;
 
         tabbr = CreateSolidBrush(tabbg);
 
