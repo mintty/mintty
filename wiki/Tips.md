@@ -1723,10 +1723,15 @@ cygwin 3.1.0 provides the ConPTY support to bridge the terminal interworking inc
 ([pty incompatibility problem](https://github.com/mintty/mintty/issues/56) and
 [character encoding incompatibility problem](https://github.com/mintty/mintty/issues/376)).
 
+In order to ensure pty functionality and thus an interactive terminal 
+interface (rather than just pipe-based terminal access), the relevant 
+terminfo entries should be bundled with mintty, as they are needed by 
+cygwin to properly support the Windows ConPTY layer.
+
 For software that is aware of Posix terminal conventions, it may be a feasible 
 solution if the software detects a terminal and its character encoding by 
-checking environment variable `TERM` and the locale variables and invokes 
-`stty raw -echo` to enable direct character-based I/O and disable 
-non-compatible signal handling. For this purpose, stty and its library 
-dependencies need to be bundled with the installation as well.
+checking environment variable `TERM` and the locale variables; in some cases 
+it may be useful to invoke `stty raw -echo` to enable direct 
+character-based I/O and disable non-compatible signal handling. (For this purpose, stty and its library 
+dependencies need to be bundled with the installation as well.)
 
