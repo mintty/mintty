@@ -6264,6 +6264,7 @@ wslicon(wchar * params)
 {
   wstring icon = 0;  // default: no icon
 
+#if CYGWIN_VERSION_API_MINOR >= 74
   char * iconfile = 0;
   char * systemroot = getenv("SYSTEMROOT");
   if (systemroot && wcsstr(params, W("-e cmd")))
@@ -6276,7 +6277,6 @@ wslicon(wchar * params)
     return icon;
   }
 
-#if CYGWIN_VERSION_API_MINOR >= 74
   wchar * wsl = wcsstr(params, W("--WSL"));
   if (wsl) {
     wsl += 5;
