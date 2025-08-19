@@ -4597,9 +4597,18 @@ do_cmd(void)
       if (!strncmp(s, "file:", 5))
         s += 5;
       if (!strncmp(s, "//localhost/", 12))
-        s += 11;
+        s += 11;  // keep 1 leading '/'
       else if (!strncmp(s, "///", 3))
-        s += 2;
+        s += 2;  // keep 1 leading '/'
+      else if (!strncmp(s, "//", 2)) {
+        char hostname[HOST_NAME_MAX + 1];
+        if (0 == gethostname(hostname, HOST_NAME_MAX)) {
+          int hlen = strlen(hostname);
+          // check s for leading //$HOSTNAME/
+          if (!strncmp(s + 2, hostname, hlen) && s[2 + hlen] == '/')
+            s += 2 + hlen;  // keep 1 leading '/'
+        }
+      }
 
       // do not check guardpath() here or it might beep on every prompt...
 

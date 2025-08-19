@@ -1,3 +1,6 @@
+Terminal features
+  * OSC 7 accepts an explicit localhost path //$HOSTNAME/path (#1330).
+
 WSL support
   * Set up HOSTTERM, HOSTLANG only if launching WSL.
   * Fix WSL session launcher from terminal started from desktop shortcut.
