@@ -1642,9 +1642,6 @@ load_config(string filename, int to_save)
     free_filename = true;
   }
 
-  if (access(filename, R_OK) == 0 && access(filename, W_OK) < 0)
-    to_save = false;
-
   // prevent saving to /etc/minttyrc
   if (strstr(filename, "/etc/") == filename)
     to_save = false;
@@ -1656,12 +1653,20 @@ load_config(string filename, int to_save)
 
   if (to_save) {
     if (file || (!rc_filename && to_save == 2) || to_save == 3) {
-      clear_opts();
-
       delete(rc_filename);
       rc_filename = path_posix_to_win_w(filename);
-      if (report_config)
-        printf("save to config <%ls>\n", rc_filename);
+
+      if (access(filename, R_OK) == 0 && access(filename, W_OK) < 0) {
+        to_save = false;
+        if (report_config)
+          printf("should save to config <%ls> but read-only\n", rc_filename);
+      }
+      else {
+        clear_opts();
+
+        if (report_config)
+          printf("save to config <%ls>\n", rc_filename);
+      }
     }
   }
 

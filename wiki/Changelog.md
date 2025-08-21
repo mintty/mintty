@@ -15,6 +15,9 @@ Desktop integration
 Window handling
   * Avoid tab colour to stick to "moving" indication.
 
+Configuration
+  * Fix reporting if config file to save to is actually read-only (#1331).
+
 ### 3.7.9 (10 August 2025) ###
 
 Terminal features
