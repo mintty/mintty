@@ -4601,6 +4601,9 @@ do_cmd(void)
       else if (!strncmp(s, "///", 3))
         s += 2;  // keep 1 leading '/'
       else if (!strncmp(s, "//", 2)) {
+#ifndef HOST_NAME_MAX
+#define HOST_NAME_MAX 255
+#endif
         char hostname[HOST_NAME_MAX + 1];
         if (0 == gethostname(hostname, HOST_NAME_MAX)) {
           int hlen = strlen(hostname);
