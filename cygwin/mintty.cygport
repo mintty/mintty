@@ -9,45 +9,65 @@ Mintty is a terminal emulator for Cygwin.
 Terminal display features
 * Xterm-compatible terminal emulation, coverage of all DEC terminal series screen control features.
 * 256 colours and True-Colour support, optional CMYK colour specification.
-* Full Unicode support, comprehensive character encoding support and wide character handling.
-* Bidirectional rendering, flexible bidi controls.
 * Full character attributes support, including italic, underline styles and colours, overline, strikeout, rapid blinking.
 * Extended character attributes support: shadowed, subscript, superscript (terminfo) and overstrike.
+* DEC VT420 screen control features, including rectangular areas.
+* Full Unicode support, comprehensive character encoding support and wide character handling.
+* Bidirectional rendering, flexible bidi controls (bidi marks and control functions).
+* Advanced Arabic shaping: LAM/ALEF (optional single-cell), ZWJ/ZWNJ shaping control.
 * Alternative fonts: simultaneous display of multiple fonts.
 * Secondary fonts: script-specific alternative font usage.
+* Dynamic installation of temporary fonts.
+* Reflow option on terminal resize (re-breaking of wrapped lines).
+* Self-drawn box characters for smooth and consistent box drawing.
+* Full emoji support, including all emoji sequences: emoji ZWJ sequences, dynamic support for flags emojis.
+* “Emoji width” mode to always render emojis in 2-cell width.
 * Image display support.
 * Sixel graphics support.
-* Emoji support.
 * Tektronix 4014 vector graphics emulation.
+* Audio support: sound files and DECPS tone playing.
 
 Terminal input and interaction features
-* Character composition support includes dead keys, Compose key, Windows IME.
-* Keyboard workarounds for certain buggy virtual keyboards.
-* Extensive mouse support, including pixel-grained DEC locator mode.
+
+* Character composition with full Unicode support, using dead keys and Compose key.
+* Visual feedback of numeric or composed character input.
+* Up to 6 key modifiers, including Meta (Win key) and configurable Super and Hyper keys.
+* Comprehensive AltGr support, handling all modifier combinations.
+* Windows IME support.
+* Keyboard workarounds for certain buggy virtual keyboard / remote desktop / hotkey software.
+* Support for all relevant mouse modes, including pixel-grained SGR and DEC locator modes.
 * Text selection with mouse or keyboard.
-* Easy copy & paste. Drag & drop of text, files and folders.
+* Easy copy & paste.
+* Drag & drop of text, files and folders.
+* Elastic mouse text selection.
 * Ability to open files and URLs with Ctrl+click, explicit hyperlinks.
 * Fast rendering and scrolling, fast keyboard feedback.
-* HTML export and clipboard format support.
-* Image screenshot export.
+* Screenshot dump: HTML export to file and clipboard, image export.
 
 Window handling features and desktop integration
-* Colour schemes / Theme file support. Background texture and image support.
+* Colour schemes / Theme file support; optional distinct theme for darkmode.
+* Thoughtfully designed default colour schme (theme helmholtz, by Andy Koppe).
+* Background texture and image support.
 * Virtual Tabs / session switcher and launcher.
-* Tabbar to switch virtual tabs for a tabbed window experience.
+* Tabbar to switch virtual tabs (with interactive tab arrangement) for a tabbed window experience.
+* Dynamic tab reordering with visual feedback.
 * Taskbar tasks (“jump list”) configuration. Task grouping configuration.
 * Flexible fullscreen, fullsize and border options.
+* Horizontal scrolling.
 * Screen and scrollback buffer search.
-* Multiple monitor support, changing DPI support.
 * Window transparency.
+* Multiple monitor support, high DPI and DPI change support; enhanced multi-monitor DPI handling.
+* Flexible multi-monitor window placement support.
 
 Configuration features and system support
 * Native Windows user interface with a lean options dialog.
 * User interface language localization support.
 * User-defined key shortcuts and menu functions.
 * Flexible configuration and resource folder options.
+* Options stored in a text file. No registry entries.
 * Switchable terminal logging, switchable character information.
-* Options stored in a text file. No registry entries."
+* Runs in Cygwin, MSYS(2), midipix. Also hosting WSL.
+* Runs on Windows 2000, Windows XP, Windows 7, Windows 10, Windows 11."
 
 HOMEPAGE="http://mintty.github.io/"
 LICENSE="GPL-3.0-or-later"
