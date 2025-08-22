@@ -116,7 +116,7 @@ src/composed.t:	$(compose_list) $(keysymdefs)
 #############################################################################
 # build
 
-arch_files := Makefile LICENSE* INSTALL VERSION
+arch_files := Makefile LICENSE* INSTALL VERSION config.template
 arch_files += src/Makefile src/*.c src/*.h src/*.rc src/*.mft
 arch_files += src/[!_]*.t src/mk*
 arch_files += tools/mintheme tools/getemojis tools/getflags

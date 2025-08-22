@@ -1,0 +1,70 @@
+#############################################################################
+# Mintty configuration template, with some useful examples -
+# uncomment, change settings or add options to your preference.
+# This sample config template mainly contains settings that 
+# cannot be configured in the interactive Options dialog.
+# The config file should best be placed in one of these locations:
+#	$HOME/.minttyrc
+#	$HOME/.config/mintty/config
+#	$APPDATA/mintty/config
+#	(see manual for further options)
+
+# enable a Compose key
+#ComposeKey=ctrl
+
+# enhance cursor visibility
+#CursorType=block
+
+# enable a VT320 status line
+#StatusLine=yes
+
+# enable DECSET 3 column switching by default (also enabled by DECSET 40)
+#Enable132ColumnSwitching=yes
+
+# enable terminal reflow on resize (also configurable in Options)
+#RewrapOnResize=yes
+
+# enable single-dash long options, e.g. mintty -WSL
+#ShortLongOpts=on
+
+# enable wslbridge2 as a WSL launcher
+#WSLbridge=2
+# new default uses native wsl.exe launcher
+#WSLbridge=0
+
+# indicate image space in clipboard
+#SixelClipChars=▒
+
+# place image or HTML screenshot files in common location
+#default SaveFilename=mintty.%Y-%m-%d_%H-%M-%S
+#SaveFilename=~/mintty.%Y-%m-%d_%H-%M-%S
+#SaveFilename=$USERPROFILE/Pictures/mintty/mintty.%Y-%m-%d_%H-%M-%S
+
+# place terminal log files in common location
+#default Log=mintty.$h.%Y-%m-%d_%H-%M-%S.$p.log
+#Log=~/mintty.$h.%Y-%m-%d_%H-%M-%S.$p.log
+#Log=/tmp/mintty.$h.%Y-%m-%d_%H-%M-%S.$p.log
+
+# add some useful actions to the extended context menu
+#CtxMenuFunctions=Reverse Video:toggle-reverse-video;\
+	Status line:toggle-status-line;\
+	BiDi:toggle-bidi;\
+	Tab bar:toggle-tabbar;\
+	ScrollLock:toggle-no-scroll;\
+	Dim margins:toggle-dim-margins;\
+	Opaque override:toggle-opaque;\
+	Send Intr:intr;\
+	New Window here:new-window-cwd;\
+	Suspend screen saver:win-toggle-keep-screen-on;
+
+# add session launchers to the extended context menu
+#SessionCommands=WSL:--WSL;Debian:--WSL=Debian;Ubuntu:--WSL=Ubuntu;\
+	Small Window:--size 60x20;PowerShell:-e powershell;
+
+# define some useful keyboard functions and some examples of user-defined keys
+#KeyFunctions=Break:break;\
+	AW+Left:tab-left;AW+Right:tab-right;\
+	AW+KP_Left:tab-left;AW+KP_Right:tab-right;\
+	A+F12:'🤓';AC+F12:`echo -n $( date )`;
+
+#############################################################################
