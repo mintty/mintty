@@ -228,7 +228,7 @@ dropping the wslbridge gateways by default, since there were
 notoriously frequent cases where they would have failed to work.
 Launching WSL with the Windows built-in default launcher, however, 
 used to be a crook solution as it obstructed transparent terminal operation 
-by hooking the Windows \fIconhost\fP layer into the workflow.
+by hooking the Windows _conhost_ layer into the workflow.
 This deficiency can now be compensated by patching an updated `conhost.exe` 
 into Windows; see instructions about `conhost` further below.
 
@@ -373,7 +373,7 @@ As a workaround on older versions of Cygwin or Windows, you can use
 [winpty](https://github.com/rprichard/winpty) as a wrapper to invoke 
 the Windows program.
 
-### Text attribute handling from WSL and other Windows programs ###
+### Interaction with WSL and other Windows programs ###
 
 When running native Windows programs, like `wsl` access program to WSL, 
 or `cmd` and `powershell`, or MinGW-compiled Windows console applications, 
@@ -381,8 +381,8 @@ the `conhost` console layer of Windows interferes
 with escape sequence controls; even for WSL, it does not pass them through 
 transparently but imposes its own idea of terminal capabilities, mangling 
 basic controls like bold and reverse attributes, so bold text is enforced 
-to appear white. This broken behaviour was fixed for Windows 11 but not 
-back-ported to Windows 10.
+to appear white, and obstructing advanced text attributes. This broken 
+behaviour was fixed for Windows 11 but not back-ported to Windows 10.
 
 You can however fix the issue by updating your conhost layer to its update 
 as distributed with the Windows Terminal project.
