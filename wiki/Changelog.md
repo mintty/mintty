@@ -17,6 +17,8 @@ Window handling
 
 Configuration
   * Fix reporting if config file to save to is actually read-only (#1331).
+  * Revised handling of downloaded colour schemes and storing themes (~#1303).
+  * New option ConfigThemes.
 
 ### 3.7.9 (10 August 2025) ###
 

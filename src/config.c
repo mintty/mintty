@@ -24,6 +24,8 @@
 #include <sys/cygwin.h>  // cygwin_internal
 #endif
 
+#define wcsispath(s)	(wcschr(s, W('/')) || wcschr(s, W('\\')))
+
 
 #define dont_support_blurred
 
@@ -70,6 +72,7 @@ const config default_cfg = {
   .opaque_when_focused = false,
   .cursor_type = CUR_LINE,
   .cursor_blinks = true,
+  .config_themes = 1,
   // Text
   .font = {.name = W("Lucida Console"), .size = 9, .weight = 400, .isbold = false},
   .fontfams[1] = {.name = W(""), .weight = 400, .isbold = false},
@@ -379,6 +382,7 @@ options[] = {
   {"OpaqueWhenFocused", OPT_BOOL, offcfg(opaque_when_focused)},
   {"CursorType", OPT_CURSOR, offcfg(cursor_type)},
   {"CursorBlinks", OPT_BOOL, offcfg(cursor_blinks)},
+  {"ConfigThemes", OPT_INT, offcfg(config_themes)},
 
   // Text
   {"Font", OPT_WSTRING, offcfg(font.name)},
@@ -1578,7 +1582,18 @@ void
 load_theme(wstring theme)
 {
   if (*theme) {
-    if (wcschr(theme, L'/') || wcschr(theme, L'\\')) {
+    if (0 == wcsncmp(theme, W("scheme:"), 7)) {
+      // theme setting is being reused for downloaded scheme, load that
+      wstring name = theme + 7;
+      wstring namend = wcschr(name, W(';'));
+      if (namend) {
+        namend++;
+        char * sch = cs__wcstoutf(namend);
+        load_scheme(sch);
+        free(sch);
+      }
+    }
+    else if (wcsispath(theme)) {
       char * thf = path_win_w_to_posix(theme);
       load_config(thf, false);
       free(thf);
@@ -1948,6 +1963,7 @@ apply_config(bool save)
   bool had_theme = !!*cfg.theme_file || !!*cfg.dark_theme;
 
   if (*cfg.colour_scheme) {
+    // accept previously stored colour scheme for compatibility
     load_scheme(cfg.colour_scheme);
     win_reset_colours();
     win_invalidate_all(false);
@@ -2923,7 +2939,7 @@ scheme_return:
 }
 
 static void
-theme_handler(control *ctrl, int event)
+old_theme_handler(control *ctrl, int event)
 {
   wstring * themeref;
   wstring * newthemeref;
@@ -3068,10 +3084,213 @@ theme_handler(control *ctrl, int event)
   }
 }
 
+static void
+theme_handler(control *ctrl, int event)
+{
+  if (!cfg.config_themes) {
+    old_theme_handler(ctrl, event);
+    return;
+  }
+
+  wstring * newtheme_ref;
+  control * theme_widget;
+  wstring NONE;
+#ifndef save_dark_theme
+  newtheme_ref = 0;
+  theme_widget = 0;
+  NONE = 0;
+#endif
+  if (ctrl->context == &new_cfg.theme_file) {
+    newtheme_ref = &new_cfg.theme_file;
+    theme_widget = theme;
+    //__ terminal theme / colour scheme
+    NONE = _W("◇ None ◇");  // ♢◇
+  }
+#ifdef save_dark_theme
+#warning need to determine whether to handle normal or dark theme
+  else {
+    newtheme_ref = &new_cfg.dark_theme;
+    theme_widget = dheme;
+    //__ terminal theme / colour scheme used in dark mode
+    NONE = _W("◇ Same ◇");  // ♢◇
+  }
+#endif
+
+  const wstring CFG_NONE = W("");
+  //__ indicator of unsaved downloaded colour scheme
+  const wstring DOWNLOADED = _W("downloaded / give me a name!");
+  // downloaded theme indicator must contain a slash
+  // to steer enabled state of Store button properly
+  const wstring CFG_DOWNLOADED = W("@/@");
+  wstring theme_name = *newtheme_ref;
+  bool do_apply = false;
+
+  if (event == EVENT_REFRESH) {
+    dlg_listbox_clear(ctrl);
+    dlg_listbox_add_w(ctrl, NONE);
+    add_file_resources(ctrl, W("themes/*"), false);
+#ifdef attempt_to_keep_scheme_hidden
+    if (*new_cfg.colour_scheme)
+      // don't do this, rather keep previously entered name to store scheme
+      // scheme string will not be entered here anyway
+      dlg_editbox_set_w(ctrl, W(""));
+    else
+#endif
+    dlg_editbox_set_w(ctrl, !wcscmp(theme_name, CFG_DOWNLOADED) ? DOWNLOADED : *theme_name ? theme_name : NONE);
+  }
+  else if (event == EVENT_SELCHANGE) {  // pull-down selection
+    if (dlg_listbox_getcur(ctrl) == 0)
+      wstrset(&theme_name, CFG_NONE);
+    else
+      dlg_editbox_get_w(ctrl, &theme_name);
+
+    *newtheme_ref = theme_name;
+    // clear pending colour scheme
+    strset(&new_cfg.colour_scheme, "");
+    do_apply = true;  // also if same theme was selected again, so what
+  }
+  else if (event == EVENT_VALCHANGE) {  // pasted or typed-in
+    // do not change the config value on editing the dialog box
+    // so a theme name for the scheme to be saved can be typed in 
+    // without destroying the scheme information (see scheme_saver)
+  }
+  else if (event == EVENT_DROP) {
+#ifdef debug_scheme
+    printf("EVENT_DROP <%ls>\n", dragndrop);
+#endif
+    if (wcsncmp(W("data:text/plain,"), dragndrop, 16) == 0) {
+      // indicate availability of downloaded scheme to be stored
+      dlg_editbox_set_w(ctrl, DOWNLOADED);
+      wstrset(newtheme_ref, CFG_DOWNLOADED);
+      // un-URL-escape scheme description
+      char * scheme = cs__wcstoutf(&dragndrop[16]);
+      char * url = scheme;
+      char * sch = scheme;
+      while (*url) {
+        int c;
+        if (sscanf(url, "%%%02X", &c) == 1) {
+          url += 3;
+        }
+        else
+          c = *url++;
+        if (c == '\n')
+          *sch++ = ';';
+        else if (c != '\r')
+          *sch++ = c;
+      }
+      *sch = '\0';
+      char * schemestring = asform("scheme:;%s", sch);
+      wchar * wscheme = cs__utftowcs(schemestring);
+      wstrset(newtheme_ref, wscheme);
+      free(wscheme);
+      free(schemestring);
+      free(scheme);
+    }
+    else if (wcsncmp(W("http:"), dragndrop, 5) == 0
+          || wcsncmp(W("https:"), dragndrop, 6) == 0
+          || wcsncmp(W("ftp:"), dragndrop, 4) == 0
+          || wcsncmp(W("ftps:"), dragndrop, 5) == 0
+          || wcsncmp(W("file:"), dragndrop, 5) == 0
+#if CYGWIN_VERSION_API_MINOR >= 74
+          || (dragndrop[1] == ':' &&
+              (wcsstr(dragndrop, W(".itermcolors")) ||
+               wcsstr(dragndrop, W(".json")) ||
+               wcsstr(dragndrop, W(".minttyrc"))
+              )
+             )
+#endif
+            )
+    {
+      char * url = cs__wcstoutf(dragndrop);
+      char * sch = download_scheme(url);
+      //printf("scheme %s\n", sch);
+      if (sch) {
+        char * urp = strchr(url, '?');
+        if (urp)
+          *urp = 0;
+        // find URL basename
+        urp = strrchr(url, '/');
+        // or file basename
+        if (!urp)
+          urp = strrchr(url, '\\');
+        if (urp) {
+          // strip suffix
+          char * suf = strrchr(urp, '.');
+          if (suf)
+            *suf = 0;
+          // set theme value to scheme:NAME;SCHEME
+          urp++;
+          char * scheme = asform("scheme:%s;%s", urp, sch);
+          dlg_editbox_set(ctrl, scheme);
+          wchar * wscheme = cs__utftowcs(scheme);
+          wstrset(newtheme_ref, wscheme);
+          free(wscheme);
+          free(scheme);
+
+          //enable_widget(store_button, true);
+          do_apply = true;
+        }
+        free(sch);
+      }
+      else {
+        win_bell(&new_cfg);  // Could not load web theme
+        win_show_warning(_("Could not load web theme"));
+      }
+      free(url);
+    }
+    else {
+      dlg_editbox_set_w(ctrl, dragndrop);
+      wstrset(newtheme_ref, dragndrop);
+      //enable_widget(store_button, false);
+    }
+  }
+
+  // determine enabling of Save button
+  // see scheme_saver for the approach
+  wstring theme_spec = *newtheme_ref;
+  wstring theme_boxval = newn(wchar, 1);
+  dlg_editbox_get_w(theme_widget, &theme_boxval);
+  //printf("box %ls spec %ls\n", theme_boxval, theme_spec);
+  wchar * scheme_name = 0;
+  char * scheme = 0;
+  if (0 == wcsncmp(theme_boxval, W("scheme:"), 7)) {
+    wstring name = theme_spec + 7;
+    wstring namend = wcschr(name, W(';'));
+    int namlen = namend - name;
+    if (namend && namlen) {
+      scheme_name = newn(wchar, namlen + 1);
+      *scheme_name = 0;
+      wcsncat(scheme_name, name, namlen);
+      scheme = cs__wcstoutf(namend + 1);
+    }
+  }
+  else if (!wcsispath(theme_boxval) && 0 == wcsncmp(theme_spec, W("scheme:"), 7)) {
+    scheme_name = wcsdup(theme_boxval);
+    wstring namend = wcschr(theme_spec, W(';'));
+    if (namend)
+      scheme = cs__wcstoutf(namend + 1);
+  }
+  //printf("name %ls scheme %s\n", scheme_name ?: W("(null)"), scheme ?: "(null)");
+  enable_widget(store_button, scheme_name && scheme);
+  delete(theme_boxval);
+  if (scheme_name)
+    free(scheme_name);
+  if (scheme)
+    free(scheme);
+
+  // apply changed theme immediately
+  if (do_apply) {
+#ifdef debug_theme
+    printf("theme_handler: apply\n");
+#endif
+    apply_config(false);
+  }
+}
+
 #define dont_debug_dragndrop
 
 static void
-scheme_saver(control *ctrl, int event)
+old_scheme_saver(control *ctrl, int event)
 {
   wstring theme_name = new_cfg.theme_file;
   if (event == EVENT_REFRESH) {
@@ -3114,6 +3333,111 @@ scheme_saver(control *ctrl, int event)
         }
       }
   }
+}
+
+static void
+scheme_saver(control *ctrl, int event)
+{
+  if (!cfg.config_themes) {
+    old_scheme_saver(ctrl, event);
+    return;
+  }
+
+#ifdef save_dark_theme
+#warning need to determine whether to save normal/dark theme or both
+  wstring * newtheme_ref = &new_cfg.dark_theme;
+  control * theme_widget = dheme;
+#else
+  wstring * newtheme_ref = &new_cfg.theme_file;
+  control * theme_widget = theme;
+#endif
+
+  wstring theme_spec = *newtheme_ref;
+  wstring theme_boxval = newn(wchar, 1);
+  dlg_editbox_get_w(theme_widget, &theme_boxval);
+  // the new theme name for a downloaded scheme is either of
+  // - a non-empty NAME part of "scheme:NAME;SCHEME" in the box
+  // - a non-filename name in the box if the config spec has a "scheme:..."
+  // the downloaded scheme is
+  // - the SCHEME part of "scheme:NAME;SCHEME" in the config spec
+  // (maybe the same in the box, or not if replaced by a new name)
+  wchar * scheme_name = 0;
+  char * scheme = 0;
+  if (0 == wcsncmp(theme_boxval, W("scheme:"), 7)) {
+    wstring name = theme_spec + 7;
+    wstring namend = wcschr(name, W(';'));
+    int namlen = namend - name;
+    if (namend && namlen) {
+      scheme_name = newn(wchar, namlen + 1);
+      *scheme_name = 0;
+      wcsncat(scheme_name, name, namlen);
+      scheme = cs__wcstoutf(namend + 1);
+    }
+  }
+  else if (!wcsispath(theme_boxval) && 0 == wcsncmp(theme_spec, W("scheme:"), 7)) {
+    scheme_name = wcsdup(theme_boxval);
+    wstring namend = wcschr(theme_spec, W(';'));
+    if (namend)
+      scheme = cs__wcstoutf(namend + 1);
+  }
+
+  if (event == EVENT_REFRESH) {
+    enable_widget(ctrl, scheme_name && scheme);
+  }
+  else if (event == EVENT_ACTION) {
+#ifdef debug_dragndrop
+    printf("%ls <- <%s>\n", new_cfg.theme_file, new_cfg.colour_scheme);
+#endif
+    // the loaded scheme is stored in the config value
+    // but the dialog box may have been typed over, 
+    // without changing the config value (see theme_handler, EVENT_VALCHANGE),
+    // in order to provide a name for the theme to be saved;
+    // so we took (above) the name from the dialog box and the scheme 
+    // from either the unchanged dialog box or the config value
+    //printf("name <%ls> scheme <%s>\n", scheme_name, scheme);
+    if (scheme_name && scheme) {
+      char * sn = get_resource_file(W("themes"), scheme_name, true);
+      //printf("save <%ls> to %s\n", scheme_name, sn);
+      if (sn) {
+        // save colour_scheme to theme_file
+        FILE * thf = fopen(sn, "w");
+        free(sn);
+        if (thf) {
+          char * sch = scheme;
+          for (int i = 0; sch[i]; i++) {
+            if (sch[i] == ';')
+              sch[i] = '\n';
+          }
+          fprintf(thf, "%s", sch);
+          fclose(thf);
+
+          wstrset(newtheme_ref, scheme_name);
+          // update display of the theme widget
+          theme_handler(theme_widget, EVENT_REFRESH);
+          strset(&new_cfg.colour_scheme, "");
+          enable_widget(store_button, false);
+        }
+        else {
+          win_bell(&new_cfg);  // Cannot write theme file
+          win_show_warning(_("Cannot write theme file"));
+        }
+      }
+      else {
+        win_bell(&new_cfg);  // Cannot store theme file
+        win_show_warning(_("Cannot store theme file"));
+      }
+    }
+    else {
+      win_bell(&new_cfg);  // No theme name or scheme found
+      win_show_warning(_("Cannot store theme file"));
+    }
+  }
+
+  delete(theme_boxval);
+  if (scheme_name)
+    free(scheme_name);
+  if (scheme)
+    free(scheme);
 }
 
 static void

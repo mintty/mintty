@@ -1422,14 +1422,26 @@ Also X11 color names are supported.
 The popup menu offers theme files as stored in a resource subdirectory 
 \fIthemes\fP for selection as a colour scheme.
 The option can also be set to a filename (like D:/.../solarized\-light.minttyrc).
-./ul
 
-The field can also be used as a drag-and-drop target for colour schemes 
-downloaded from the Color Scheme Configurator, or for theme files from the web.
+The field can also be used as a drag-and-drop target for downloaded 
+colour schemes of types .itermcolors, .json, or .minttyrc as for example 
+provided by the Color Scheme Designer. From some sources, the download 
+link can also be dragged onto the field directly, without downloading first.
 See the Tips wiki page 
 .br
 \fIhttps://github.com/mintty/mintty/wiki/Tips#using\-colour\-schemes\-themes\fP 
 about this mechanism.
+
+Note: When dragging a scheme file onto the field, its value is temporarily 
+used to store the scheme contents, and name if available, as "scheme:..." 
+data, also persisting in the config file. The intention is, however, 
+to Save the scheme with a new name, which can be taken from the download info 
+if available, or typed into the field, then \fBSave\fP.
+(The setting \fBColourScheme\fP previously used for this purpose is deprecated.)
+.br
+Storing the colour scheme creates a file in a config directory, subdirectory 
+\fIthemes\fP. This fails if a theme file of that name already exists, 
+or if no name is available in the setting and none was typed in.
 
 Note: Mintty also provides the command-line script \fBmintheme\fP which can 
 display the themes available in the mintty configuration directories or 
@@ -1437,7 +1449,27 @@ activate one of them in the current mintty window.
 
 .en
 \fBDarkmode Theme\fP (ThemeDark=): 
-If this setting is not empty, it is used when the system is configured for darkmode. 
+If this setting is not empty, it is used when the system is configured for darkmode.
+
+.en
+\fBColour Schemes/Themes configuration\fP (ConfigThemes=1): 
+This setting selects how downloaded colour schemes are handled and 
+how both regular and darkmode themes are configured in the Options menu.
+.ul
+.en
+\fB0\fP reverts to the old method (involving the auxiliary setting 
+\fBColourScheme\fP which is now deprecated)
+.en
+\fB1\fP enables configuration of both regular and darkmode themes, 
+using the same dialog box, switchable by a checkbox
+.en
+\fB2\fP enables configuration of both regular and darkmode themes with 
+two distinct dialog boxes.
+./ul
+Note that actual interactive configuration of a distinct darkmode theme 
+in the Options dialog is not yet implemented, use config file option 
+ThemeDark to this aim.
+./ul
 
 .TQ
 \fBTransparency\fP (Transparency=off)
@@ -3864,9 +3896,9 @@ valid values are 0, 1 (CR) and 2 (CR ^C).
 (Corresponds to the xterm resource \fBginTerminator\fP.)
 
 .TQ
-\fBDownloaded colour scheme\fP (ColourScheme=)
+\fBDownloaded colour scheme\fP (ColourScheme=) [DEPRECATED]
 This setting is not intended for manual configuration. It can store a 
-colour scheme as downloaded from the Color Scheme Configurator or from a 
+colour scheme as downloaded from the Color Scheme Designer or from a 
 theme file on the web via drag-and-drop to the Theme of the Options menu.
 After the colour scheme is stored to a colour scheme file, this setting 
 is not used anymore.
@@ -4039,7 +4071,7 @@ This unsigned integer byte count limits the size of graphics data
 
 .TQ
 \fBSixel image clipboard substitution\fP (SixelClipChars=\fIspace\fP)
-Characters to copy to clipboard as a substitute for Sixel image graphics,
+Characters to copy to clipboard as a substitute for image graphics,
 to indicate their positions. With an empty value, U+FFFC will be used.
 Double-width characters should not be used here.
 
