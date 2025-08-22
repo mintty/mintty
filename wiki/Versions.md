@@ -1,6 +1,6 @@
 ## Mintty versions and dependencies ##
 
-#### Mintty release `3.7.9`
+#### Mintty release `3.8.0`
 
 For tested compatibility with various Windows versions, see the 
 [Compatibility table](http://mintty.github.io/#compatibility) on the 

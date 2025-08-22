@@ -1,3 +1,5 @@
+### 3.8.0 (22 August 2025) ###
+
 Terminal features
   * OSC 7 accepts an explicit localhost path //$HOSTNAME/path (#1330).
 
@@ -13,12 +15,13 @@ Desktop integration
   * Session launcher: support icons for cmd and powershell.
 
 Window handling
-  * Avoid tab colour to stick to "moving" indication.
+  * Avoid tab colour to stick to "moving" indication (~#1293).
 
 Configuration
   * Fix reporting if config file to save to is actually read-only (#1331).
   * Revised handling of downloaded colour schemes and storing themes (~#1303).
   * New option ConfigThemes.
+  * New config file template, deploy with cygwin package.
 
 ### 3.7.9 (10 August 2025) ###
 
