@@ -4060,6 +4060,15 @@ win_init_cursors()
  */
 
 void
+show_config_log(void)
+{
+  //__ Config log: message box heading
+  message_box_w(wnd, config_log, _W("Config log"),
+                MB_ICONINFORMATION, null
+               );
+}
+
+void
 show_message(char * msg, UINT type)
 {
   FILE * out = (type & (MB_ICONWARNING | MB_ICONSTOP)) ? stderr : stdout;

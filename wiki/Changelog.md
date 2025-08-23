@@ -1,3 +1,6 @@
+Configuration
+  * User-definable function config-log to show all effective log files (mintty/wsltty#333).
+
 ### 3.8.0 (22 August 2025) ###
 
 Terminal features

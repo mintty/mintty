@@ -3643,6 +3643,9 @@ Supported actions are described as follows:
 \fBhor\-narrow\-mult\fP: horizontal view right narrower by some columns
 .en
 \fBhor\-wide\-mult\fP: horizontal view right wider by some columns
+
+.en
+\fBconfig\-log\fP: display effective config files in a message box
 ./ul
 
 \fINote (*):\fP The exact behaviour of some actions depends on the 
@@ -4271,6 +4274,19 @@ designations; respective notes and warnings apply.
 Note that the setting string must not be terminated with a Windows lineend, 
 as its CR would be considered part of the last item; this can be prevented 
 with a final semicolon separator.
+
+Example:
+.ul
+.en
+.ex
+CtxMenuFunctions=Reverse Video:toggle\-reverse\-video;\\
+.br
+	Status line:toggle\-status\-line;\\
+.br
+	New Window here:new\-window\-cwd;\\
+.br
+	Show config files:config\-log;
+./ul
 
 .TQ
 \fBSystem menu user commands\fP (SysMenuFunctions=)

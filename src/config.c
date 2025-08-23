@@ -34,6 +34,8 @@ string config_dir = 0;
 static wstring rc_filename = 0;
 static char linebuf[444];
 
+wchar * config_log = 0;
+
 
 // all entries need initialisation in options[] or crash...
 const config default_cfg = {
@@ -1637,6 +1639,19 @@ load_scheme(string cs)
   free(scheme);
 }
 
+static void
+log_config(wstring msg, wstring fn)
+{
+  if (!config_log)
+    //__ Config log: list heading
+    config_log = wcsdup(_W("Config files handled:"));
+  config_log = renewn(config_log, wcslen(config_log) + 5 + wcslen(msg) + wcslen(fn));
+  wcscat(config_log, W("\n• "));
+  wcscat(config_log, msg);
+  wcscat(config_log, W(" "));
+  wcscat(config_log, fn);
+}
+
 // to_save:
 // 0 read config from filename
 // 1 use filename for saving if file exists and is writable
@@ -1663,8 +1678,14 @@ load_config(string filename, int to_save)
 
   FILE * file = fopen(filename, "r");
   //printf("load_config <%s> ok %d save %d\n", filename, !!file, to_save);
-  if (report_config && file)
-    printf("loading config <%s>\n", filename);
+  if (file) {
+    if (report_config)
+      printf("loading config <%s>\n", filename);
+    wchar * wfn = path_posix_to_win_w(filename);
+    //__ Config log: message for loaded file
+    log_config(_W("Config file loaded:"), wfn);
+    free(wfn);
+  }
 
   if (to_save) {
     if (file || (!rc_filename && to_save == 2) || to_save == 3) {
@@ -1675,12 +1696,16 @@ load_config(string filename, int to_save)
         to_save = false;
         if (report_config)
           printf("should save to config <%ls> but read-only\n", rc_filename);
+        //__ Config log: message for file to save to, if read-only
+        log_config(_W("Should save to config file but read-only:"), rc_filename);
       }
       else {
         clear_opts();
 
         if (report_config)
           printf("save to config <%ls>\n", rc_filename);
+        //__ Config log: message for file to save to
+        log_config(_W("Save to config file:"), rc_filename);
       }
     }
   }

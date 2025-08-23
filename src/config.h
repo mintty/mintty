@@ -298,5 +298,6 @@ extern void apply_config(bool save);
 extern char * save_filename(char * suf);
 // In a configuration parameter list, map tag to value
 extern char * matchconf(char * conf, char * item);
+extern wchar * config_log;
 
 #endif

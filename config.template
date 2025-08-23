@@ -55,6 +55,7 @@
 	Opaque override:toggle-opaque;\
 	Send Intr:intr;\
 	New Window here:new-window-cwd;\
+	Show config files:config-log;\
 	Suspend screen saver:win-toggle-keep-screen-on;
 
 # add session launchers to the extended context menu

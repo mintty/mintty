@@ -1907,6 +1907,8 @@ static struct function_def cmd_defs[] = {
   {"switch-visible-prev", {.fct = switch_visible_PREV}, 0},
   {"switch-visible-next", {.fct = switch_visible_NEXT}, 0},
 
+  {"config-log", {.fct = show_config_log}, 0},
+
   {"void", {.fct = nop}, 0}
 };
 
