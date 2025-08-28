@@ -1,3 +1,6 @@
+WSL support
+  * Workaround for display corruption in wsl/conpty/cygwin chain after entering ^O (#1332).
+
 Configuration
   * User-definable function config-log to show all effective log files (mintty/wsltty#333).
 

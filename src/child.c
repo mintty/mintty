@@ -674,13 +674,26 @@ child_proc(void)
 #endif
         do {
           int ret = read(pty_fd, buf + len, sizeof buf - len);
+          //printf("%d+%d ", len, ret);
           trace_line("read", ret, buf + len, ret);
           //if (kb_trace) printf("[%lu] read %d\n", mtime(), ret);
+
           if (ret > 0)
             len += ret;
           else
             break;
-        } while (len < sizeof buf);
+
+          // The read loop buffer filling was once introduced to speed up
+          // but its implied usage of pty interferes with the WSL gateway
+          // wsl.exe and its conpty layer in some inexplicable way (#1332).
+          // (This did not happen before cygwin 3.3.5.)
+          // It is particularly completely obscure how the corrupted 
+          // display described there is triggered by entering ^O.
+          // So we disable the loop. It is apparently not needed anymore.
+          // (It could be disabled only while wsl.exe is running which
+          // could be detected by catching the DECSET 9001 sequence.)
+        } while (0 && len < sizeof buf);
+        //printf("read %d\n", len);
 
         if (len > 0) {
           term_write(buf, len);
