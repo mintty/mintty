@@ -5689,6 +5689,8 @@ report_pos(void)
 void
 exit_mintty(void)
 {
+  child_close_log();
+
   report_pos();
 
   // bring next window to top

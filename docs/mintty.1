@@ -2887,6 +2887,12 @@ If a log file name is specified with \fBLog=...\fP and \fBLogging=no\fP
 logging can be enabled (and toggled) from the extended context menu.
 
 .TQ
+\fBLog filter\fP (LogFilter=1)
+Setting 1 filters all control sequences out from logging that would 
+request or enable terminal reports, so output of log files can be tested 
+without causing terminal response.
+
+.TQ
 \fBFilenames for screen saving\fP (SaveFilename=mintty.%Y\-%m\-%d_%H\-%M\-%S)
 This setting selects the location and filename pattern (which is expanded 
 with the strftime(3) function) for .html and .png screen dumps.

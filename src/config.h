@@ -195,6 +195,7 @@ typedef struct {
   wstring icon;
   wstring log;
   bool logging;
+  int log_filter;
   wstring title;
   bool create_utmp;
   char window;

@@ -3,6 +3,7 @@ WSL support
 
 Configuration
   * User-definable function config-log to show all effective log files (mintty/wsltty#333).
+  * New option LogFilter to avoid terminal reports on viewing log files.
 
 ### 3.8.0 (22 August 2025) ###
 
