@@ -1,3 +1,6 @@
+Terminal features
+  * Support DECSCS to select virtual communication speed or reset to option Baud.
+
 WSL support
   * Workaround for display corruption in wsl/conpty/cygwin chain after entering ^O (#1332).
 

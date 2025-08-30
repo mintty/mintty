@@ -782,8 +782,8 @@ child_proc(void)
         static char buf[4096];
         uint len = 0;
 #if CYGWIN_VERSION_API_MINOR >= 74
-        if (cfg.baud > 0) {
-          uint cps = cfg.baud / 10; // 1 start bit, 8 data bits, 1 stop bit
+        if (term.baud > 0) {
+          uint cps = term.baud / 10; // 1 start bit, 8 data bits, 1 stop bit
           uint nspc = 2000000000 / cps;
 
           static ulong prevtime = 0;
@@ -796,7 +796,7 @@ child_proc(void)
           }
           clock_gettime(CLOCK_MONOTONIC, &tim);
           ulong now = tim.tv_sec * (long)1000000000 + tim.tv_nsec;
-          //printf("baud %d ns/char %d prev %ld now %ld delta\n", cfg.baud, nspc, prevtime, now);
+          //printf("baud %d ns/char %d prev %ld now %ld delta\n", term.baud, nspc, prevtime, now);
           if (now < prevtime + nspc) {
             ulong delay = prevtime ? prevtime + nspc - now : 0;
             if (delay < exceeded)

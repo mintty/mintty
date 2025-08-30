@@ -619,6 +619,7 @@ struct term {
 
   int detect_progress;
   int progress_scan;
+  int baud;
 
   enum {
     NORMAL, ESCAPE, CSI_ARGS,
