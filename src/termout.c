@@ -5184,6 +5184,8 @@ term_do_write(const char *buf, uint len, bool fix_status)
       }
     }
 
+#define accept_multi_ESC_ST true
+
     switch (term.state) {
       when NORMAL: {
         wchar wc;
@@ -5634,6 +5636,10 @@ term_do_write(const char *buf, uint len, bool fix_status)
       when ESCAPE or CMD_ESCAPE:
         if (term.vt52_mode)
           do_vt52(c);
+        else if (c == '\e' && accept_multi_ESC_ST) {
+          if (term.state == ESCAPE)
+            do_ctrl(c);
+        }
         else if (c < 0x20)
           do_ctrl(c);
         else if (c < 0x30) {
@@ -5910,7 +5916,9 @@ term_do_write(const char *buf, uint len, bool fix_status)
         }
 
       when DCS_ESCAPE:
-        if (c < 0x20) {
+        if (c == '\e' && accept_multi_ESC_ST) {
+        }
+        else if (c < 0x20) {
           do_ctrl(c);
           term.state = NORMAL;
         } else if (c < 0x30) {

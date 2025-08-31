@@ -1,5 +1,6 @@
 Terminal features
   * Support DECSCS to select virtual communication speed or reset to option Baud.
+  * ST control terminator accepts multiple ESC (xterm).
 
 WSL support
   * Workaround for display corruption in wsl/conpty/cygwin chain after entering ^O (#1332).
