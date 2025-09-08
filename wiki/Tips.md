@@ -1319,8 +1319,9 @@ Emoji data can be found at the following sources:
   * Deploy $APPDATA/Zoom/data/Emojis/*.png into `zoom`
 
 Emoji flags graphics (extending Unicode) can be found at the following sources:
-* [Google region flags](https://github.com/google/region-flags.git)
-* [Puellanivis’ emoji flags](https://github.com/puellanivis/emoji.git)
+* [Noto region flags](https://github.com/googlefonts/noto-emoji/tree/main/third_party/region-flags)
+* [Google region flags](https://github.com/google/region-flags.git) (outdated)
+* [Puellanivis’ emoji flags](https://github.com/puellanivis/emoji.git) (waved forms, including regions and cities)
 
   * Use the script [`getflags`](getflags) to download the repositories 
   and extract emoji data (call it without parameters for instructions).
@@ -1330,6 +1331,7 @@ To limit the download size and download the desired subtree only,
 either use subversion, for example:
   * `svn export https://github.com/googlefonts/noto-emoji/trunk/png/128 noto`
   * `svn export https://github.com/iamcal/emoji-data/trunk/img-apple-160 apple`
+
 or a more complex command combination of git, for example:
   * `git clone --depth 1 -n --filter=blob:none https://github.com/googlefonts/noto-emoji`
   * `cd noto-emoji`
