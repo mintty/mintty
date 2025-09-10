@@ -1,4 +1,5 @@
 Terminal features
+  * Fix emoji selection highlighted background.
   * Support DECSCS to select virtual communication speed or reset to option Baud.
   * ST control terminator accepts multiple ESC (xterm).
 
