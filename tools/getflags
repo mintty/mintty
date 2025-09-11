@@ -5,16 +5,42 @@
 
 download () {
 
-# download Google region flags
-if type svn
-then	svn export https://github.com/google/region-flags/trunk/png google-region-flags
-else	git clone --depth 1 https://github.com/google/region-flags.git google-region-flags &&
-	ln google-region-flags/png/*.png google-region-flags/
+# download noto third-party region flags
+if [ -d noto-emoji-flags ]
+then	if [ -d noto-emoji-flags/.git ]
+	then	(cd noto-emoji-flags; git pull)
+	else	echo WARNING: directory noto-emoji-flags already exists but no git config - Exit
+		exit 9
+	fi
+elif [ -d noto-emoji/.git ]
+then	(cd noto-emoji; git pull)
+	mv noto-emoji noto-emoji-flags
+else
+	notogit=https://github.com/googlefonts/noto-emoji
+	git clone --depth 1 -n --filter=blob:none $notogit noto-emoji-flags
+	(cd noto-emoji-flags
+	 git sparse-checkout set --no-cone third_party/region-flags/png
+	 git checkout
+	)
 fi
+(cd noto-emoji-flags; rm -f *.png; ln third_party/region-flags/png/*.png ./)
+
+# drop download of old Google region flags
+#git clone --depth 1 https://github.com/google/region-flags.git google-region-flags &&
+#ln google-region-flags/png/*.png google-region-flags/
 
 # download Puellanivis’ flag emojis
-git clone --depth 1 https://github.com/puellanivis/emoji.git puellanivis-flags &&
-(cd puellanivis-flags/flags; ln *.png */*.png ..)
+if [ -d puellanivis-flags ]
+then	if [ -d puellanivis-flags/.git ]
+	then	(cd puellanivis-flags; git pull)
+	else	echo WARNING: directory puellanivis-flags already exists but no git config - Exit
+		exit 9
+	fi
+else
+	puelgit=https://github.com/puellanivis/emoji.git
+	git clone --depth 1 $puelgit puellanivis-flags
+fi
+(cd puellanivis-flags; rm -f *.png; ln flags/*.png flags/*/*.png ./)
 
 }
 
