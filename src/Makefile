@@ -312,7 +312,7 @@ unibasever = `sed -e '/^\# Blocks-/ s,[^0-9]*\([0-9]*\)\..*,\1.0,' -e t -e d Blo
 # Emoji version may advance Unicode version
 #emojiver = $(unibasever)
 # extract Emoji version from emoji-data.txt
-emojiver = `sed -e 's,^\#.*Emoji Version \([0-9][0-9.]*\).*,\1,' -e t -e d emoji-data.txt`
+emojiver = `sed -e 's,^\#.*Version:* \([0-9][0-9.]*\).*,\1,' -e t -e d emoji-data.txt`
 # override Emoji version if not in sync
 ##emojiver = 15.0
 
@@ -321,11 +321,17 @@ emojiver = `sed -e 's,^\#.*Emoji Version \([0-9][0-9.]*\).*,\1,' -e t -e d emoji
 #	$(WGET) http://www.unicode.org/Public/emoji/$(unibasever)/$@
 # from 13.0:
 emoji-sequences.txt:	Blocks.txt
-	$(WGET) http://www.unicode.org/Public/emoji/$(emojiver)/$@
+	#$(WGET) http://www.unicode.org/Public/emoji/$(emojiver)/$@
+	#$(WGET) http://www.unicode.org/Public/emoji/latest/$@
+	$(WGET) http://www.unicode.org/Public/$(univer)/emoji/$@
 emoji-zwj-sequences.txt:	Blocks.txt
-	$(WGET) http://www.unicode.org/Public/emoji/$(emojiver)/$@
+	#$(WGET) http://www.unicode.org/Public/emoji/$(emojiver)/$@
+	#$(WGET) http://www.unicode.org/Public/emoji/latest/$@
+	$(WGET) http://www.unicode.org/Public/$(univer)/emoji/$@
 emoji-test.txt:	Blocks.txt
-	$(WGET) http://www.unicode.org/Public/emoji/$(emojiver)/$@
+	#$(WGET) http://www.unicode.org/Public/emoji/$(emojiver)/$@
+	#$(WGET) http://www.unicode.org/Public/emoji/latest/$@
+	$(WGET) http://www.unicode.org/Public/$(univer)/emoji/$@
 emoji-data.txt:	Blocks.txt
 	$(WGET) http://www.unicode.org/Public/$(univer)/ucd/emoji/$@
 emoji-variation-sequences.txt:	Blocks.txt
