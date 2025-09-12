@@ -1,5 +1,6 @@
 Unicode and Emoji data
   * Unicode 17.0 update.
+  * Enable emoji support by default.
 
 Terminal features
   * Fix emoji selection highlighted background.
@@ -12,6 +13,7 @@ WSL support
 Configuration
   * User-definable function config-log to show all effective log files (mintty/wsltty#333).
   * New option LogFilter to avoid terminal reports on viewing log files.
+  * Change emoji default style from none to Emojis=noto.
 
 ### 3.8.0 (22 August 2025) ###
 
