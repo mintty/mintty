@@ -1,9 +1,11 @@
-#! /bin/sh
+#! /bin/dash
+
+# this script is 20% faster with dash than with bash
 
 #############################################################################
 # download function
 
-download () {
+download_noto () {
 
 # download noto third-party region flags
 if [ -d noto-emoji-flags ]
@@ -12,9 +14,6 @@ then	if [ -d noto-emoji-flags/.git ]
 	else	echo WARNING: directory noto-emoji-flags already exists but no git config - Exit
 		exit 9
 	fi
-elif [ -d noto-emoji/.git ]
-then	(cd noto-emoji; git pull)
-	mv noto-emoji noto-emoji-flags
 else
 	notogit=https://github.com/googlefonts/noto-emoji
 	git clone --depth 1 -n --filter=blob:none $notogit noto-emoji-flags
@@ -25,9 +24,9 @@ else
 fi
 (cd noto-emoji-flags; rm -f *.png; ln third_party/region-flags/png/*.png ./)
 
-# drop download of old Google region flags
-#git clone --depth 1 https://github.com/google/region-flags.git google-region-flags &&
-#ln google-region-flags/png/*.png google-region-flags/
+}
+
+download_other () {
 
 # download Puellanivis’ flag emojis
 if [ -d puellanivis-flags ]
@@ -42,6 +41,16 @@ else
 fi
 (cd puellanivis-flags; rm -f *.png; ln flags/*.png flags/*/*.png ./)
 
+}
+
+download () {
+	download_noto
+
+	# drop download of old Google region flags
+	#git clone --depth 1 https://github.com/google/region-flags.git google-region-flags &&
+	#ln google-region-flags/png/*.png google-region-flags/
+
+	download_other
 }
 
 #############################################################################
@@ -96,7 +105,12 @@ extract () {
 		fi
 
 		echo "$f -> common/$n"
-		ln "$f" "common/$n"
+		if [ -L "$f" ]
+		then	# linking a symbolic link while renaming the target 
+			# would yield a dangling link, so copy it
+			cp "$f" "common/$n"
+		else	ln "$f" "common/$n"
+		fi
 	done
 }
 
@@ -111,8 +125,10 @@ case "$1" in
 	echo >&2
 	echo "Options:" >&2
 	echo "	-d	Download flags emojis repositories" >&2
+	echo "	-n	Download only Noto flags" >&2
 	echo "	-e	Extract emoji files with proper filenames into common/" >&2
 	echo "	-de	-d and -e" >&2
+	echo "	-ne	-n and -e" >&2
 	echo >&2
 	if [ `uname` = "Linux" ] && type wslpath 2> /dev/null 1>&2
 	then	echo "Note: for direct deployment from WSL, first go into the common config directory:" >&2
@@ -125,6 +141,13 @@ case "$1" in
 		echo '  /usr/share/mintty' >&2
 	fi
 	exit;;
+-n|--download-noto)
+	download_noto
+	;;
+-ne|--noto)
+	download_noto
+	extract
+	;;
 -d|--download)
 	download
 	;;
@@ -137,3 +160,5 @@ case "$1" in
 	;;
 esac
 
+#############################################################################
+# end

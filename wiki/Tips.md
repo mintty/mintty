@@ -1303,12 +1303,14 @@ Emoji data can be found at the following sources:
   and extract emoji data (call it without parameters for instructions)
   * Deploy the subdirectories `common` and `google`
   * Used to include apple, emojione, facebook, google, twitter, samsung, windows emojis, now only provides google style
+  * Style seems to be unified with Google Noto Emoji font meanwhile
 * [OpenMoji](https://openmoji.org/)
   * Under “Get OpenMojis”, download the “[PNG Color 72×72](https://github.com/hfg-gmuend/openmoji/releases/latest/download/openmoji-72x72-color.zip)” archive (or the very large resolution if preferred)
   * Unpack the archive into `openmoji`
 * [Noto Emoji font](https://github.com/googlefonts/noto-emoji), subdirectory `png/128`
   * “Clone or download” the repository or download a release archive
   * Deploy subdirectory noto-emoji/png/128 as `noto`
+  * Use the script [`getnoto`](getnoto) to deploy noto and flags emojis
 * [JoyPixels](https://www.joypixels.com/) (formerly EmojiOne)
   * Download JoyPixels Free (or Premium)
   * Deploy the preferred subdirectory (e.g. png/unicode/128) as `joypixels`
@@ -1316,7 +1318,7 @@ Emoji data can be found at the following sources:
   of recent and outdated emoji sets of styles apple, facebook, google, twitter.
   Check out yourself.
 * Zoom (with an installed Zoom meeting client)
-  * Deploy $APPDATA/Zoom/data/Emojis/*.png into `zoom`
+  * Deploy $LOCALAPPDATA/Zoom/data/Emojis/*.png into `zoom`
 
 Emoji flags graphics (extending Unicode) can be found at the following sources:
 * [Noto region flags](https://github.com/googlefonts/noto-emoji/tree/main/third_party/region-flags)
@@ -1357,6 +1359,12 @@ Deploying into $APPDATA further has the advantage of a common deployment
 for multiple installations of cygwin, MSYS2, Git-for-Windows, or embedded 
 cygwin-based packages.
 
+In addition to emojis subdirectories of the mintty configuration directories, 
+emojis are also looked up in /usr/share/emojis, so emojis packages can 
+provide much simpler installation.
+Emojis of the Google Noto Emoji font seem to be most popular and well 
+available, therefore mintty 3.8.1 sets emoji style “noto” as default.
+
 ### Quick Guide to emoji installation ###
 
 In the cygwin or MSYS2 mintty packages, the emoji download and deployment 
@@ -1365,6 +1373,7 @@ all-users deployment of the emojis listed at Unicode.org and the flags emojis:
 * `cd /usr/share/mintty/emojis`
 * `./getemojis -d`
 * `./getflags -de`
+* or `./getnoto`
 
 You may also use the scripts for deployment in your preferred config directory.
 
