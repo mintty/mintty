@@ -2569,6 +2569,8 @@ static LONG last_key_time = 0;
     return true;
   }
 
+  win_keyclick();
+
   uchar kbd[256];
   GetKeyboardState(kbd);
   inline bool is_key_down(uchar vk) { return kbd[vk] & 0x80; }

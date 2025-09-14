@@ -35,6 +35,7 @@ static wstring rc_filename = 0;
 static char linebuf[444];
 
 wchar * config_log = 0;
+char * keyclick = 0;
 
 
 // all entries need initialisation in options[] or crash...
@@ -132,6 +133,7 @@ const config default_cfg = {
   .key_menu = "",	// VK_APPS
   .key_scrlock = "",	// VK_SCROLL
   .key_commands = W(""),
+  .keyclick = W(""),
   .manage_leds = 7,
   .enable_remap_ctrls = false,
   .old_keyfuncs_keypad = false,
@@ -463,6 +465,7 @@ options[] = {
   {"Break", OPT_STRING | OPT_LEGACY, offcfg(key_break)},
   {"Pause", OPT_STRING | OPT_LEGACY, offcfg(key_pause)},
   {"KeyFunctions", OPT_WSTRING | OPT_KEEPCR, offcfg(key_commands)},
+  {"KeyClick", OPT_WSTRING, offcfg(keyclick)},
   {"ManageLEDs", OPT_INT, offcfg(manage_leds)},
   {"ShootFoot", OPT_BOOL, offcfg(enable_remap_ctrls)},
   {"OldKeyFunctionsKeypad", OPT_BOOL, offcfg(old_keyfuncs_keypad)},
@@ -1823,6 +1826,40 @@ fix_config(void)
   cfg.scrollback_lines = min(cfg.scrollback_lines, cfg.max_scrollback_lines);
 }
 
+static void
+post_config(void)
+{
+  if (keyclick)
+    free(keyclick);
+  if (*cfg.keyclick) {
+    wchar * click = wcsdup(cfg.keyclick);
+    if (!wcschr(click, '.')) {
+      int len = wcslen(click);
+      click = renewn(click, len + 5);
+      wcscat(click, W(".wav"));
+    }
+    char * cfn = get_resource_file(W("sounds"), click, false);
+    free(click);
+    if (cfn) {
+      FILE * clickf = fopen(cfn, "r");
+      if (clickf) {
+        struct stat cstat;
+        fstat(fileno(clickf), &cstat);
+        keyclick = malloc(cstat.st_size);
+        fread(keyclick, 1, cstat.st_size, clickf);
+        fclose(clickf);
+
+        // despite preloading the wave sound into memory, initial playback 
+        // suffers from a delay, so we play the sound once here to 
+        // preload the actual audio output and not delay initial key click;
+        // it would be nice to be able to mute this...
+        win_keyclick();
+      }
+      free(cfn);
+    }
+  }
+}
+
 void
 finish_config(void)
 {
@@ -1860,6 +1897,8 @@ finish_config(void)
   if (0 < cfg.transparency && cfg.transparency <= 3)
     cfg.transparency *= 16;
   //printf("finish_config bd %d\n", cfg.bold_as_font);
+
+  post_config();
 }
 
 static void
@@ -2010,6 +2049,8 @@ apply_config(bool save)
     win_invalidate_all(false);
   }
   //printf("apply_config %d bd %d\n", save, cfg.bold_as_font);
+
+  post_config();
 }
 
 

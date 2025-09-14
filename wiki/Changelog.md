@@ -7,6 +7,9 @@ Terminal features
   * Support DECSCS to select virtual communication speed or reset to option Baud.
   * ST control terminator accepts multiple ESC (xterm).
 
+Keyboard handling
+  * Optional click feedback for Key press.
+
 WSL support
   * Workaround for display corruption in wsl/conpty/cygwin chain after entering ^O (#1332).
 
@@ -14,6 +17,7 @@ Configuration
   * User-definable function config-log to show all effective log files (mintty/wsltty#333).
   * New option LogFilter to avoid terminal reports on viewing log files.
   * Change emoji default style from none to Emojis=noto.
+  * New option KeyClick.
 
 ### 3.8.0 (22 August 2025) ###
 

@@ -164,6 +164,7 @@ extern void win_csi_seq(char * pre, char * suf);
 extern void win_led(int led, bool set);
 extern bool get_scroll_lock(void);
 extern void sync_scroll_lock(bool locked);
+extern void win_keyclick(void);
 
 extern wchar * dewsl(wchar * wpath);
 extern void shell_exec(wstring wpath);

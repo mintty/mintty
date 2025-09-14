@@ -122,6 +122,7 @@ typedef struct {
   string key_menu;	// VK_APPS
   string key_scrlock;	// VK_SCROLL
   wstring key_commands;
+  wstring keyclick;
   int manage_leds;
   bool enable_remap_ctrls;
   bool old_keyfuncs_keypad;
@@ -300,5 +301,6 @@ extern char * save_filename(char * suf);
 // In a configuration parameter list, map tag to value
 extern char * matchconf(char * conf, char * item);
 extern wchar * config_log;
+extern char * keyclick;
 
 #endif
