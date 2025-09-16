@@ -13,6 +13,9 @@ Keyboard handling
 WSL support
   * Workaround for display corruption in wsl/conpty/cygwin chain after entering ^O (#1332).
 
+Window handling
+  * Revise close button handling for WSL, esp. in Windows 10 (mintty/wsltty#368).
+
 Configuration
   * User-definable function config-log to show all effective log files (mintty/wsltty#333).
   * New option LogFilter to avoid terminal reports on viewing log files.

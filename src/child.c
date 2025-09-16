@@ -45,7 +45,7 @@ string child_dir = null;
 
 bool logging = false;
 static pid_t pid;
-static bool killed;
+static bool killed = false;
 static int win_fd;
 static int pty_fd = -1;
 static int log_fd = -1;
@@ -773,6 +773,12 @@ child_proc(void)
         timeout_p = &timeout;
     }
 
+#ifdef exit_WSL_after_closed_here
+    if (support_wsl && killed)
+      // force-close, as wsl.exe does not response to kill() in Windows 10
+      exit_mintty();
+#endif
+
     if (select(win_fd + 1, &fds, 0, 0, timeout_p) > 0) {
       if (pty_fd >= 0 && FD_ISSET(pty_fd, &fds)) {
         // Pty devices on old Cygwin versions (pre 1005) deliver only 4 bytes
@@ -875,6 +881,14 @@ child_kill(bool point_blank)
       kill(-pid, point_blank ? SIGKILL : SIGHUP) < 0 ||
       point_blank)
     exit_mintty();
+
+  if (support_wsl) {
+    //if (killed) // limit to double-close? - rather not
+
+    // force-close, as wsl.exe does not response to kill() in Windows 10
+    exit_mintty();
+  }
+
   killed = true;
 }
 

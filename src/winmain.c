@@ -3828,89 +3828,104 @@ win_reconfig(void)
 static bool
 confirm_exit(void)
 {
+  wchar * wmsg;
+
+  if (!support_wsl) {
 #ifdef use_ps
-  if (!child_is_parent())
-    return true;
+    if (!child_is_parent())
+      return true;
 
-  /* command to retrieve list of child processes */
-  //procps is ASCII-limited
-  //char * pscmd = "LC_ALL=C.UTF-8 /bin/procps -o pid,ruser=USER -o comm -t %s 2> /dev/null || LC_ALL=C.UTF-8 /bin/ps -ef";
-  //char * pscmd = "LC_ALL=C.UTF-8 /bin/ps -ef";
-  char * pscmd = "LC_ALL=C.UTF-8 /bin/ps -es | /bin/sed -e 's,  *,	&,g' | /bin/cut -f 2,3,5-99 | /bin/tr -d '	'";
-  char * tty = child_tty();
-  if (strrchr(tty, '/'))
-    tty = strrchr(tty, '/') + 1;
-  char cmd[strlen(pscmd) + strlen(tty) + 1];
-  sprintf(cmd, pscmd, tty, tty);
-  FILE * procps = popen(cmd, "r");
+    /* command to retrieve list of child processes */
+    //procps is ASCII-limited
+    //char * pscmd = "LC_ALL=C.UTF-8 /bin/procps -o pid,ruser=USER -o comm -t %s 2> /dev/null || LC_ALL=C.UTF-8 /bin/ps -ef";
+    //char * pscmd = "LC_ALL=C.UTF-8 /bin/ps -ef";
+    char * pscmd = "LC_ALL=C.UTF-8 /bin/ps -es | /bin/sed -e 's,  *,	&,g' | /bin/cut -f 2,3,5-99 | /bin/tr -d '	'";
+    char * tty = child_tty();
+    if (strrchr(tty, '/'))
+      tty = strrchr(tty, '/') + 1;
+    char cmd[strlen(pscmd) + strlen(tty) + 1];
+    sprintf(cmd, pscmd, tty, tty);
+    FILE * procps = popen(cmd, "r");
 
-  int cmdpos = 0;
-  char * msg = newn(char, 1);
-  strcpy(msg, "");
-  if (procps) {
-    int ll = 999;  // use very long input despite narrow msg box
-                   // to avoid high risk of clipping within multi-byte char
-                   // and failing the wide character transformation
-    char line[ll]; // heap-allocated to prevent #530
-    bool first = true;
-    bool filter_tty = false;
-    while (fgets(line, sizeof line, procps)) {
-      line[strcspn(line, "\r\n")] = 0;  /* trim newline */
-      if (first || !filter_tty || strstr(line, tty))  // should check column position too...
-      {
-        if (first) {
-          if (strstr(line, "TTY")) {
-            filter_tty = true;
+    int cmdpos = 0;
+    char * msg = newn(char, 1);
+    strcpy(msg, "");
+    if (procps) {
+      int ll = 999;  // use very long input despite narrow msg box
+                     // to avoid high risk of clipping within multi-byte char
+                     // and failing the wide character transformation
+      char line[ll]; // heap-allocated to prevent #530
+      bool first = true;
+      bool filter_tty = false;
+      while (fgets(line, sizeof line, procps)) {
+        line[strcspn(line, "\r\n")] = 0;  /* trim newline */
+        if (first || !filter_tty || strstr(line, tty))  // should check column position too...
+        {
+          if (first) {
+            if (strstr(line, "TTY")) {
+              filter_tty = true;
+            }
+            char * cmd = strstr(line, " COMMAND");
+            if (!cmd)
+              cmd = strstr(line, " CMD");
+            if (cmd)
+              cmdpos = cmd + 1 - line;
+            first = false;
           }
-          char * cmd = strstr(line, " COMMAND");
-          if (!cmd)
-            cmd = strstr(line, " CMD");
-          if (cmd)
-            cmdpos = cmd + 1 - line;
-          first = false;
+          msg = renewn(msg, strlen(msg) + strlen(line) + 4);
+          strcat(msg, "|");  // cmdpos += strlen(prefix) outside loop!
+          strcat(msg, line);
+          strcat(msg, "\n");
         }
-        msg = renewn(msg, strlen(msg) + strlen(line) + 4);
-        strcat(msg, "|");  // cmdpos += strlen(prefix) outside loop!
-        strcat(msg, line);
-        strcat(msg, "\n");
       }
+      pclose(procps);
     }
-    pclose(procps);
-  }
-  cmdpos += 1;
-  wchar * proclist = cs__utftowcs(msg);
-  int cpos = 0;
-  for (uint i = 0; i < wcslen(proclist); i++) {
-    if (cpos == 0) {
-      if (proclist[i] == '|') {
-        proclist[i] = 0x254E;  // │┃┆┇┊┋┠╎╏║╟
-        cpos = 1;
+    cmdpos += 1;
+    wchar * proclist = cs__utftowcs(msg);
+    int cpos = 0;
+    for (uint i = 0; i < wcslen(proclist); i++) {
+      if (cpos == 0) {
+        if (proclist[i] == '|') {
+          proclist[i] = 0x254E;  // │┃┆┇┊┋┠╎╏║╟
+          cpos = 1;
+        }
+        else
+          cpos = -1;
       }
+      if (cpos > 0 && (!cmdpos || cpos <= cmdpos) && proclist[i] == ' ')
+        proclist[i] = 0x2007;
+      if (proclist[i] == '\n')
+        cpos = 0;
       else
-        cpos = -1;
+        cpos ++;
     }
-    if (cpos > 0 && (!cmdpos || cpos <= cmdpos) && proclist[i] == ' ')
-      proclist[i] = 0x2007;
-    if (proclist[i] == '\n')
-      cpos = 0;
-    else
-      cpos ++;
-  }
 #else
-  wchar * proclist = grandchild_process_list();
-  if (!proclist)
-    return true;
+    wchar * proclist = grandchild_process_list();
+    if (!proclist)
+      return true;
 #endif
 
-  wchar * msg_pre = _W("Processes are running in session:");
-  wchar * msg_post = _W("Close anyway?");
+    wchar * msg_pre = _W("Processes are running in session:");
+    wchar * msg_post = _W("Close anyway?");
 
-  wchar * wmsg = newn(wchar, wcslen(msg_pre) + wcslen(proclist) + wcslen(msg_post) + 2);
-  wcscpy(wmsg, msg_pre);
-  wcscat(wmsg, W("\n"));
-  wcscat(wmsg, proclist);
-  wcscat(wmsg, msg_post);
-  free(proclist);
+    wmsg = newn(wchar, wcslen(msg_pre) + wcslen(proclist) + wcslen(msg_post) + 2);
+    wcscpy(wmsg, msg_pre);
+    wcscat(wmsg, W("\n"));
+    wcscat(wmsg, proclist);
+    wcscat(wmsg, msg_post);
+    free(proclist);
+  }
+  else {
+    wchar * msg_pre = _W("Running WSL ");
+    wchar * msg_post = _W("Close anyway?");
+    wchar * msg_distro = wslname ?: W("");
+
+    wmsg = newn(wchar, wcslen(msg_pre) + wcslen(msg_distro) + wcslen(msg_post) + 2);
+    wcscpy(wmsg, msg_pre);
+    wcscat(wmsg, msg_distro);
+    wcscat(wmsg, W("\n"));
+    wcscat(wmsg, msg_post);
+  }
 
   int ret = message_box_w(
               wnd, wmsg,
@@ -3939,6 +3954,9 @@ confirm_reset(void)
 void
 win_close(void)
 {
+  // save Shift state right on button click, before confirm dialog
+  bool with_shift = (GetKeyState(VK_SHIFT) & 0x80) != 0;
+
   if (!support_wsl && *cfg.exit_commands) {
     // try to determine foreground program
     char * fg_prog = foreground_prog();
@@ -3958,7 +3976,7 @@ win_close(void)
   }
 
   if (!cfg.confirm_exit || confirm_exit())
-    child_kill((GetKeyState(VK_SHIFT) & 0x80) != 0);
+    child_kill(with_shift);
 }
 
 
