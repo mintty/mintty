@@ -827,7 +827,10 @@ child_proc(void)
         }
         else
 #endif
-        do {
+#if defined(collect_pty_buffer) || CYGWIN_VERSION_DLL_MAJOR < 1005
+        do
+#endif
+        {
           int ret = read(pty_fd, buf + len, sizeof buf - len);
           //printf("%d+%d ", len, ret);
           trace_line("read", ret, buf + len, ret);
@@ -847,7 +850,10 @@ child_proc(void)
           // So we disable the loop. It is apparently not needed anymore.
           // (It could be disabled only while wsl.exe is running which
           // could be detected by catching the DECSET 9001 sequence.)
-        } while (0 && len < sizeof buf);
+        }
+#if defined(collect_pty_buffer) || CYGWIN_VERSION_DLL_MAJOR < 1005
+          while (len < sizeof buf);
+#endif
         //printf("read %d\n", len);
 
         if (len > 0) {
