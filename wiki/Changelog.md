@@ -17,6 +17,9 @@ Window handling
   * Revise close button handling for WSL, esp. in Windows 10 (mintty/wsltty#368).
 
 Configuration
+  * Interactive configuration of normal and darkmode themes in switchable dialog box (~#1303).
+  * Optional configuration of normal and darkmode themes in two distinct dialog boxes (#1303).
+  * New option ConfigThemes to select themes configuration mode (~#1303).
   * User-definable function config-log to show all effective log files (mintty/wsltty#333).
   * New option LogFilter to avoid terminal reports on viewing log files.
   * Change emoji default style from none to Emojis=noto.
