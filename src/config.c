@@ -4211,7 +4211,7 @@ setup_config_box(controlbox * b)
   if (cfg.config_themes == 1) {
     ctrl_checkbox(
       //__ Options - Looks: configure dark mode theme
-      s, _("Darkmode"),
+      s, _("&Darkmode"),
       configure_darkmode_handler, &configure_darkmode
     )->column = 0;
   }

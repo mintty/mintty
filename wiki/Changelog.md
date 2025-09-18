@@ -1,3 +1,5 @@
+### 3.8.1 (18 September 2025) ###
+
 Unicode and Emoji data
   * Unicode 17.0 update.
   * Enable emoji support by default.
@@ -8,7 +10,7 @@ Terminal features
   * ST control terminator accepts multiple ESC (xterm).
 
 Keyboard handling
-  * Optional click feedback for Key press.
+  * Optional click feedback for key press.
 
 WSL support
   * Workaround for display corruption in wsl/conpty/cygwin chain after entering ^O (#1332).

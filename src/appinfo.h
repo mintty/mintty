@@ -6,7 +6,7 @@
 
 #define MAJOR_VERSION  3
 #define MINOR_VERSION  8
-#define PATCH_NUMBER   0
+#define PATCH_NUMBER   1
 #define BUILD_NUMBER   0
 
 // needed for res.rc
