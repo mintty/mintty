@@ -29,9 +29,9 @@
 # for yellow to 1.45 for red, and the colour components adjusted accordingly.
 # Of course, that is a highly subjective process ...
 
-ForegroundColour=0,0,0
-BackgroundColour=255,255,255
-CursorColour=0,0,0
+ForegroundColour=32,32,32
+BackgroundColour=222,222,222
+CursorColour=127,127,127
 
 Black=0,0,0
 Red=162,30,41;212,44,58
