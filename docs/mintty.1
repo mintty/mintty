@@ -1239,11 +1239,15 @@ emoji presentation, emoji style variation and emoji sequences.
 The option \fBEmojis\fP can choose among sets of emoji graphics if 
 deployed in a mintty configuration directory, or if deployed as 
 common emoji data in \fI/usr/share/emojis\fP.
+Extended flag emojis (not listed by Unicode) are supported dynamically.
+.br
+It is suggested to also install package \fIemojis-noto\fP to enable 
+graphic emojis display in default configuration.
+.br
 See the Tips wiki page 
 .br
 \fIhttps://github.com/mintty/mintty/wiki/Tips#emojis\fP 
 about deployment of emoji graphics for mintty.
-Extended flag emojis (not listed by Unicode) are supported dynamically.
 
 .SS HTML Screen dump
 
@@ -1697,7 +1701,7 @@ so the default was changed to true in 3.7.9.
 Note that font smoothing may be affected by Windows-generated underline modes.
 
 .TQ
-\fBEmoji support\fP (Emojis=none)
+\fBEmoji support\fP (Emojis=noto)
 With this option, mintty emoji support is enabled and the emojis style 
 is chosen. Mintty will match output for valid emoji sequences, 
 presentation forms and emoji style selectors.
@@ -1729,6 +1733,10 @@ Supported styles are:
 
 Note that all style options only work if the respective emoji graphics repository 
 is deployed in a mintty resource directory, subdirectory \fIemojis\fP.
+.br
+With default setting \fIEmojis=noto\fP, it is suggested to also install 
+package \fIemojis-noto\fP to enable graphic emojis display.
+.br
 See the Tips wiki page 
 .br
 \fIhttps://github.com/mintty/mintty/wiki/Tips#emojis\fP 

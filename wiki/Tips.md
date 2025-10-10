@@ -1367,6 +1367,9 @@ available, therefore mintty 3.8.1 sets emoji style “noto” as default.
 
 ### Quick Guide to emoji installation ###
 
+With default emoji style setting `Emojis=noto`, it is sufficient to also 
+install package _emojis-noto_ to enable graphic emojis display.
+
 In the cygwin or MSYS2 mintty packages, the emoji download and deployment 
 scripts are installed in /usr/share/mintty/emojis, so do this for a common 
 all-users deployment of the emojis listed at Unicode.org and the flags emojis:
