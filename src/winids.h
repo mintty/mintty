@@ -49,6 +49,7 @@
 #define IDM_TOGCHARINFO     0x02F0
 #define IDM_TOGVT220KB      0x0300
 #define IDM_HTML            0x0310
+#define IDM_HTML_ALL        0x0350
 #define IDM_KEY_DOWN_UP     0x0330
 
 #define IDM_USERCOMMAND     0x1000

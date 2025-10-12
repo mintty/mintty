@@ -219,6 +219,10 @@ get_selection(bool attrs, pos start, pos end, bool rect, bool allinline, bool wi
       }
       start.x++;
     }
+    if (cfg.export_html_unwrapped && (line->lattr & LATTR_WRAPPED)) {
+      // join auto-wrapped lines for HTML export (#1336)
+      nl = false;
+    }
     if (nl) {
       clip_addchar(buf, '\r', 0, false, hint);
       // mark lineend with line attributes, particularly double-width/height
@@ -652,7 +656,7 @@ term_cmd(char * cmd)
 #include "winpriv.h"  // PADDING
 
 static char *
-term_create_html(FILE * hf, int level)
+term_create_html(bool all, FILE * hf, int level)
 {
   char * hbuf = hf ? 0 : strdup("");
   size_t hbuf_len = 0;
@@ -686,6 +690,12 @@ term_create_html(FILE * hf, int level)
   if (!term.selected) {
     start = (pos){term.disptop, 0, 0, 0, false};
     end = (pos){term.disptop + term.rows - 1, term.cols, 0, 0, false};
+    rect = false;
+  }
+  if (all) {
+    // mark all, like term_select_all() without term_copy()
+    start = (pos){-sblines(), 0, 0, 0, false};
+    end = (pos){term_last_nonempty_line(), term.cols, 0, 0, true};
     rect = false;
   }
 
@@ -811,7 +821,7 @@ term_create_html(FILE * hf, int level)
 #ifdef float_left
   // float needed here to avoid placement left of previous text (Thunderbird)
   // this cannot be reproduced anymore; dropped (#900)
-  if (level >= 3) {
+  if (level >= 3)
     hprintf(hf, "    float: left;\n");
 #endif
   hprintf(hf, "  }\n");
@@ -1245,11 +1255,11 @@ term_create_html(FILE * hf, int level)
 char *
 term_get_html(int level)
 {
-  return term_create_html(0, level);
+  return term_create_html(false, 0, level);
 }
 
 void
-term_export_html(bool do_open)
+term_export_html(bool all, bool do_open)
 {
   struct timeval now;
   gettimeofday(& now, 0);
@@ -1266,7 +1276,7 @@ term_export_html(bool do_open)
     return;
   }
 
-  term_create_html(hf, 3);
+  term_create_html(all, hf, 3);
 
   fclose(hf);  // implies close(hfd);
 

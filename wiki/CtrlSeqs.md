@@ -944,6 +944,7 @@ Mintty supports the following DEC, xterm and mintty Media Copy sequences:
 | `^[[?5i`     | copy output to printer          |
 | `^[[?4i`     | end output to printer           |
 | `^[[10i`     | save screen as HTML             |
+| `^[[10;8i`   | save scrollback and screen as HTML |
 | `^[[12i`     | save screen as PNG image        |
 
 

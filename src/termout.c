@@ -3336,7 +3336,7 @@ do_csi(uchar c)
         term_print_finish();
       }
       else if (arg0 == 10 && !term.esc_mod) {
-        term_export_html(false);
+        term_export_html(arg1 == 8, false);
       }
 #ifdef support_SVG
       else if (arg0 == 11 && !term.esc_mod) {

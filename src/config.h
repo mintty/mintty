@@ -148,6 +148,7 @@ typedef struct {
   bool copy_tabs;
   bool copy_as_rtf;
   char copy_as_html;
+  bool export_html_unwrapped;
   wstring copy_as_rtf_font;
   int copy_as_rtf_font_size;
   bool trim_selection;

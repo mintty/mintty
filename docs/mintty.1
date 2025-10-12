@@ -2284,6 +2284,15 @@ levels of HTML formatting, when applying the normal copy function.
 the extended context menu.
 
 .TQ
+\fBHTML print/export writes lines unwrapped\fP (ExportHTMLUnwrapped=true)
+With this setting, HTML print (via escape sequence) and HTML export 
+(via user-definable function export\-html\-all) 
+write wrapped lines as one unwrapped line.
+.br
+The user-definable functions for HTML copy are not affected, they were 
+available in variations already.
+
+.TQ
 \fBClicks place command line cursor\fP (ClicksPlaceCursor=no)
 If enabled, the command line cursor can be placed by pressing the left
 mouse button. Also pasting in the command line positions the cursor first.
@@ -3590,6 +3599,8 @@ Supported actions are described as follows:
 \fBtoggle\-char\-info\fP: toggles character info display
 .en
 \fBexport\-html\fP (*): exports the screen as an HTML file
+.en
+\fBexport\-html\-all\fP (*): exports scrollback and screen as an HTML file
 .en
 \fBprint\-screen\fP: print screen contents
 .en

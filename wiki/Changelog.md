@@ -1,3 +1,11 @@
+Terminal features
+  * Change HTML print/export to write unwrapped lines by default (#1336).
+  * New escape sequence variation CSI 10 ; 8 i to print scrollback and screen (#1336).
+
+Configuration
+  * New option ExportHTMLUnwrapped (#1336).
+  * New user-definable function export-html-all (~#1336).
+
 ### 3.8.1 (18 September 2025) ###
 
 Unicode and Emoji data

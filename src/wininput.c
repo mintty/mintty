@@ -720,6 +720,10 @@ win_init_ctxmenu(bool extended_menu, bool with_user_commands)
   if (extended_menu) {
     //__ Context menu: write terminal window contents as HTML file
     AppendMenuW(ctxmenu, MF_ENABLED, IDM_HTML, _W("HTML Screen Dump"));
+#ifdef context_menu_offers_HTML_dump_all
+    //__ Context menu: write all scrollback and terminal contents as HTML file
+    //AppendMenuW(ctxmenu, MF_ENABLED, IDM_HTML_ALL, _W("HTML Dump All"));
+#endif
     AppendMenuW(ctxmenu, MF_ENABLED, IDM_TOGLOG, 0);
     AppendMenuW(ctxmenu, MF_ENABLED, IDM_TOGCHARINFO, 0);
     AppendMenuW(ctxmenu, MF_ENABLED, IDM_TOGVT220KB, 0);
@@ -1874,6 +1878,7 @@ static struct function_def cmd_defs[] = {
   {"toggle-logging", {IDM_TOGLOG}, mflags_logging},
   {"toggle-char-info", {IDM_TOGCHARINFO}, mflags_char_info},
   {"export-html", {IDM_HTML}, 0},
+  {"export-html-all", {IDM_HTML_ALL}, 0},
   {"print-screen", {.fct = print_screen}, 0},
   {"toggle-vt220", {.fct = toggle_vt220}, mflags_vt220},
   {"toggle-auto-repeat", {.fct = toggle_auto_repeat}, mflags_auto_repeat},
