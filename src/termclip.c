@@ -832,6 +832,15 @@ term_create_html(bool all, FILE * hf, int level)
   hprintf(hf, "  .ul { text-decoration-line: underline }\n");
   hprintf(hf, "  .st { text-decoration-line: line-through }\n");
   hprintf(hf, "  .lu { text-decoration-line: line-through underline }\n");
+  hprintf(hf, "  @keyframes blink { 0%% { opacity: 1; } 50%% { opacity: 0; } }\n");
+  hprintf(hf, "  [name=blink], [name=rapid] {\n");
+  hprintf(hf, "    animation-name: blink;\n");
+  hprintf(hf, "    animation-iteration-count: infinite;\n");
+  hprintf(hf, "    animation-timing-function: step-end;\n");
+  hprintf(hf, "  }\n");
+  hprintf(hf, "  [name=blink] { animation-duration: 1.0s; }\n");
+  hprintf(hf, "  [name=rapid] { animation-duration: 0.6s; }\n");
+
   if (bold_colour != (colour)-1)
     hprintf(hf, "  .bold-color { color: #%02X%02X%02X }\n",
             red(bold_colour), green(bold_colour), blue(bold_colour));
@@ -861,6 +870,9 @@ term_create_html(bool all, FILE * hf, int level)
   }
 
   hprintf(hf, "  </style>\n");
+
+#if 0
+#warning blinking is now implemented via css
   hprintf(hf, "  <script>\n");
   hprintf(hf, "  var b1 = 500; var b2 = 300;\n");
   hprintf(hf, "  function visib (tag, state, timeout) {\n");
@@ -877,6 +889,8 @@ term_create_html(bool all, FILE * hf, int level)
   hprintf(hf, "    window.setTimeout ('visib (\"rapid\", 0, b2)', b2);\n");
   hprintf(hf, "  }\n");
   hprintf(hf, "  </script>\n");
+#endif
+
   hprintf(hf, "</head>\n\n");
   hprintf(hf, "<body class=mintty onload='setup();'>\n");
   //hprintf(hf, "  <table border=0 cellpadding=0 cellspacing=0><tr><td>\n");
@@ -1138,7 +1152,7 @@ term_create_html(bool all, FILE * hf, int level)
       }
 
       if (ca->attr & ATTR_INVISIBLE)
-        add_style("visibility: hidden;");
+        add_style("opacity: 0;");
       else {
         // add JavaScript triggers
         if (ca->attr & ATTR_BLINK2)
