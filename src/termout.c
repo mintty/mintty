@@ -4501,12 +4501,19 @@ do_clipboard(void)
   int len;
   int ret;
 
+  char buf_indicator = 0;
   while (*s != ';' && *s != '\0') {
+    if (*s == 'c')
+      buf_indicator = 'c';
+    if (!buf_indicator)
+      buf_indicator = *s;
     s += 1;
   }
   if (*s != ';') {
     return;
   }
+  if (!buf_indicator)
+    buf_indicator = 'c';
   s += 1;
   if (0 == strcmp(s, "?")) {
     if (!cfg.allow_paste_selection) {
@@ -4522,7 +4529,7 @@ do_clipboard(void)
     if (!b64)
       return;
 
-    child_printf("\e]52;c;%s%s", b64, osc_fini());
+    child_printf("\e]52;%c;%s%s", buf_indicator, b64, osc_fini());
 
     free(b64);
     return;

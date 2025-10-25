@@ -2,6 +2,7 @@ Terminal features
   * Change HTML print/export to write unwrapped lines by default (#1336).
   * New escape sequence variation CSI 10 ; 8 i to print scrollback and screen (#1336).
   * Revise HTML blinking and invisible attributes; enable copying (#1336).
+  * OSC 52 response mirrors requested clipboard/buffer (#1337).
 
 Configuration
   * New option ExportHTMLUnwrapped (#1336).
