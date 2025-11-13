@@ -1,7 +1,7 @@
 # Traductions françaises du paquet mintty.
 # Copyright (C) 2017 THE mintty'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the mintty package.
-# Eric lassauge <lassauge@gmail.com>, 2017-2023.
+# Eric lassauge <lassauge@gmail.com>, 2017-2025.
 #
 msgid ""
 msgstr ""
@@ -70,32 +70,32 @@ msgstr "Erreur : impossible de créer un process démon fils"
 #. __ Setting false for Boolean options (localization optional)
 #: config.c:670
 msgid "no"
-msgstr ""
+msgstr "non"
 
 #. __ Setting true for Boolean options (localization optional)
 #: config.c:672
 msgid "yes"
-msgstr ""
+msgstr "oui"
 
 #. __ Setting false for Boolean options (localization optional)
 #: config.c:674
 msgid "false"
-msgstr ""
+msgstr "faux"
 
 #. __ Setting true for Boolean options (localization optional)
 #: config.c:676
 msgid "true"
-msgstr ""
+msgstr "vrai"
 
 #. __ Setting false for Boolean options (localization optional)
 #: config.c:678
 msgid "off"
-msgstr ""
+msgstr "arrêt"
 
 #. __ Setting true for Boolean options (localization optional)
 #: config.c:680
 msgid "on"
-msgstr ""
+msgstr "marche"
 
 #. __ Options - Text - Emojis - Placement (localization optional)
 #: config.c:709
@@ -134,7 +134,7 @@ msgstr "Erreur interne : trop d’options/commentaires"
 #. report errors only during initialisation
 #: config.c:1115
 msgid "Ignoring invalid value '%s' for option '%s'"
-msgstr "Value inconnue ignorée « %s » pour l’option « %s »"
+msgstr "Valeur « %s » inconnue, ignorée pour l’option « %s »"
 
 #. __ %s: option name
 #: config.c:1127
@@ -144,22 +144,22 @@ msgstr "Option « %s » avec des valeurs manquantes ignorée"
 #. __ Config log: list heading
 #: config.c:1652
 msgid "Config files handled:"
-msgstr ""
+msgstr "Fichiers de configuration gérés :"
 
 #. __ Config log: message for loaded file
 #: config.c:1691
 msgid "Config file loaded:"
-msgstr ""
+msgstr "Fichiers de configuration chargés :"
 
 #. __ Config log: message for file to save to, if read-only
 #: config.c:1705
 msgid "Should save to config file but read-only:"
-msgstr ""
+msgstr "Impossible d'enregistrer dans le fichier de configuration car uniquement en lecture :"
 
 #. __ Config log: message for file to save to
 #: config.c:1713
 msgid "Save to config file:"
-msgstr ""
+msgstr "Enregistré dans le fichier de configuration :"
 
 #. __ %1$s: config file name, %2$s: error message
 #: config.c:1921
@@ -239,7 +239,7 @@ msgstr "◇ Aucun ◇"
 #. __ terminal theme / colour scheme used in dark mode
 #: config.c:3028 config.c:3174
 msgid "◇ Same ◇"
-msgstr ""
+msgstr "◇ Identique ◇"
 
 #. __ indicator of unsaved downloaded colour scheme
 #: config.c:3032 config.c:3187
@@ -351,7 +351,7 @@ msgstr "Enreg."
 #. __ Options - Looks: configure dark mode theme
 #: config.c:4202 config.c:4214
 msgid "&Darkmode"
-msgstr ""
+msgstr "Mode &Sombre"
 
 #. __ Options - Looks: name of web service
 #: config.c:4219
@@ -432,7 +432,7 @@ msgstr "B&loc"
 #. __ Options - Looks: cursor type
 #: config.c:4293
 msgid "Bo&x"
-msgstr "Bloc"
+msgstr "Boît&e"
 
 #. __ Options - Looks: cursor type
 #: config.c:4296
@@ -583,7 +583,7 @@ msgstr "AltGr émet également Alt"
 #. __ Options - Keys:
 #: config.c:4560
 msgid "&Esc/Enter reset IME to alphanumeric"
-msgstr "&Esc/Enter réinitiale IME"
+msgstr "&Echap/Entrée réinitialise IME"
 
 #. __ Options - Keys: section title
 #: config.c:4566
@@ -673,7 +673,7 @@ msgstr "Copier sur &sélection"
 #. __ Context menu:
 #: config.c:4641 config.c:4674 config.c:4838 wininput.c:693
 msgid "Copy with TABs"
-msgstr "Copier (texte) avec &tabulations"
+msgstr "Copier avec tabulations"
 
 #. __ Options - Mouse:
 #. __ Options - Selection:
@@ -849,7 +849,7 @@ msgstr "Taille a&ctuelle"
 #. __ Options - Window:
 #: config.c:4936
 msgid "Re&wrap on resize"
-msgstr "Réaligner après re&dimensionnement"
+msgstr "Reboucler après re&dimensionnement"
 
 #. __ Options - Window:
 #: config.c:4944
@@ -879,7 +879,7 @@ msgstr "Modifieur pour défilement"
 #. __ Options - Window:
 #: config.c:5009
 msgid "&PgUp and PgDn scroll without modifier"
-msgstr "Défilement par &PgAr et PgAv "
+msgstr "Défilement par &PgAr et PgAv"
 
 #. __ Options - Window: section title
 #: config.c:5015
@@ -959,7 +959,7 @@ msgstr "[Impression…] "
 #. __ Options - Text: font chooser activation button
 #: winctrls.c:935
 msgid "&Select..."
-msgstr "&Sélect.…"
+msgstr "&Sélect…"
 
 #. __ Font chooser: title bar label
 #: winctrls.c:1281
@@ -1170,7 +1170,7 @@ msgstr "Enregistrer fichier"
 #. __ Context menu:
 #: wininput.c:540
 msgid "Character &Info"
-msgstr "&Info de caractères"
+msgstr "&Info caractère"
 
 #. __ Context menu:
 #: wininput.c:546
@@ -1222,7 +1222,7 @@ msgstr "Ouvr&ir"
 #. __ Context menu:
 #: wininput.c:691
 msgid "Copy as text"
-msgstr "Copier en text"
+msgstr "Copier en texte"
 
 #. __ Context menu:
 #: wininput.c:695
@@ -1294,7 +1294,7 @@ msgstr "Forcer la fermeture ?"
 
 #: winmain.c:3919
 msgid "Running WSL "
-msgstr ""
+msgstr "Exécution WSL"
 
 #: winmain.c:3945
 msgid "Reset terminal?"
@@ -1303,7 +1303,7 @@ msgstr "Réinitialiser le terminal ?"
 #. __ Config log: message box heading
 #: winmain.c:4096
 msgid "Config log"
-msgstr ""
+msgstr "Config. traces"
 
 #: winmain.c:4187
 msgid "Try '--help' for more information"
@@ -1490,7 +1490,7 @@ msgid ""
 "%s.\n"
 "See also the Wiki there for further hints, thanks and credits."
 msgstr ""
-"Traductions © 2023 Éric Lassauge\n"
+"Traductions © 2025 Éric Lassauge\n"
 "Reportez les bugs ou les demandes d’amélioration via le gestionnaire de "
 "problèmes de la page du projet mintty\n"
 "à l’adresse « %s ».\n"
