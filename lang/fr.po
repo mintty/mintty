@@ -69,32 +69,32 @@ msgstr "Erreur : impossible de créer un process démon fils"
 #. __ Setting false for Boolean options (localization optional)
 #: config.c:670
 msgid "no"
-msgstr ""
+msgstr "non"
 
 #. __ Setting true for Boolean options (localization optional)
 #: config.c:672
 msgid "yes"
-msgstr ""
+msgstr "oui"
 
 #. __ Setting false for Boolean options (localization optional)
 #: config.c:674
 msgid "false"
-msgstr ""
+msgstr "faux"
 
 #. __ Setting true for Boolean options (localization optional)
 #: config.c:676
 msgid "true"
-msgstr ""
+msgstr "vrai"
 
 #. __ Setting false for Boolean options (localization optional)
 #: config.c:678
 msgid "off"
-msgstr ""
+msgstr "arrêt"
 
 #. __ Setting true for Boolean options (localization optional)
 #: config.c:680
 msgid "on"
-msgstr ""
+msgstr "marche"
 
 #. __ Options - Text - Emojis - Placement (localization optional)
 #: config.c:709
