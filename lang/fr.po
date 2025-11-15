@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: mintty\n"
 "Report-Msgid-Bugs-To: https://github.com/mintty/mintty/issues/700\n"
 "POT-Creation-Date: 2025-09-18 05:26+0200\n"
-"PO-Revision-Date: 2023-01-26 14:20+0100\n"
+"PO-Revision-Date: 2025-11-14 17:30+0100\n"
 "Last-Translator: Eric Lassauge <lassauge@gmail.com>\n"
 "Language-Team: French <traduc@traduc.org>\n"
 "Language: fr\n"
@@ -16,7 +16,6 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
-"X-Generator: Poedit 2.0.9\n"
 
 #: charset.c:229 charset.c:240 winmain.c:6753 winmain.c:6866 winmain.c:6873
 msgid "(Default)"
@@ -351,7 +350,7 @@ msgstr "Enreg."
 #. __ Options - Looks: configure dark mode theme
 #: config.c:4202 config.c:4214
 msgid "&Darkmode"
-msgstr "Mode &Sombre"
+msgstr "&Sombre"
 
 #. __ Options - Looks: name of web service
 #: config.c:4219
@@ -384,7 +383,7 @@ msgstr "&Moy."
 #. __ Options - Looks: transparency
 #: config.c:4236
 msgid "&Medium"
-msgstr "&Moyen"
+msgstr "&Moyenne"
 
 #. __ Options - Looks: transparency
 #: config.c:4238
