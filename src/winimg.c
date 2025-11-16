@@ -728,6 +728,10 @@ static bool previously_selected = false;
       // do not adjust horizontal scrolling here
 
       int top = img->top - term.virtuallines - term.disptop;
+      // todo:
+      // should we make some adjustment here to tame the effect of 
+      // line-wrapping on images?
+      // see disabled setting of term.virtuallines in term_reflow()
 
       // suppress repetitive image painting
       if (left == img->x && top == img->y && !force_imgs)
@@ -800,12 +804,14 @@ static bool previously_selected = false;
 
 #ifdef scale_graphics_in_double_width_lines
 #warning no working implementation yet; not done in xterm either
-        termline * line = fetch_line(top);
-        ushort lattr = line->lattr;
-        release_line(line);
-        if ((lattr & LATTR_MODE) != LATTR_NORM) {
-          // fix position in double-width line:
-          // adjust below: left, xlft, ...width, xrgt, iwidth, iheight
+        if (top < term.rows) {
+          termline * line = fetch_line(top);
+          ushort lattr = line->lattr;
+          release_line(line);
+          if ((lattr & LATTR_MODE) != LATTR_NORM) {
+            // fix position in double-width line:
+            // adjust below: left, xlft, ...width, xrgt, iwidth, iheight
+          }
         }
 #endif
 
