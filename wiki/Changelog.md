@@ -3,6 +3,8 @@ Terminal features
   * New escape sequence variation CSI 10 ; 8 i to print scrollback and screen (#1336).
   * Revise HTML blinking and invisible attributes; enable copying (#1336).
   * OSC 52 response mirrors requested clipboard/buffer (#1337).
+  * OSC 1337 Capabilities Feature Reporting (#1341, iTerm2).
+  * Primary Device Attributes report leaves out disabled features.
   * Framework for embedding of ReGIS graphics.
 
 Configuration

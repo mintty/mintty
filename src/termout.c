@@ -19,6 +19,8 @@
 
 #include <termios.h>
 #include <sys/time.h>
+#include <langinfo.h>  // nl_langinfo, CODESET
+
 
 #define TERM_CMD_BUF_INC_STEP 128
 //#define TERM_CMD_BUF_MAX_SIZE (1024 * 1024)
@@ -32,10 +34,10 @@
 #define CPAIR(x, y) ((x) << 8 | (y))
 
 static string primary_da1 = "\e[?1;2c";
-static string primary_da2 = "\e[?62;1;2;4;6;9;15;22;29c";
-static string primary_da3 = "\e[?63;1;2;4;6;9;11;15;22;29c";
-static string primary_da4 = "\e[?64;1;2;4;6;9;11;15;21;22;28;29c";
-static string primary_da5 = "\e[?65;1;2;4;6;9;11;15;21;22;28;29c";
+static string primary_da2 = "\e[?62;2;4;6;9;15;29c";
+static string primary_da3 = "\e[?63;2;4;6;9;11;15;29c";
+static string primary_da4 = "\e[?64;2;4;6;9;11;15;21;28;29c";
+static string primary_da5 = "\e[?65;2;4;6;9;11;15;21;28;29c";
 /* Registered Extensions to the Character Cell Display Service Class
 	1	132 Column Display
 	2	Printer Port
@@ -855,6 +857,23 @@ write_linefeed(void)
   curs->wrapnext = false;
 }
 
+static bool
+contains(string s, int i)
+{
+  while (*s) {
+    while (*s == ',' || *s == ' ')
+      s++;
+    int si = -1;
+    int len;
+    if (sscanf(s, "%d%n", &si, &len) <= 0)
+      return false;
+    s += len;
+    if (si == i && (!*s || *s == ',' || *s == ' '))
+      return true;
+  }
+  return false;
+}
+
 static void
 write_primary_da(void)
 {
@@ -880,7 +899,17 @@ write_primary_da(void)
   }
   if (extend_da) {
     child_write(primary_da, strlen(primary_da) - 1);  // strip final 'c'
-    if (cfg.allow_set_selection)
+    if (!contains(cfg.suppress_dec, 40))
+      child_write(";1", 2);  // 132 Column Display
+    if (!contains(cfg.suppress_sgr, 31)
+     && !contains(cfg.suppress_sgr, 32)
+     && !contains(cfg.suppress_sgr, 33)
+     && !contains(cfg.suppress_sgr, 34)
+     && !contains(cfg.suppress_sgr, 35)
+     && !contains(cfg.suppress_sgr, 36)
+       )
+      child_write(";22", 3);  // Color Text
+    if (cfg.allow_set_selection && !contains(cfg.suppress_osc, 52))
       child_write(";52", 3);
     child_write("c", 1);
   }
@@ -1509,24 +1538,6 @@ write_error(void)
   // which looks appropriately erroneous. Could be made configurable.
   wchar errch = get_errch(W("�▒¤¿?"), term.curs.attr.attr);
   write_char(errch, 1);
-}
-
-
-static bool
-contains(string s, int i)
-{
-  while (*s) {
-    while (*s == ',' || *s == ' ')
-      s++;
-    int si = -1;
-    int len;
-    if (sscanf(s, "%d%n", &si, &len) <= 0)
-      return false;
-    s += len;
-    if (si == i && (!*s || *s == ',' || *s == ' '))
-      return true;
-  }
-  return false;
 }
 
 
@@ -4604,6 +4615,56 @@ do_clipboard(void)
 }
 
 /*
+ * Feature Reporting: respond to OSC 1337 Capabilities request
+ */
+static void
+respond_capabilities(void)
+{
+  char buf[90], *p = buf;
+  p += sprintf(p, "\e]1337;Capabilities=");
+
+  if (!contains(cfg.suppress_sgr, 38) && !contains(cfg.suppress_sgr, 48))
+    p += sprintf(p, "T3");  // 24BIT
+  if (cfg.allow_set_selection && !contains(cfg.suppress_osc, 52))
+    p += sprintf(p, "Cw");  // CLIPB_WRITABLE
+  p += sprintf(p, "Lr");  // DECSLRM
+  if (!contains(cfg.suppress_dec, 1000)
+   && !contains(cfg.suppress_dec, 1002)
+   && !contains(cfg.suppress_dec, 1003)
+   && !contains(cfg.suppress_dec, 1006)
+     )
+    p += sprintf(p, "M");  // MOUSE
+  p += sprintf(p, "Sc7");  // DECSCUSR
+  if (0 == strcmp(nl_langinfo(CODESET), "UTF-8")) {
+    p += sprintf(p, "U");  // UNICODE_BASIC
+    p += sprintf(p, "Uw%d", UNICODE_VERSION / 100);  // UNICODE_WIDTHS
+  }
+  if (cs_ambig_wide)
+    p += sprintf(p, "Aw");  // AMBIGUOUS_WIDE
+  if (contains(cfg.suppress_osc, 0) || contains(cfg.suppress_osc, 1) || contains(cfg.suppress_osc, 2))
+    p += sprintf(p, "Ts1");
+  else
+    p += sprintf(p, "Ts3");  // TITLES
+  if (!contains(cfg.suppress_dec, 2004))
+    p += sprintf(p, "B");  // BRACKETED_PASTE
+  if (!contains(cfg.suppress_dec, 1004))
+    p += sprintf(p, "F");  // FOCUS_REPORTING
+  if (!contains(cfg.suppress_sgr, 9) && !contains(cfg.suppress_sgr, 29))
+    p += sprintf(p, "Gs");  // STRIKETHROUGH
+  if (!contains(cfg.suppress_sgr, 53) && !contains(cfg.suppress_sgr, 55))
+    p += sprintf(p, "Go");  // OVERLINE
+  if (!contains(cfg.suppress_dec, 2026))
+    p += sprintf(p, "Sy");  // SYNC
+  if (!contains(cfg.suppress_osc, 8))
+    p += sprintf(p, "H");  // HYPERLINKS
+  // skip "No" NOTIFICATIONS
+  p += sprintf(p, "SxF");  // SIXEL, FILE (image)
+
+  p += sprintf(p, "%s", osc_fini());
+  child_write(buf, p - buf);
+}
+
+/*
  * Process OSC command sequences.
  */
 static void
@@ -4888,6 +4949,12 @@ do_cmd(void)
       if (payload) {
         *payload = 0;
         payload++;
+      }
+
+      // branch off Feature Reporting request (#1341, iTerm2)
+      if (0 == strcmp("Capabilities", s)) {
+        respond_capabilities();
+        return;
       }
 
       // verify protocol

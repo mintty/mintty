@@ -25,8 +25,32 @@ These escape sequences cause mintty to report its identification.
 
 | **request** | **response**                      | **comment** |
 |:------------|:----------------------------------|:------------|
-| `^[[>0c`    | `^[[>77;`_version_`;`_unicode_`c` | secondary devices attributes (DEC); _version_ like 30105, _unicode_ version when using built-in data |
-| `^[[>0q`    | `^[P>\|mintty `_version_`^[\`     | terminal identification query (xterm 354); _version_ like 3.1.5 |
+| `^[[>c`     | `^[[>77;`_version_`;`_unicode_`c` | secondary device attributes (DEC); _version_ like 30105, _unicode_ version when using built-in data |
+| `^[[>q`     | `^[P>\|mintty `_version_`^[\`     | terminal identification query (xterm 354); _version_ like 3.1.5 |
+
+### Feature reporting ###
+
+Mintty supports the primary device attributes request conditionally:
+
+| **request** | **response**                             |
+|:------------|:-----------------------------------------|
+| `^[[c`      | `^[[?65;1;2;4;6;9;11;15;21;22;28;29;52c` |
+
+Tags 1, 22, and extended tag 52 are only included if the respective features 
+are not disabled (e.g. by setting Suppress options). Tags 11, 21, 28 are 
+left out correspondingly if terminal types vt220 or vt340 are configured.
+
+Mintty also adds Feature Reporting as proposed by iTerm2 in response to an 
+OSC 1337 Capabilities request:
+
+| **request** | **response**                             |
+|:------------|:-----------------------------------------|
+| `^[]1337;Capabilities^[\` | `^[]1337;Capabilities=`_feature tag list_`^[\` |
+
+Features as currently available are indicated by a list of 1- or 2-letter 
+feature tags, some appended with a number, as listed in section Publication 
+of [iTerm2 Terminal Feature Reporting](https://iterm2.com/feature-reporting/).
+The default feature tag list in UTF-8 mode is `T3LrMSc7UUw17Ts3BFGsGoSyHSxF`.
 
 
 ## Escape keycode ##
