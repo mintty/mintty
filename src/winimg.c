@@ -12,6 +12,7 @@
 #include "termpriv.h"
 #include "winimg.h"
 #include "sixel.h"
+#include "regis.h"
 
 // tempfile_t manipulation
 
@@ -255,15 +256,16 @@ winimg_new(imglist **ppimg, char * id, unsigned char * pixels, uint len,
   //printf("winimg alloc %d -> [%d]\n", (int)sizeof(imglist), img->imgi);
   if (!img)
     return false;
-#ifdef debug_img_list
-  printf("winimg_new [%d]->%p l %d t %d w %d h %d\n", img->imgi, pixels, left, top, width, height);
-#endif
 
   static int _imgi = 0;
 #ifdef debug_img_disp
-  printf("winimg_new %d @%d:%d\n", _imgi, left, top);
+  printf("winimg_new %d @%d:%d\n", _imgi, left, scrtop);
 #endif
   img->imgi = ++_imgi;
+
+#ifdef debug_img_list
+  printf("winimg_new [%d]->%p l %d t %d w %d h %d\n", img->imgi, pixels, left, scrtop, width, height);
+#endif
 
   img->pixels = pixels;
   img->hdc = NULL;
@@ -282,7 +284,12 @@ winimg_new(imglist **ppimg, char * id, unsigned char * pixels, uint len,
   img->y = maxval(short);
 
   img->len = len;
-  if (len) {  // image format, not sixel
+  if ((int)len < 0) {  // ReGIS graphics
+    img->id = 0;
+    img->cwidth = cell_width;
+    img->cheight = cell_height;
+  }
+  else if (len) {  // Image (iTerm2 protocol)
     img->id = id ? strdup(id) : 0;
     img->cwidth = cell_width;
     img->cheight = cell_height;
@@ -389,7 +396,7 @@ winimg_new(imglist **ppimg, char * id, unsigned char * pixels, uint len,
     (void)crop_x, (void)crop_y, (void)crop_width, (void)crop_height;
 #endif
   }
-  else
+  else  // Sixel graphics
     img->id = 0;
 
   *ppimg = img;
@@ -688,7 +695,7 @@ static bool previously_selected = false;
   img = backward_img_traversal ? term.imgs.last : term.imgs.first;
   imglist * next;
 #ifdef debug_img_over
-  printf("--------------- imglist loop\n");
+  printf("--------------- imglist loop vlines %lld disptop %d\n", term.virtuallines, term.disptop);
 #endif
   for (; img; img = next) {
     next = backward_img_traversal ? img->prev : img->next;
@@ -711,10 +718,10 @@ static bool previously_selected = false;
       // if the image is out of scrollback, collect it
       destrimg = img;
 #ifdef debug_img_list
-      printf("paint: destroy @%d h %d virt %lld sb %d\n", img->top, img->height, term.virtuallines, term.sblines);
+      printf("paint: destroy @%lld h %d virt %lld sb %d\n", img->top, img->height, term.virtuallines, term.sblines);
 #endif
 #ifdef debug_img_over
-      printf("@%d:%d destroy out [%d]\n", img->top - term.virtuallines - term.disptop, img->left, img->imgi);
+      printf("@%lld:%d destroy out [%d]\n", img->top - term.virtuallines - term.disptop, img->left, img->imgi);
 #endif
     } else {
       int left = img->left;
@@ -733,7 +740,7 @@ static bool previously_selected = false;
         // if the image is scrolled out, serialize it into a temp file
 #ifdef debug_img_list
         if (img->hdc)
-          printf("paint: hibernate img [%d] v@%d s@%d\n", img->imgi, img->top, top);
+          printf("paint: hibernate img [%d] v@%lld s@%d\n", img->imgi, img->top, top);
 #endif
         winimg_hibernate(img);
 #ifdef debug_img_over
@@ -741,7 +748,7 @@ static bool previously_selected = false;
 #endif
       } else {
 #ifdef debug_img_list
-        printf("paint: check img [%d] v@%d s@%d\n", img->imgi, img->top, top);
+        printf("paint: check img [%d] v@%lld s@%d\n", img->imgi, img->top, top);
 #endif
         // create img DC handle if not initialized, or resume from hibernate
         winimg_lazyinit(img);
@@ -860,7 +867,124 @@ static bool previously_selected = false;
 #ifdef debug_img_list
           printf("paint: display img\n");
 #endif
-          if (img->len) {
+          if (img->len < 0) {  // Draw ReGIS graphics
+            // extract ReGIS DCS parameter
+            int regarg = -1 - img->len;
+
+            // width of the ReGIS background pad,
+            // rounded up to cell size and scaled with a zoomed window
+            int padwidth = cell_width * img->width;
+            int padheight = cell_height * img->height;
+
+            // determine zoom factor
+#define scale_regis true
+            float scale;
+            if (scale_regis)
+              //scale = (float)cell_width / (float)img->cwidth;
+              scale = min(padwidth / 800.0, padheight / 480.0);
+            else
+              scale = 1.0;
+
+            // set up ReGIS drawing area and background pad;
+            // arrange double buffering to avoid flickering
+            HDC hdc = CreateCompatibleDC(dc);
+
+            // size of the ReGIS graphics area
+            int rwidth = img->pixelwidth * scale;
+            // snap to 5% original width grid
+            rwidth = rwidth / 40 * 40;
+            // scale height to aspect ratio
+            int rheight = (rwidth - 1) * 480 / 800 + 1;
+
+            // fit size into pad
+            if (rheight > padheight) {
+              rheight = padheight;
+              // snap to 5% original height grid
+              rheight = rheight / 24 * 24;
+              // scale width to aspect ratio
+              rwidth = (rheight - 1) * 800 / 480 + 1;
+            }
+            //printf("--------------- img s %d×%d c %d×%d pix %d×%d (pad %d×%d) reg %d×%d\n", img->width, img->height, img->cwidth, img->cheight, img->pixelwidth, img->pixelheight, padwidth, padheight, rwidth, rheight);
+
+            // set up drawing pad
+            HBITMAP hbm = CreateCompatibleBitmap(dc, padwidth, padheight);
+            (void)SelectObject(hdc, hbm);
+
+static bool regis_init = false;
+            if ((regarg & 1) || !regis_init) {
+              // background fill the terminal pad 
+              // (drawing area extended to full terminal cells)
+              if (*cfg.background)
+                fill_background(hdc, &(RECT){0, 0, padwidth, padheight});
+              else {
+                colour bg = colours[term.rvideo ? FG_COLOUR_I : BG_COLOUR_I];
+#ifdef debug_regis
+                bg = RGB(80, 90, 100);  // show pad filling
+#endif
+                HBRUSH br = CreateSolidBrush(bg);
+                FillRect(hdc, &(RECT){0, 0, padwidth, padheight}, br);
+                DeleteObject(br);
+              }
+              // background clear the actual ReGIS drawing area,
+              // also reset ReGIS drawing parameters
+              regis_clear(hdc, rwidth, rheight);
+              // home ReGIS cursor
+              regis_home();
+              regis_init = true;
+            }
+
+#if defined(debug_regis) && debug_regis > 1
+            // mark ReGIS graphics area
+            colour bg = RGB(140, 150, 190);
+            HPEN oldpen = SelectObject(hdc, CreatePen(PS_SOLID, 1, bg));
+            MoveToEx(hdc, 0, 0, null);
+            LineTo(hdc, 0, rheight - 1);
+            LineTo(hdc, rwidth - 1, rheight - 1);
+            LineTo(hdc, rwidth - 1, 0);
+            LineTo(hdc, 0, 0);
+            oldpen = SelectObject(hdc, oldpen);
+            DeleteObject(oldpen);
+#endif
+
+#ifdef zoom_regis
+#warning this way of zooming results in pixelish upscaling
+            regis_draw(hdc, 1.0, rwidth, rheight, regarg, img->pixels);
+
+            int grtop = top * cell_height + OFFSET + PADDING;
+            int grbot = (top + img->height) * cell_height + OFFSET + PADDING;
+            StretchBlt(dc, xlft, grtop, (xrgt - xlft) * scale, (grbot - grtop) * scale,
+                       hdc, 0, 0, rwidth, rheight, SRCCOPY);
+#else
+#ifdef zoom_transform
+#warning this spoils dashed lines at larger zoom factor
+            int coord_transformed = SetGraphicsMode(hdc, GM_ADVANCED);
+            XFORM old_xform;
+            if (coord_transformed && GetWorldTransform(hdc, &old_xform)) {
+              XFORM xform = (XFORM){scale, 0.0, 0.0, scale, 0, 0};
+              coord_transformed = SetWorldTransform(hdc, &xform);
+              scale = 1.0;
+            }
+#endif
+
+            // scale while drawing
+            regis_draw(hdc, scale, rwidth, rheight, regarg, img->pixels);
+
+#ifdef zoom_transform
+            if (coord_transformed)
+              SetWorldTransform(hdc, &old_xform);
+#endif
+
+            int grtop = top * cell_height + OFFSET + PADDING;
+            StretchBlt(dc, xlft, grtop, padwidth, padheight,
+                       hdc, 0, 0, padwidth, padheight, SRCCOPY);
+#endif
+
+            DeleteObject(hbm);
+            DeleteDC(hdc);
+            ExcludeClipRect(dc, xlft, ytop, xrgt, ybot);
+          }
+          else if (img->len) {  // Draw Image (iTerm2 protocol)
+
             //draw_img(dc, img);
             // underlay image with background;
             // do it in a copy to avoid flickering
@@ -883,7 +1007,7 @@ static bool previously_selected = false;
             DeleteDC(hdc);
             ExcludeClipRect(dc, xlft, ytop, xrgt, ybot);
           }
-          else {
+          else {  // Draw Sixel graphis
             // adjust horizontal scrolling
             left -= horclip() / cell_width;
 
@@ -912,7 +1036,7 @@ static bool previously_selected = false;
           //destroy and remove
           destrimg = img;
 #ifdef debug_img_list
-          printf("paint: destroy @%d h %d virt %lld sb %d\n", img->top, img->height, term.virtuallines, term.sblines);
+          printf("paint: do destroy @%lld h %d virt %lld sb %d\n", img->top, img->height, term.virtuallines, term.sblines);
 #endif
 #ifdef debug_img_over
           printf("@%d:%d destroy over [%d]\n", top, left, img->imgi);

@@ -4030,6 +4030,50 @@ do_dcs(void)
       }
     }
 
+  when 'p':
+    //printf("regis state %d arg %d %d %d num %d len %d <%s>\n", term.state, term.csi_argc, *term.csi_argv, term.csi_argv[1], term.cmd_num, term.cmd_len, term.cmd_buf);
+    if (term.state == DCS_ESCAPE) {
+      uint regarg = *term.csi_argv;
+
+      unsigned char * regis = (unsigned char *)strdup(term.cmd_buf);
+
+      short left = term.curs.x;
+      short top = term.sixel_display ? 0: term.curs.y;
+
+      // image area size at time of output
+      int pixelwidth = 800;
+      int pixelheight = 480;
+#define scale_regis true
+      if (scale_regis) {
+        // adapt pixelwidth, pixelheight to terminal size
+        int termheight, termwidth;
+        win_get_pixels(&termheight, &termwidth, false);
+        pixelwidth = termwidth;
+        pixelheight = pixelwidth * 480 / 800;
+      }
+      // image area (cell units)
+      int width = (pixelwidth - 1) / cell_width + 1;
+      int height = (pixelheight - 1) / cell_height + 1;
+
+      imglist * img;
+      if (!winimg_new(&img, 0, regis, -1 - regarg, left, top, width, height, pixelwidth, pixelheight, false, 0, 0, 0, 0, term.curs.attr.attr & (ATTR_BLINK | ATTR_BLINK2))) {
+        free(regis);
+        return;
+      }
+
+      fill_image_space(img, false);
+
+      // add image to image list
+      if (term.imgs.first == NULL) {
+        term.imgs.first = term.imgs.last = img;
+      } else {
+        // append image to list
+        img->prev = term.imgs.last;
+        term.imgs.last->next = img;
+        term.imgs.last = img;
+      }
+    }
+
   when 'q': {
    sixel_state_t * st = (sixel_state_t *)term.imgs.parser_state;
    int status = -1;
@@ -5833,6 +5877,7 @@ term_do_write(const char *buf, uint len, bool fix_status)
             term.state = DCS_ESCAPE;
           when '0' ... '9':  /* DCS parameter */
             //printf("DCS start %c\n", c);
+            term.csi_argv[term.csi_argc] = c - '0';  // Pm parameter for ReGIS
             term.state = DCS_PARAM;
           when ';':          /* DCS separator */
             //printf("DCS sep %c\n", c);
@@ -5855,6 +5900,7 @@ term_do_write(const char *buf, uint len, bool fix_status)
         switch (c) {
           when '@' ... '~':  /* DCS cmd final byte */
             term.dcs_cmd = term.dcs_cmd << 8 | c;
+            //printf("dcs_cmd %02X\n", term.dcs_cmd);
             if (term.csi_argv[term.csi_argc])
               term.csi_argc ++;
             do_dcs();
