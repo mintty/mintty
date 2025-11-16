@@ -3921,6 +3921,8 @@ static float freq_C5_C7[26] =
     }
     when CPAIR('*', 'r'): {  /* DECSCS: select communication speed */
       if (arg0 <= 2)  {
+        // DECSCS 2 Host Receive speed:
+        // baud rate the VT320 uses to receive data from the host system
         if (term.csi_argc == 1)
           term.baud = cfg.baud;
         else
@@ -3932,8 +3934,8 @@ static float freq_C5_C7[26] =
             when 4: term.baud = 2400;
             when 5: term.baud = 4800;
             when 6: term.baud = 9600;
-            when 7: term.baud = 19200;
-            when 8: term.baud = 38400;
+            when 7: term.baud = 19200;  // VT320 max setting
+            when 8: term.baud = 38400;  // VT420 max speed
             when 9: term.baud = 57600;
             when 10: term.baud = 76800;
             when 11: term.baud = 115200;
