@@ -835,6 +835,24 @@ save_filename(char * suf)
       pat = pat1;
     }
   }
+
+#ifdef fix_bin_directory
+  if (*pat != '/') {
+    char cwd[MAX_PATH];
+    if (getcwd(cwd, sizeof(cwd))) {
+      if (0 == strcmp("/bin", cwd)) {
+        // if we're started from /bin 
+        // (e.g. by creating a shortcut directly from mintty.exe),
+        // redirect file save location to home
+        // (done elsewhere when started from SYSTEMROOT via desktop shortcut)
+        char * pat1 = asform("%s/%s", home, pat);
+        free(pat);
+        pat = pat1;
+      }
+    }
+  }
+#endif
+
   wchar * wpat = cs__mbstowcs(pat);
   free(pat);
   pat = path_win_w_to_posix(wpat);
