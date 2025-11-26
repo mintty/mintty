@@ -4936,6 +4936,9 @@ static struct {
     when WM_IME_STARTCOMPOSITION:
       ImmSetCompositionFont(imc, &lfont);
 
+    when WM_IME_ENDCOMPOSITION:
+      win_key_reset();
+
     when WM_IME_COMPOSITION:
       if (lp & GCS_RESULTSTR) {
         LONG len = ImmGetCompositionStringW(imc, GCS_RESULTSTR, null, 0);
