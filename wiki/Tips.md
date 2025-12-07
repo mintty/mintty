@@ -388,10 +388,14 @@ You can however fix the issue by updating your conhost layer to its update
 as distributed with the Windows Terminal project.
 From the [release area](https://github.com/microsoft/terminal/releases), 
 among the Assets, download the WindowsTerminalPreview zip file of your 
-architecture, extract its `OpenConsole.exe`, rename it to `conhost.exe` 
-and replace the conhost program in your Windows System32 folder with it:
+architecture, or the .nuget package (which is also a zip file), 
+or get the 1.25 version, currently available in the "Canary" section 
+of the github project page;
+extract its `OpenConsole.exe`, rename it to `conhost.exe` 
+and replace the conhost program in your Windows System32 folder with it, 
+using an elevated shell ("Run as Administrator"):
 * Make a backup copy of conhost.exe first, just in case.
-* Then remove the original conhost.exe, or rename it as a backup.
+* Then rename the original conhost.exe (also as a backup); it cannot be removed while in use.
 * Then copy the OpenConsole.exe binary to conhost.exe.
 
 (Do **not** copy conhost.exe from Windows 11 into Windows 10.)
