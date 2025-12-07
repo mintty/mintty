@@ -7,6 +7,9 @@ Terminal features
   * Primary Device Attributes report leaves out disabled features.
   * Framework for embedding of ReGIS graphics.
 
+Keyboard handling
+  * Fix sticky modifier while in IME input mode (#1345).
+
 Configuration
   * New option ExportHTMLUnwrapped (#1336).
   * New user-definable function export-html-all (~#1336).
