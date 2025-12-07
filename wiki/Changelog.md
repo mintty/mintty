@@ -10,9 +10,13 @@ Terminal features
 Keyboard handling
   * Fix sticky modifier while in IME input mode (#1345).
 
+Window handling
+  * Enable terminal rewrap on resize by default.
+
 Configuration
   * New option ExportHTMLUnwrapped (#1336).
   * New user-definable function export-html-all (~#1336).
+  * Change default setting RewrapOnResize=yes.
 
 ### 3.8.1 (18 September 2025) ###
 
