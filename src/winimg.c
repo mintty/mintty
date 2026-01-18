@@ -653,6 +653,19 @@ draw_img(HDC dc, imglist * img)
 #endif
 }
 
+
+// callback function to flush incremental graphic output, used for ReGIS
+// - we could easier define this as an inner function but then 
+//   gcc would generate a trampoline for it which is undesirable
+// so we need to go the ugly way to shuffle parameters to global variables
+static HDC _dc, _rdc;
+static int _xlft, _grtop, _padwidth, _padheight;
+static void flush(void)
+{
+  StretchBlt(_dc, _xlft, _grtop, _padwidth, _padheight,
+             _rdc, 0, 0, _padwidth, _padheight, SRCCOPY);
+}
+
 void
 winimgs_paint(void)
 {
@@ -848,6 +861,15 @@ static bool previously_selected = false;
             iheight = img->cheight * cell_height * img->height / img->pixelheight;
           }
           int ibot = max(0, top * cell_height + iheight) + OFFSET + PADDING;
+
+          // pre-clear background of graphics area
+          // - for ReGIS graphics, this could be skipped in order to 
+          //   support iterative combination of subsequent ReGIS output;
+          //   however, this fails due to screen refresh and scrolling, 
+          //   so to really support that ReGIS feature, 
+          //   considerable effort would need to be put into a strategy 
+          //   to combine overlayed graphics on refresh
+
           // fill either background image or colour
           if (*cfg.background) {
             fill_background(dc, &(RECT){xlft + iwidth, ytop, xrgt, ibot});
@@ -861,6 +883,7 @@ static bool previously_selected = false;
             FillRect(dc, &(RECT){xlft, ibot, xrgt, ybot}, br);
             DeleteObject(br);
           }
+
           if (!img->len) {
             // sixel needs this in addition
             ExcludeClipRect(dc, xlft + iwidth, ytop, xrgt, ibot);
@@ -881,6 +904,8 @@ static bool previously_selected = false;
             // rounded up to cell size and scaled with a zoomed window
             int padwidth = cell_width * img->width;
             int padheight = cell_height * img->height;
+            // anchor position of graphics
+            int grtop = top * cell_height + OFFSET + PADDING;
 
             // determine zoom factor
 #define scale_regis true
@@ -890,10 +915,6 @@ static bool previously_selected = false;
               scale = min(padwidth / 800.0, padheight / 480.0);
             else
               scale = 1.0;
-
-            // set up ReGIS drawing area and background pad;
-            // arrange double buffering to avoid flickering
-            HDC hdc = CreateCompatibleDC(dc);
 
             // size of the ReGIS graphics area
             int rwidth = img->pixelwidth * scale;
@@ -912,81 +933,87 @@ static bool previously_selected = false;
             }
             //printf("--------------- img s %d×%d c %d×%d pix %d×%d (pad %d×%d) reg %d×%d\n", img->width, img->height, img->cwidth, img->cheight, img->pixelwidth, img->pixelheight, padwidth, padheight, rwidth, rheight);
 
+#define regis_use_separate_dc
+
+#ifdef regis_use_separate_dc
+            // set up ReGIS drawing area and background pad;
+            // arrange double buffering to avoid flickering
+            // - well, actually it turns out that this would not be needed,
+            // but we stay with the separate rendering DC anyway, see below
+            HDC rdc = CreateCompatibleDC(dc);
             // set up drawing pad
             HBITMAP hbm = CreateCompatibleBitmap(dc, padwidth, padheight);
-            (void)SelectObject(hdc, hbm);
-
-static bool regis_init = false;
-            if ((regarg & 1) || !regis_init) {
-              // background fill the terminal pad 
-              // (drawing area extended to full terminal cells)
-              if (*cfg.background)
-                fill_background(hdc, &(RECT){0, 0, padwidth, padheight});
-              else {
-                colour bg = colours[term.rvideo ? FG_COLOUR_I : BG_COLOUR_I];
-#ifdef debug_regis
-                bg = RGB(80, 90, 100);  // show pad filling
-#endif
-                HBRUSH br = CreateSolidBrush(bg);
-                FillRect(hdc, &(RECT){0, 0, padwidth, padheight}, br);
-                DeleteObject(br);
-              }
-              // background clear the actual ReGIS drawing area,
-              // also reset ReGIS drawing parameters
-              regis_clear(hdc, rwidth, rheight);
-              // home ReGIS cursor
-              regis_home();
-              regis_init = true;
-            }
-
-#if defined(debug_regis) && debug_regis > 1
-            // mark ReGIS graphics area
-            colour bg = RGB(140, 150, 190);
-            HPEN oldpen = SelectObject(hdc, CreatePen(PS_SOLID, 1, bg));
-            MoveToEx(hdc, 0, 0, null);
-            LineTo(hdc, 0, rheight - 1);
-            LineTo(hdc, rwidth - 1, rheight - 1);
-            LineTo(hdc, rwidth - 1, 0);
-            LineTo(hdc, 0, 0);
-            oldpen = SelectObject(hdc, oldpen);
-            DeleteObject(oldpen);
-#endif
-
-#ifdef zoom_regis
-#warning this way of zooming results in pixelish upscaling
-            regis_draw(hdc, 1.0, rwidth, rheight, regarg, img->pixels);
-
-            int grtop = top * cell_height + OFFSET + PADDING;
-            int grbot = (top + img->height) * cell_height + OFFSET + PADDING;
-            StretchBlt(dc, xlft, grtop, (xrgt - xlft) * scale, (grbot - grtop) * scale,
-                       hdc, 0, 0, rwidth, rheight, SRCCOPY);
+            (void)SelectObject(rdc, hbm);
 #else
+#warning transform placement fails on GDI output (incl. ExtTextOut)
+#warning so text will not be placed properly
+            // rendering directly to a common DC, 
+            // using handle name rdc for clarity;
+            // however, this does not seem to work with ReGIS output:
+            // we need to adjust the coordinate system, and while 
+            // this works nicely for GDI+ rendering, it is apparently 
+            // ignored for GDI rendering (???), 
+            // so ReGIS text would be displaced from the drawing area
+            HDC rdc = dc;
+            XFORM old_xform1;
+            bool coord_transformed1 = SetGraphicsMode(rdc, GM_ADVANCED);
+            if (coord_transformed1 && GetWorldTransform(rdc, &old_xform1)) {
+              XFORM xform = (XFORM){1.0, 0.0, 0.0, 1.0, xlft, grtop};
+              coord_transformed1 = ModifyWorldTransform(rdc, &xform, MWT_LEFTMULTIPLY);
+            }
+#endif
+
+#ifdef debug_regis
+            // mark terminal drawing pad 
+            // (drawing area rounded up to cell-size)
+            colour bg = RGB(80, 90, 100);  // show pad filling
+            HBRUSH br = CreateSolidBrush(bg);
+            FillRect(rdc, &(RECT){0, 0, padwidth, padheight}, br);
+            DeleteObject(br);
+#endif
+
 #ifdef zoom_transform
-#warning this spoils dashed lines at larger zoom factor
-            int coord_transformed = SetGraphicsMode(hdc, GM_ADVANCED);
-            XFORM old_xform;
-            if (coord_transformed && GetWorldTransform(hdc, &old_xform)) {
+#warning transform zooming fails on GDI output (incl. ExtTextOut)
+#warning so text will not be scaled properly
+#warning also, this used to spoil dashed-style lines at larger zoom factor
+            int coord_transformed2 = SetGraphicsMode(rdc, GM_ADVANCED);
+            XFORM old_xform2;
+            if (coord_transformed2 && GetWorldTransform(rdc, &old_xform2)) {
               XFORM xform = (XFORM){scale, 0.0, 0.0, scale, 0, 0};
-              coord_transformed = SetWorldTransform(hdc, &xform);
+              coord_transformed2 = ModifyWorldTransform(rdc, &xform, MWT_LEFTMULTIPLY);
               scale = 1.0;
             }
 #endif
 
+            // provide graphics flushing function with parameters;
+            // we could nicely define the flush function here locally 
+            // but then gcc would generate a trampoline which is undesirable
+            // so we need to shuffle parameters to global variables
+            _dc = dc; _rdc = rdc;
+            _xlft = xlft; _grtop = grtop;
+            _padwidth = padwidth; _padheight = padheight;
+            //printf("pad %d/%d draw %d/%d\n", padwidth, padheight, rwidth, rheight);
+
             // scale while drawing
-            regis_draw(hdc, scale, rwidth, rheight, regarg, img->pixels);
+            regis_draw(rdc, scale, rwidth, rheight, regarg, img->pixels, flush);
 
 #ifdef zoom_transform
-            if (coord_transformed)
-              SetWorldTransform(hdc, &old_xform);
+            if (coord_transformed2)
+              SetWorldTransform(rdc, &old_xform2);
 #endif
 
-            int grtop = top * cell_height + OFFSET + PADDING;
+#ifdef regis_use_separate_dc
+            // copy rendered graphics from the separate DC into the window DC
             StretchBlt(dc, xlft, grtop, padwidth, padheight,
-                       hdc, 0, 0, padwidth, padheight, SRCCOPY);
+                       rdc, 0, 0, padwidth, padheight, SRCCOPY);
+            DeleteObject(hbm);
+            DeleteDC(rdc);
+#else
+            // restore coordinate mapping of window DC
+            if (coord_transformed1)
+              SetWorldTransform(rdc, &old_xform1);
 #endif
 
-            DeleteObject(hbm);
-            DeleteDC(hdc);
             ExcludeClipRect(dc, xlft, ytop, xrgt, ybot);
           }
           else if (img->len) {  // Draw Image (iTerm2 protocol)
