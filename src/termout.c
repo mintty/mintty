@@ -36,10 +36,10 @@
 #define CPAIR(x, y) ((x) << 8 | (y))
 
 static string primary_da1 = "\e[?1;2c";
-static string primary_da2 = "\e[?62;2;4;6;9;15;29c";
-static string primary_da3 = "\e[?63;2;4;6;9;11;15;29c";
-static string primary_da4 = "\e[?64;2;4;6;9;11;15;21;28;29c";
-static string primary_da5 = "\e[?65;2;4;6;9;11;15;21;28;29c";
+static string primary_da2 = "\e[?62;2;3;4;6;9;15;29c";
+static string primary_da3 = "\e[?63;2;3;4;6;9;11;15;29c";
+static string primary_da4 = "\e[?64;2;3;4;6;9;11;15;21;28;29c";
+static string primary_da5 = "\e[?65;2;3;4;6;9;11;15;21;28;29c";
 /* Registered Extensions to the Character Cell Display Service Class
 	1	132 Column Display
 	2	Printer Port
