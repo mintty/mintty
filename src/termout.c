@@ -1,5 +1,5 @@
 // termout.c (part of mintty)
-// Copyright 2008-23 Andy Koppe, 2017-2025 Thomas Wolff
+// Copyright 2008-23 Andy Koppe, 2017-2026 Thomas Wolff
 // Adapted from code from PuTTY-0.60 by Simon Tatham and team.
 // Licensed under the terms of the GNU General Public License v3 or later.
 
@@ -19,7 +19,9 @@
 
 #include <termios.h>
 #include <sys/time.h>
+#if CYGWIN_VERSION_API_MINOR >= 74
 #include <langinfo.h>  // nl_langinfo, CODESET
+#endif
 
 
 #define TERM_CMD_BUF_INC_STEP 128
@@ -4635,10 +4637,12 @@ respond_capabilities(void)
      )
     p += sprintf(p, "M");  // MOUSE
   p += sprintf(p, "Sc7");  // DECSCUSR
+#if CYGWIN_VERSION_API_MINOR >= 74
   if (0 == strcmp(nl_langinfo(CODESET), "UTF-8")) {
     p += sprintf(p, "U");  // UNICODE_BASIC
     p += sprintf(p, "Uw%d", UNICODE_VERSION / 100);  // UNICODE_WIDTHS
   }
+#endif
   if (cs_ambig_wide)
     p += sprintf(p, "Aw");  // AMBIGUOUS_WIDE
   if (contains(cfg.suppress_osc, 0) || contains(cfg.suppress_osc, 1) || contains(cfg.suppress_osc, 2))
