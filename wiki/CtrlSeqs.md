@@ -744,8 +744,8 @@ in order to avoid screen flickering in certain situations of display update.
 
 ## Image support ##
 
-In addition to the legacy Sixel feature, mintty supports graphic image display 
-via iTerm2 controls:
+In addition to the legacy graphics features, mintty supports graphic 
+image display via iTerm2 controls:
 
 > `^[]1337;File=` _par_`=`_arg_ [ `;`_par_`=`_arg_ ]* `:`_image_ `^G`
 
@@ -811,6 +811,26 @@ to achieve the same effect case-by-case per image.
 | `^[[?8452l`   | below image                                |
 | `^[[?7780h`   | do not scroll, keep cursor position        |
 | `^[[?7780l`   | scroll as needed to fit image (default)    |
+
+
+## ReGIS support ##
+
+### ReGIS graphics position ###
+
+Mintty supports ReGIS vector graphics output. Unlike DEC VT340, ReGIS 
+graphics is displayed inlined from the current cursor position.
+DECSET 80 (Sixel Display Mode) can also be used to switch to ReGIS 
+output to the home position.
+
+| **sequence** | **graphics anchor position**      |
+|:-------------|:----------------------------------|
+| `^[[?80h`    | home of screen (Display Mode)     |
+| `^[[?80l`    | current position (Scrolling Mode) |
+
+### ReGIS feature support ###
+
+See the [[ReGIS]] wiki page for a list of ReGIS feature limitations 
+and extensions.
 
 
 ## Audio support ##

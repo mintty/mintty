@@ -7,6 +7,9 @@ Terminal features
   * Primary Device Attributes report leaves out disabled features.
   * Framework for embedding of ReGIS graphics.
 
+Graphics support
+  * ReGIS vector graphics support.
+
 Keyboard handling
   * Fix sticky modifier while in IME input mode (#1345).
 
@@ -17,6 +20,8 @@ Configuration
   * New option ExportHTMLUnwrapped (#1336).
   * New user-definable function export-html-all (~#1336).
   * Change default setting RewrapOnResize=yes.
+  * Renamed option ImageClipChars from SixelClipChars, keeping old name as alias.
+  * New options ReGISFont, ReGISTension, ReGISGrid.
 
 ### 3.8.1 (18 September 2025) ###
 

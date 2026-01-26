@@ -1199,6 +1199,9 @@ shortcut override mode.
 
 .SS Embedding graphics in terminal output
 
+.TQ
+.B Embedding Sixel pixel graphics
+
 The Sixel graphics support feature facilitates a range of applications 
 that integrate graphic images in the terminal, animated graphics, and even 
 video and interactive gaming applications.
@@ -1212,10 +1215,19 @@ GNUTERM=sixel gnuplot \-e "splot [x=\-3:3] [y=\-3:3] sin(x) * cos(y)"
 in order to prevent Windows handle resource exhaustion.
 
 .TQ
+.B Displaying ReGIS vector graphics
+
+The ReGIS vector graphics support feature completes feature compatibility 
+with DEC VT340 and xterm.
+Details on ReGIS features (limitations, modifications, extensions) are 
+listed on the wiki page
+\fIhttps://github.com/mintty/mintty/wiki/ReGIS\fP.
+
+.TQ
 .B Image support
-In addition to the legacy Sixel feature, mintty supports graphic image display 
-(using iTerm2 controls). Image formats supported comprise
-PNG, JPEG, GIF, TIFF, BMP, Exif.
+In addition to the legacy Sixel and ReGIS graphics features, mintty 
+supports graphic image display (using iTerm2 controls). 
+Image formats supported comprise PNG, JPEG, GIF, TIFF, BMP, Exif.
 
 .SS Vector graphics terminal emulation
 
@@ -1364,8 +1376,8 @@ command-line.)
 Unicode-enabled settings: BellFile, BellFile2..7, ThemeFile, ThemeDark, 
 KeyClick, Background, Title, ExitTitle, Icon, Log, SaveFilename, 
 Language, Font, Font1..10, FontRTL, FontSample, FontChoice, 
-TekFont, CopyAsRTFFont, 
-SearchBar, Printer, Answerback, SixelClipChars, 
+TekFont, ReGISFont, CopyAsRTFFont, 
+SearchBar, Printer, Answerback, ImageClipChars, SixelClipChars, 
 Class, AppID, AppName, AppLaunchCmd, 
 DropCommands, ExitCommands, UserCommands, SessionCommands, TaskCommands, 
 KeyFunctions, SysMenuFunctions, CtxMenuFunctions, UserCommandsPath.
@@ -1560,7 +1572,7 @@ In the config file, this corresponds to the following entries:
 .en
 \fBFont style\fP (FontWeight=400, FontIsBold=no)
 .en
-\fBSize\fP (FontHeight=9)
+\fBSize\fP (FontHeight=9 / FontSize=9)
 ./ul0
 .RS
 The font selection dialog also offers an \fBApply\fP button for 
@@ -2576,9 +2588,9 @@ The \fBxterm\-256color\fP setting enables 256-color mode in some applications,
 but may not be recognised at all by others, which is why plain \fBxterm\fP
 is the default.
 
-The \fBvt340\fP setting facilitates a terminal ID indication corresponding 
-to the Sixel graphics feature. However, particularly the \fIgnuplot\fP 
-tool uses a dedicated variable (\fBGNUTERM\fP) to trigger its usage.
+The \fBvt340\fP setting facilitates a terminal ID indication corresponding to 
+the Sixel and ReGIS graphics features. However, particularly the \fIgnuplot\fP 
+tool uses a dedicated variable (\fBGNUTERM\fP) to trigger output mode.
 
 (Corresponds roughly to the combined xterm resources 
 \fBdecTerminalID\fP, \fBtermName\fP, \fBkeyboardType\fP.)
@@ -3927,6 +3939,20 @@ valid values are 0, 1 (CR) and 2 (CR ^C).
 (Corresponds to the xterm resource \fBginTerminator\fP.)
 
 .TQ
+\fBReGIS font\fP (ReGISFont=)
+For ReGIS graphics, a dedicated font can be selected.
+The terminal default font is used otherwise.
+
+.TQ
+\fBReGIS tension\fP (ReGISTension=0.6)
+This setting can adjust the "tension" of ReGIS interpolated curves.
+
+.TQ
+\fBReGIS background grid\fP (ReGISGrid=0)
+Set this for example to ReGISGrid=100 to draw a background grid to 
+help check or debug ReGIS programs.
+
+.TQ
 \fBDownloaded colour scheme\fP (ColourScheme=) [DEPRECATED]
 This setting is not intended for manual configuration. It can store a 
 colour scheme as downloaded from the Color Scheme Designer or from a 
@@ -4098,13 +4124,18 @@ The value is a bitmask, adding the following values:
 .TQ
 \fBMaximum image size\fP (MaxImageSize=4444444)
 This unsigned integer byte count limits the size of graphics data 
-(image or Sixel graphics) accepted in the mintty command buffer.
+(image, Sixel or ReGIS graphics) accepted in the mintty command buffer.
 
 .TQ
-\fBSixel image clipboard substitution\fP (SixelClipChars=\fIspace\fP)
+\fBImage cell clipboard substitution\fP (ImageClipChars=\fIspace\fP)
 Characters to copy to clipboard as a substitute for image graphics,
 to indicate their positions. With an empty value, U+FFFC will be used.
 Double-width characters should not be used here.
+Applies to all image and graphics formats.
+
+.TQ
+\fBSixel image clipboard substitution\fP (SixelClipChars=\fIspace\fP) [DEPRECATED]
+Alias of ImageClipChars.
 
 .TQ
 \fBDrag-and-drop application-targetted commands\fP (DropCommands=)
@@ -4635,11 +4666,11 @@ In addition, mintty supports a maximum of ANSI and ECMA-48 character attribute c
 strikeout, rapid blinking, alternative fonts) and additional 
 rendering attributes (underline styles and colours, superscript and subscript, 
 shadowed and overstrike).
-Mintty provides Sixel graphics, image support according to the iTerm2 
-protocol (including png, jpeg, gif output), Emoji support, and Bidi 
-reordering according to the Unicode Bidi Algorithm UBA, amended with 
-flexible bidi controls according to the draft bidi mode model of the 
-\fBBiDi in Terminal Emulators\fP recommendation 
+Mintty provides Sixel graphics, ReGIS vector graphics, image support 
+according to the iTerm2 protocol (including png, jpeg, gif output), 
+Emoji support, and Bidi reordering according to the Unicode Bidi Algorithm 
+UBA, amended with flexible bidi controls according to the draft bidi 
+mode model of the \fBBiDi in Terminal Emulators\fP recommendation 
 (\fIhttps://terminal\-wg.pages.freedesktop.org/bidi/\fP).
 However, rendering of emoji zwj-joined sequences within right-to-left text 
 works only in emoji width mode.
@@ -4665,7 +4696,7 @@ Additional information can be found on the wiki on the mintty project page
 
 .SH LICENSE
 
-Copyright (C) 2025 Thomas Wolff, Andy Koppe
+Copyright (C) 2026 Thomas Wolff, Andy Koppe
 
 Mintty is released under the terms of the the \fIGNU General Public License\fP
 version 3.

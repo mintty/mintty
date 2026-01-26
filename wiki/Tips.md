@@ -1577,7 +1577,9 @@ the left or right neighbour monitor: Win+Shift+cursor-left/right.
 
 ## Embedding graphics in terminal output ##
 
-Mintty supports both Sixel graphics and image graphics output (see below).
+Mintty supports Sixel and ReGIS graphics output and image output (see below).
+
+### Sixel graphics ###
 
 The Sixel feature facilitates a range of applications that integrate 
 graphic images in the terminal, animated graphics, and even video and 
@@ -1591,6 +1593,16 @@ gnuplot -e "splot [x=-3:3] [y=-3:3] sin(x) * cos(y)"
 
 Note that gnuplot uses black text on default background for captions 
 and coordinates so better not run it in a terminal with dark background.
+
+### ReGIS vector graphics ###
+
+The ReGIS vector graphics support feature completes feature compatibility 
+with DEC VT340 and xterm.
+
+#### ReGIS feature support ####
+
+ReGIS feature support has a few limitations, modifications, and extensions.
+See the [[ReGIS]] wiki page for a list.
 
 ### Image support ###
 
