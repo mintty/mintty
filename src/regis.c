@@ -767,95 +767,6 @@ regis_init(void)
 }
 
 
-static char *
-skip_space(char * s)
-{
-  while (*s <= ' ')
-    s ++;
-  return s;
-}
-
-static int
-scannum1(char * * s)
-{
-  float num = -1.0;
-  int len;
-  int ret = sscanf(*s, "%f%n", &num, &len);
-  if (ret)
-    *s += len;
-  return roundf(num);
-}
-
-static int
-scannum(char * * s)
-{
-  float num = 0.0;
-  int len;
-  int ret = sscanf(*s, "%f%n", &num, &len);
-  if (ret)
-    *s += len;
-  return roundf(num);
-}
-
-static void
-scanxy(char * * s)
-{
-  int scannat(char * * s)
-  {
-    switch (**s) {
-      when '0' ... '9' or '.':
-        return scannum(s);
-      when '-' or '+':
-        // swallow wrong syntax like T[+50,-50]
-        (void)scannum(s);
-    }
-    return 0;
-  }
-
-  (*s) ++;
-  *s = skip_space(*s);
-  scan_rx = scannat(s);
-  *s = skip_space(*s);
-  if (**s == ',') {
-    (*s) ++;
-    *s = skip_space(*s);
-    scan_ry = scannat(s);
-    *s = skip_space(*s);
-  }
-}
-
-static void
-scancoord(char * * s)
-{
-  int scanord(int ord, char * * s)
-  {
-    switch (**s) {
-      when '0' ... '9' or '.':
-        return scannum(s);
-      when '-':
-        return ord + scannum(s);
-      when '+':
-        (*s) ++;
-        return ord + scannum(s);
-    }
-    return ord;
-  }
-
-  (*s) ++;
-  *s = skip_space(*s);
-  new_rx = scanord(curr_rx, s);
-  *s = skip_space(*s);
-  if (**s == ',') {
-    (*s) ++;
-    *s = skip_space(*s);
-    new_ry = scanord(curr_ry, s);
-    *s = skip_space(*s);
-  }
-  else
-    new_ry = curr_ry;
-}
-
-
 static float h, l, s;
 
 static void
@@ -1307,6 +1218,95 @@ static struct macro {
     }
     void regis_clear_macro(char let) {
       clear_macro(toupper(let) - 'A');
+    }
+
+
+    char *
+    skip_space(char * s)
+    {
+      while (*s <= ' ')
+        s ++;
+      return s;
+    }
+
+    int
+    scannum1(char * * s)
+    {
+      float num = -1.0;
+      int len;
+      int ret = sscanf(*s, "%f%n", &num, &len);
+      if (ret)
+        *s += len;
+      return roundf(num);
+    }
+
+    int
+    scannum(char * * s)
+    {
+      float num = 0.0;
+      int len;
+      int ret = sscanf(*s, "%f%n", &num, &len);
+      if (ret)
+        *s += len;
+      return roundf(num);
+    }
+
+    void
+    scanxy(char * * s)
+    {
+      int scannat(char * * s)
+      {
+        switch (**s) {
+          when '0' ... '9' or '.':
+            return scannum(s);
+          when '-' or '+':
+            // swallow wrong syntax like T[+50,-50]
+            (void)scannum(s);
+        }
+        return 0;
+      }
+
+      (*s) ++;
+      *s = skip_space(*s);
+      scan_rx = scannat(s);
+      *s = skip_space(*s);
+      if (**s == ',') {
+        (*s) ++;
+        *s = skip_space(*s);
+        scan_ry = scannat(s);
+        *s = skip_space(*s);
+      }
+    }
+
+    void
+    scancoord(char * * s)
+    {
+      int scanord(int ord, char * * s)
+      {
+        switch (**s) {
+          when '0' ... '9' or '.':
+            return scannum(s);
+          when '-':
+            return ord + scannum(s);
+          when '+':
+            (*s) ++;
+            return ord + scannum(s);
+        }
+        return ord;
+      }
+
+      (*s) ++;
+      *s = skip_space(*s);
+      new_rx = scanord(curr_rx, s);
+      *s = skip_space(*s);
+      if (**s == ',') {
+        (*s) ++;
+        *s = skip_space(*s);
+        new_ry = scanord(curr_ry, s);
+        *s = skip_space(*s);
+      }
+      else
+        new_ry = curr_ry;
     }
 
 
