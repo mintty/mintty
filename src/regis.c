@@ -921,7 +921,6 @@ setblue(COLORREF * colr, int val)
    ReGIS graphics rendering is invoked on-the-fly as being parsed, 
    so it's an interpreter, no storage of parsing structure is involved. 
    The only additional storage is the list of defined "macrographs".
-   Recursive invocation of regis_chunk is also applied to handle macrographs.
  */
 void
 regis_draw(HDC dc, float scale, int rwidth, int rheight, int rmode, uchar * regis, flush_fn flush)
@@ -985,6 +984,7 @@ static struct {
   } posstack[stacklen];
 static int posi = 0;
 
+
 // Macrographs
 static struct macro {
   char * macro;
@@ -1030,6 +1030,12 @@ static struct macro {
     for (uint mi = 0; mi < lengthof(macro); mi++)
       clear_macro(mi);
   }
+
+  struct macro_stack {
+    int mi;
+    char * ret;
+  } macro_stack[26];
+  int macro_stacki = 0;
 
 
   char * regis_string(char * r, wchar * * text) {
@@ -1194,6 +1200,7 @@ static struct macro {
     void save_text_controls(void) { sav_txt_ctrl = controls->text; }
     void restore_text_controls(void) { controls->text = sav_txt_ctrl; }
 
+
     void regis_define_macro(char let, char * begin, char * end)
     {
       int mi = toupper(let) - 'A';
@@ -1207,14 +1214,68 @@ static struct macro {
       (void)begin; (void)end;
 #endif
     }
-    void regis_invoke_macro(char let)
+    char * regis_invoke_macro(char * r)
     {
-      int mi = toupper(let) - 'A';
+      char let = toupper(*r);
+      int mi = let - 'A';
       if (macro[mi].macro && !macro[mi].invoked) {
         macro[mi].invoked = true;  // prevent macro recursion
+#ifdef invoke_macros_recursively
+        // this way of recursive macro invocation is more elegant
+        // but it supports only putting complete commands into macros
         regis_chunk(fill, 0, controls, macro[mi].macro, 0);
         macro[mi].invoked = false;
+#else
+        // macro invocation by string position push/pop
+        // shall support macros anywhere, e.g.
+        // @:P [200,400] @; @P
+        // and even
+        // @:X 200 @; P[@X]
+        // as suggested in several ReGIS descriptions:
+        // FUNDAMENTALS OF THE REMOTE GRAPHICS INSTRUCTION SET, DEC/TR-95 1979:
+        //	"a macrograph string reference causes the characters 
+        //	previously defined for that macrograph to be substituted 
+        //	for the string reference characters. ... a macrograph string 
+        //	may be just an argument of an instruction ..."
+        //	"This sequence [@<letter>] may appear anyplace in a 
+        //	sequence of REGIS istructions."
+        // GIGI/ReGIS Handbook, DEC AA-K336A-TK 1981:
+        //	macrograph defines a string that "is a part of 
+        //	or a whole ReGIS command string"
+        //	and "you can invoke it anywhere in a ReGIS command stream"
+        // VT125 GRAPHICS TERMINAL USER GUIDE, DEC EK-VT125-UG-002 1982:
+        //	"... command strings or any other string of characters ...
+        //	substituted in another command string."
+        //	"ReGIS inserts the contents of the macrograph in the command 
+        //	string at the position where the macrograph is invoked."
+        macro_stack[macro_stacki].mi = mi;
+        r++;
+#ifdef debug_macros
+        printf("invoke %c: ", let);
+        println (macro[mi].macro);
+        printf("push [%d]: %p ", macro_stacki, r);
+        println (r);
+#endif
+        macro_stack[macro_stacki].ret = r;
+        macro_stacki ++;
+        return macro[mi].macro;
+#endif
       }
+      return r;
+    }
+    char * return_from_macro(char * r)
+    {
+      // check if this is a macro invocation
+      if (macro_stacki) {
+        macro_stacki --;
+#ifdef debug_macros
+        printf("pop  [%d]: %p ", macro_stacki, macro_stack[macro_stacki].ret);
+        println (macro_stack[macro_stacki].ret);
+#endif
+        macro[macro_stack[macro_stacki].mi].invoked = false;
+        return macro_stack[macro_stacki].ret;
+      }
+      return r;
     }
     void regis_clear_macro(char let) {
       clear_macro(toupper(let) - 'A');
@@ -1224,14 +1285,29 @@ static struct macro {
     char *
     skip_space(char * s)
     {
-      while (*s <= ' ')
+      while (*s && *s <= ' ')
         s ++;
+      if (*s == '@') {
+        char * t = s;
+        t++;
+        switch (*t) {
+          when 'A' ... 'Z' or 'a' ... 'z':
+            s = regis_invoke_macro(t);
+            s = skip_space(s);
+            return s;
+        }
+      }
+      if (!*s) {
+        // check if we should return from a macro
+        return return_from_macro(s);
+      }
       return s;
     }
 
     int
     scannum1(char * * s)
     {
+      *s = skip_space(*s);
       float num = -1.0;
       int len;
       int ret = sscanf(*s, "%f%n", &num, &len);
@@ -1243,6 +1319,7 @@ static struct macro {
     int
     scannum(char * * s)
     {
+      *s = skip_space(*s);
       float num = 0.0;
       int len;
       int ret = sscanf(*s, "%f%n", &num, &len);
@@ -1602,6 +1679,7 @@ static struct macro {
       // skip comment lines
       if (*r == '\n') {
         r++;
+#if 0
         if (*r == '#') {
 #ifdef debug_regis
           println(r);
@@ -1610,6 +1688,7 @@ static struct macro {
             r++;
           continue;
         }
+#endif
       }
       // remember current position for proper loop termination
       char * last_r = r;
@@ -1722,18 +1801,21 @@ static struct macro {
             controls->foreground = RGB(0, 0, 0);
           when 'R':  // red
             r++;
+            r = skip_space(r);
             if (*r >= '0' && *r <= '9')
               setred(&controls->foreground, scannum(&r));
             else
               controls->foreground = RGB(255, 0, 0);
           when 'G':  // green
             r++;
+            r = skip_space(r);
             if (*r >= '0' && *r <= '9')
               setgreen(&controls->foreground, scannum(&r));
             else
               controls->foreground = RGB(0, 255, 0);
           when 'B':  // blue
             r++;
+            r = skip_space(r);
             if (*r >= '0' && *r <= '9')
               setblue(&controls->foreground, scannum(&r));
             else
@@ -1825,18 +1907,21 @@ static struct macro {
             controls->background = RGB(0, 0, 0);
           when 'R':  // red
             r++;
+            r = skip_space(r);
             if (*r >= '0' && *r <= '9')
               setred(&controls->background, scannum(&r));
             else
               controls->background = RGB(255, 0, 0);
           when 'G':  // green
             r++;
+            r = skip_space(r);
             if (*r >= '0' && *r <= '9')
               setgreen(&controls->background, scannum(&r));
             else
               controls->background = RGB(0, 255, 0);
           when 'B':  // blue
             r++;
+            r = skip_space(r);
             if (*r >= '0' && *r <= '9')
               setblue(&controls->background, scannum(&r));
             else
@@ -1966,7 +2051,7 @@ static struct macro {
                   regis_clear_macro(c);
                 r++;
               when 'A' ... 'Z' or 'a' ... 'z':
-                regis_invoke_macro(toupper(*r));
+                r = regis_invoke_macro(r);
             }
           when '"' or '\'':
             if (rstate == 'T') {
@@ -1980,7 +2065,7 @@ static struct macro {
               }
             }
             else
-              // skip stray text
+              // skip stray text string (for example used as comment after ;)
               r = regis_string(r, 0);
             //continue;
           when '(':
@@ -2111,12 +2196,23 @@ static struct macro {
 #endif
             reset_temporary_write_controls();
             rstate = let;
+          when '#':  // comment with log output
+#ifdef debug_regis
+            println(r);
+#endif
+            while (*r && *r != '\n')
+              r++;
         }
       }
 
       // advance pointer in ReGIS program if needed
       if (r == last_r && *r && *r != fini && *r != '\n')
         r ++;
+
+      if (!*r) {
+        // check if we should return from a macro
+        r = return_from_macro(r);
+      }
     }
 
     return r;
