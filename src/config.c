@@ -1,5 +1,5 @@
 // config.c (part of mintty)
-// Copyright 2008-2023 Andy Koppe, 2015-2025 Thomas Wolff
+// Copyright 2008-2023 Andy Koppe, 2015-2026 Thomas Wolff
 // Based on code from PuTTY-0.60 by Simon Tatham and team.
 // Licensed under the terms of the GNU General Public License v3 or later.
 
@@ -103,6 +103,7 @@ const config default_cfg = {
   .charwidth = 0,
   .old_locale = false,
   .fontmenu = -1,
+  .regis_font = W(""),
   .tek_font = W(""),
   .tab_font = W(""),
   // Keys
@@ -316,6 +317,8 @@ const config default_cfg = {
   },
   .max_image_size = 4444444,
   .sixel_clip_char = W(" "),
+  .regis_grid = 0,
+  .regis_tension = "0.6",
   .baud = 0,
   .bloom = 0,
   .old_xbuttons = false,
@@ -433,6 +436,7 @@ options[] = {
   {"Font10Weight", OPT_INT, offcfg(fontfams[10].weight)},
   {"FontRTL", OPT_WSTRING, offcfg(fontfams[11].name)},
   {"FontRTLWeight", OPT_INT, offcfg(fontfams[11].weight)},
+  {"ReGISFont", OPT_WSTRING, offcfg(regis_font)},
   {"TekFont", OPT_WSTRING, offcfg(tek_font)},
   {"TabFont", OPT_WSTRING, offcfg(tab_font)},
 
@@ -619,7 +623,10 @@ options[] = {
   {"WordCharsExcl", OPT_STRING, offcfg(word_chars_excl)},
   {"IMECursorColour", OPT_COLOUR, offcfg(ime_cursor_colour)},
   {"MaxImageSize", OPT_INT, offcfg(max_image_size)},
-  {"SixelClipChars", OPT_WSTRING, offcfg(sixel_clip_char)},
+  {"ImageClipChars", OPT_WSTRING, offcfg(sixel_clip_char)},
+  {"SixelClipChars", OPT_WSTRING | OPT_LEGACY, offcfg(sixel_clip_char)},
+  {"ReGISGrid", OPT_INT, offcfg(regis_grid)},
+  {"ReGISTension", OPT_STRING, offcfg(regis_tension)},
   {"OldBold", OPT_BOOL, offcfg(old_bold)},
   {"ShortLongOpts", OPT_BOOL, offcfg(short_long_opts)},
   {"BoldAsRainbowSparkles", OPT_BOOL, offcfg(bold_as_special)},

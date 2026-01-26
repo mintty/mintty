@@ -624,7 +624,7 @@ regis_text(HDC dc, float scale, struct write_controls * controls, wchar * s)
       }[(int)cfg.font_smoothing];
   }
 
-  wstring fn = cfg.font.name;
+  wstring fn = *cfg.regis_font ? cfg.regis_font : cfg.font.name;
   HFONT f = CreateFontW(
                   h * scale, w * scale,
                   tilt,  // string angle
@@ -928,6 +928,10 @@ regis_draw(HDC dc, float scale, int rwidth, int rheight, int rmode, uchar * regi
 
 static bool regis_init_done = false;
 
+  float tension = 0.6;
+  if (*cfg.regis_tension)
+    sscanf(cfg.regis_tension, "%f", &tension);
+
   if ((rmode & 1) || !regis_init_done) {
     // reset ReGIS drawing parameters
     regis_init();
@@ -954,12 +958,15 @@ static bool regis_init_done = false;
   printf("[43;30mregis_draw scale %f[K[m\n", scale);
   signal(SIGSEGV, sigsegv);
 
-#ifdef use_gdiplus
-#define grid_size 100
+  if (!cfg.regis_grid)
+    cfg.regis_grid = 100;
+#endif
+
   void screen_grid(int d) {
-    ARGB fg = GpARGB(33, 33, 33);
     float w = rwidth / scale;
     float h = rheight / scale;
+#ifdef grid_use_gdiplus
+    ARGB fg = GpARGB(33, 33, 33);
     GpPen * gridpen;
     GdipCreatePen1(fg, 1.0, UnitPixel, &gridpen);
 
@@ -968,10 +975,25 @@ static bool regis_init_done = false;
     for (int i = d; i < h; i += d)
       GdipDrawLine(gr, gridpen, 0, i * scale, (w - 1) * scale, i * scale);
     GdipDeletePen(gridpen);
+#else
+    COLORREF c = RGB(33, 33, 33);
+    HPEN pen = CreatePen(PS_SOLID , 1, c);
+    SelectObject(dc, pen);
+
+    for (int i = d; i < w; i += d) {
+      MoveToEx(dc, i * scale, 0, 0);
+      LineTo(dc, i * scale, rheight);
+    }
+    for (int i = d; i < h; i += d) {
+      MoveToEx(dc, 0, i * scale, 0);
+      LineTo(dc, rwidth, i * scale);
+    }
+    DeleteObject(pen);
+#endif
   }
-  screen_grid(grid_size);
-#endif
-#endif
+
+  if (cfg.regis_grid)
+    screen_grid(cfg.regis_grid);
 
 
 // Position stack for (S) (B) (E) commands.
@@ -1396,11 +1418,10 @@ static struct macro {
       gp(GdipCreateSolidFill(gbg, &gbr));
       gp(GdipFillRectangle(gr, gbr, 0, 0, rwidth, rheight));
       gp(GdipDeleteBrush(gbr));
-#ifdef debug_regis
-      screen_grid(grid_size);
-#endif
       //gp(GdipFlush(gr, FlushIntentionFlush));
 #endif
+      if (cfg.regis_grid)
+        screen_grid(cfg.regis_grid);
     }
 
 
@@ -1630,7 +1651,6 @@ static struct macro {
 
 #ifdef use_gdiplus
           // finish/close curve only if this is a C(E)
-#define tension 0.6
           if (closed) {
             if (filling) {
               init_gpath();
