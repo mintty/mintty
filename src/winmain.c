@@ -1,5 +1,5 @@
 // winmain.c (part of mintty)
-// Copyright 2008-13 Andy Koppe, 2015-2025 Thomas Wolff
+// Copyright 2008-13 Andy Koppe, 2015-2026 Thomas Wolff
 // Based on code from PuTTY-0.60 by Simon Tatham and team.
 // Licensed under the terms of the GNU General Public License v3 or later.
 
@@ -228,6 +228,11 @@ static HTHEME (WINAPI * pOpenThemeData)(HWND, LPCWSTR pszClassList) = 0;
 static HRESULT (WINAPI * pCloseThemeData)(HTHEME) = 0;
 
 static BOOL (WINAPI * pGetLayeredWindowAttributes)(HWND, COLORREF *, BYTE *, DWORD *) = 0;
+
+#if WINVER >= 0x0601
+static BOOL (WINAPI * pGetGestureInfo)(HGESTUREINFO, GESTUREINFO *) = 0;
+static BOOL (WINAPI * pCloseGestureInfoHandle)(HGESTUREINFO) = 0;
+#endif
 
 
 #define dont_debug_guardpath
@@ -596,6 +601,12 @@ load_dwm_funcs(void)
       (void *)GetProcAddress(user32, "SystemParametersInfoW");
     pGetLayeredWindowAttributes =
       (void *)GetProcAddress(user32, "GetLayeredWindowAttributes");
+#if WINVER >= 0x0601
+    pGetGestureInfo =
+      (void *)GetProcAddress(user32, "GetGestureInfo");
+    pCloseGestureInfoHandle =
+      (void *)GetProcAddress(user32, "CloseGestureInfoHandle");
+#endif
   }
   if (uxtheme) {
     DWORD win_version = GetVersion();
@@ -4778,8 +4789,79 @@ static struct {
       }
     }
 
+#if WINVER >= 0x0601
+    when WM_GESTURE: {
+      GESTUREINFO gi;
+      gi.cbSize = sizeof(GESTUREINFO);
+      if (pGetGestureInfo && pGetGestureInfo((HGESTUREINFO)lp, &gi)) {
+#ifdef debug_gestures
+        char * gesturename[] = {
+          "BEGIN",
+          "END",
+          "ZOOM",
+          "PAN",
+          "ROTATE",
+          "TWOFINGERTAP",
+          "PRESSANDTAP"};
+        printf("WM_GESTURE %X %d:%s %d/%d %16llX +%d\n", gi.dwFlags, gi.dwID, gesturename[gi.dwID - 1], gi.ptsLocation.x, gi.ptsLocation.y, gi.ullArguments, gi.cbExtraArgs);
+#endif
+
+        bool handled = false;
+        switch (gi.dwID) {
+           when GID_ZOOM:
+             //handled = true;
+           when GID_PAN: {
+             static int pan_x, pan_y;
+             int x = gi.ptsLocation.x;
+             int y = gi.ptsLocation.y;
+             //int finger_delta = gi.ullArguments;
+
+             if (gi.dwFlags & GF_BEGIN) {
+               pan_x = x;
+               pan_y = y;
+             }
+             else if (gi.dwFlags & GF_INERTIA) {
+               // not observed
+             }
+             else {  // regardless of whether (gi.dwFlags & GF_END) or not
+               POINT wpos = {.x = x, .y = y};
+               ScreenToClient(wnd, &wpos);
+               int height, width;
+               win_get_pixels(&height, &width, false);
+               height += OFFSET + 2 * PADDING;
+               width += 2 * PADDING;
+               int delta = y - pan_y;
+               (void)pan_x;
+               //printf("%d %d %d %d %d\n", wpos.y, wpos.x, height, width, delta);
+               if (delta && wpos.y >= 0 && wpos.y < height) {
+                 if (wpos.x >= 0 && wpos.x < width)
+                   win_mouse_wheel(wpos, false, delta);
+               }
+
+               pan_x = x;
+               pan_y = y;
+             }
+             handled = true;
+           }
+           when GID_ROTATE:
+             //handled = true;
+           when GID_TWOFINGERTAP:
+             //handled = true;
+           when GID_PRESSANDTAP:
+             //handled = true;
+           otherwise:;
+        }
+        if (handled && pCloseGestureInfoHandle) {
+          pCloseGestureInfoHandle((HGESTUREINFO)lp);
+          return 0;
+        }
+      }
+    }
+#endif
+
     when WM_MOUSEMOVE: win_mouse_move(false, lp);
     when WM_NCMOUSEMOVE: win_mouse_move(true, screentoclient(wnd, lp));
+
     when WM_LBUTTONDOWN: win_mouse_click(MBT_LEFT, lp);
     when WM_RBUTTONDOWN: win_mouse_click(MBT_RIGHT, lp);
     when WM_MBUTTONDOWN: win_mouse_click(MBT_MIDDLE, lp);
