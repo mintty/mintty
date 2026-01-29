@@ -13,8 +13,6 @@ typedef struct _PROCESSOR_NUMBER {
 } PROCESSOR_NUMBER, *PPROCESSOR_NUMBER;
 #endif
 
-#undef WINVER
-#define WINVER 0x0601
 // kill mysterious compilation bug since gcc 14
 #define TpSetCallbackPriority(cbe, prio)	
 #include <shlobj.h>
