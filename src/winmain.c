@@ -4802,9 +4802,17 @@ static struct {
           "PAN",
           "ROTATE",
           "TWOFINGERTAP",
-          "PRESSANDTAP"};
-        printf("WM_GESTURE %X %d:%s %d/%d %16llX +%d\n", gi.dwFlags, gi.dwID, gesturename[gi.dwID - 1], gi.ptsLocation.x, gi.ptsLocation.y, gi.ullArguments, gi.cbExtraArgs);
+          "PRESSANDTAP"
+        };
+        printf("WM_GESTURE (mm %d as %d os %d) %X %d:%s %d/%d %16llX +%d\n", 
+               term.mouse_mode, term.on_alt_screen, term.show_other_screen, 
+               gi.dwFlags, gi.dwID, gesturename[gi.dwID - 1], gi.ptsLocation.x, gi.ptsLocation.y, gi.ullArguments, gi.cbExtraArgs);
 #endif
+
+        if (!term.mouse_mode && !term.on_alt_screen)
+          break;
+        if (term.show_other_screen)
+          break;
 
         bool handled = false;
         switch (gi.dwID) {
@@ -4820,9 +4828,6 @@ static struct {
                pan_x = x;
                pan_y = y;
              }
-             else if (gi.dwFlags & GF_INERTIA) {
-               // not observed
-             }
              else {  // regardless of whether (gi.dwFlags & GF_END) or not
                POINT wpos = {.x = x, .y = y};
                ScreenToClient(wnd, &wpos);
@@ -4833,6 +4838,12 @@ static struct {
                int delta = y - pan_y;
                (void)pan_x;
                //printf("%d %d %d %d %d\n", wpos.y, wpos.x, height, width, delta);
+               if (term.on_alt_screen)
+                 delta *= 2;
+               if (!term.mouse_mode)
+                 delta *= 2;
+               if (!(gi.dwFlags & GF_INERTIA))
+                 delta *= 2;
                if (delta && wpos.y >= 0 && wpos.y < height) {
                  if (wpos.x >= 0 && wpos.x < width)
                    win_mouse_wheel(wpos, false, delta);
