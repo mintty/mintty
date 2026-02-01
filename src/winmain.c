@@ -8142,7 +8142,7 @@ static int dynfonts = 0;
     gc.dwID  = GID_PAN;
     GetGestureConfig(wnd, 0, 0, &uiGcs, &gc, sizeof(GESTURECONFIG));
     //printf("gc pan %d %02X %02X\n", gc.dwID, gc.dwWant, gc.dwBlock);
-    gc.gwWant = cfg.touch_scroll;
+    gc.dwWant = cfg.touch_scroll;
     SetGestureConfig(wnd, 0, uiGcs, &gc, sizeof(GESTURECONFIG));
   }
 
