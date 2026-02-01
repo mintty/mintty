@@ -4088,6 +4088,30 @@ mouse tracking reports.
 The default is to take the value from a system setting, typically 3.
 
 .TQ
+\fBTouch scrolling support\fP (TouchScroll=1) [EXPERIMENTAL]
+This setting may disable interpretation of the Windows PAN gesture 
+for touch screens (0). It may also enable additional features of it 
+by setting a bitmask, adding the following values:
+.ul
+.en
+\fB2\fP single finger vertical panning
+.en
+\fB4\fP single finger horizontal panning
+.en
+\fB8\fP perpendicular gutter for pan detection
+.en
+\fB16\fP apply inertia to slow down panning gracefully
+./ul
+The effect of these feature aspects on interactive behaviour is not 
+thoroughly tested, feedback is appreciated.
+.br
+Note that inertia seems to be applied already be default. The effect 
+of the additional inertia flag is unclear.
+.br
+Note that horizontal panning is only effective in connection with the 
+\fBhorbar\fP command-line option.
+
+.TQ
 \fBDisable Shift-coupled implicit font zooming\fP (ZoomFontWithWindow=yes)
 If this option is set to false, implicit font zooming coupled with 
 window zooming by the Shift key is disabled, except for the 

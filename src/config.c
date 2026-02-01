@@ -153,6 +153,7 @@ const config default_cfg = {
   .mouse_pointer = W("ibeam"),
   .appmouse_pointer = W("arrow"),
   .pixmouse_pointer = W("cross"),
+  .touch_scroll = 1,
   // Selection
   .input_clears_selection = true,
   .copy_on_select = true,
@@ -490,6 +491,7 @@ options[] = {
   {"MousePointer", OPT_WSTRING, offcfg(mouse_pointer)},
   {"AppMousePointer", OPT_WSTRING, offcfg(appmouse_pointer)},
   {"PixMousePointer", OPT_WSTRING, offcfg(pixmouse_pointer)},
+  {"TouchScroll", OPT_INT, offcfg(touch_scroll)},
 
   // Selection
   {"ClearSelectionOnInput", OPT_BOOL, offcfg(input_clears_selection)},

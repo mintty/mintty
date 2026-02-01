@@ -4817,43 +4817,55 @@ static struct {
         bool handled = false;
         switch (gi.dwID) {
            when GID_ZOOM:
+             // touch zooming apparently works implicitly
              //handled = true;
-           when GID_PAN: {
-             static int pan_x, pan_y;
-             int x = gi.ptsLocation.x;
-             int y = gi.ptsLocation.y;
-             //int finger_delta = gi.ullArguments;
+           when GID_PAN: 
+             if (cfg.touch_scroll) {
+               static int pan_x, pan_y;
+               int x = gi.ptsLocation.x;
+               int y = gi.ptsLocation.y;
+               // should we scale by finger distance?
+               //int finger_delta = gi.ullArguments;
 
-             if (gi.dwFlags & GF_BEGIN) {
-               pan_x = x;
-               pan_y = y;
-             }
-             else {  // regardless of whether (gi.dwFlags & GF_END) or not
-               POINT wpos = {.x = x, .y = y};
-               ScreenToClient(wnd, &wpos);
-               int height, width;
-               win_get_pixels(&height, &width, false);
-               height += OFFSET + 2 * PADDING;
-               width += 2 * PADDING;
-               int delta = y - pan_y;
-               (void)pan_x;
-               //printf("%d %d %d %d %d\n", wpos.y, wpos.x, height, width, delta);
-               if (term.on_alt_screen)
-                 delta *= 2;
-               if (!term.mouse_mode)
-                 delta *= 2;
-               if (!(gi.dwFlags & GF_INERTIA))
-                 delta *= 2;
-               if (delta && wpos.y >= 0 && wpos.y < height) {
-                 if (wpos.x >= 0 && wpos.x < width)
-                   win_mouse_wheel(wpos, false, delta);
+               if (gi.dwFlags & GF_BEGIN) {
+                 // remember position touched, for subsequent delta
+                 pan_x = x;
+                 pan_y = y;
                }
+               else {  // regardless of whether (gi.dwFlags & GF_END) or not
+                 POINT wpos = {.x = x, .y = y};
+                 ScreenToClient(wnd, &wpos);
+                 int height, width;
+                 win_get_pixels(&height, &width, false);
+                 height += OFFSET + 2 * PADDING;
+                 width += 2 * PADDING;
+                 bool horiz = abs(x - pan_x) > abs(y - pan_y);
+                 int delta = horiz ? x - pan_x : y - pan_y;
+                 //printf("%d %d %d %d hor %d delta %d\n", wpos.y, wpos.x, height, width, horiz, delta);
 
-               pan_x = x;
-               pan_y = y;
+                 // heuristic adjustment of scrolling speed
+                 if (term.on_alt_screen)
+                   delta *= 2;
+                 if (!term.mouse_mode)
+                   delta *= 2;
+                 if (!(gi.dwFlags & GF_INERTIA))
+                   delta *= 2;
+
+                 if (horiz) {
+                   // experimental; check speed scaling
+                   horscroll(delta / 10);
+                 }
+                 else if (delta && wpos.y >= 0 && wpos.y < height) {
+                   if (wpos.x >= 0 && wpos.x < width)
+                     win_mouse_wheel(wpos, false, delta);
+                 }
+
+                 // remember position reached, for subsequent delta
+                 pan_x = x;
+                 pan_y = y;
+               }
+               handled = true;
              }
-             handled = true;
-           }
            when GID_ROTATE:
              //handled = true;
            when GID_TWOFINGERTAP:
@@ -8119,6 +8131,19 @@ static int dynfonts = 0;
       }
       trace_winsize("launch");
     }
+  }
+
+  // Set up touch screen behaviour.
+  // The PAN gesture will be handled like mouse scroll events.
+  if (cfg.touch_scroll && cfg.touch_scroll > 1) {
+    GESTURECONFIG gc;
+    UINT uiGcs = 1;
+    ZeroMemory(&gc, sizeof(gc));
+    gc.dwID  = GID_PAN;
+    GetGestureConfig(wnd, 0, 0, &uiGcs, &gc, sizeof(GESTURECONFIG));
+    //printf("gc pan %d %02X %02X\n", gc.dwID, gc.dwWant, gc.dwBlock);
+    gc.gwWant = cfg.touch_scroll;
+    SetGestureConfig(wnd, 0, uiGcs, &gc, sizeof(GESTURECONFIG));
   }
 
   configure_taskbar(app_id);

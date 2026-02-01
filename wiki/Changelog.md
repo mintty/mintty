@@ -13,6 +13,9 @@ Graphics support
 Keyboard handling
   * Fix sticky modifier while in IME input mode (#1345).
 
+Touch screen handling
+  * Touch scrolling by recognition of Windows PAN gesture (#1073).
+
 Window handling
   * Enable terminal rewrap on resize by default.
 
@@ -22,6 +25,7 @@ Configuration
   * Change default setting RewrapOnResize=yes.
   * Renamed option ImageClipChars from SixelClipChars, keeping old name as alias.
   * New options ReGISFont, ReGISTension, ReGISGrid.
+  * New option TouchScroll.
 
 ### 3.8.1 (18 September 2025) ###
 

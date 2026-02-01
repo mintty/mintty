@@ -142,6 +142,7 @@ typedef struct {
   wstring mouse_pointer;
   wstring appmouse_pointer;
   wstring pixmouse_pointer;
+  int touch_scroll;
   // Selection
   bool input_clears_selection;
   bool copy_on_select;
