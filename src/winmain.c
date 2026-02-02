@@ -123,6 +123,7 @@ bool checked_desktop_config = false;
 bool title_settable = true;
 static string report_geom = 0;
 static bool report_moni = false;
+static bool report_fonts = false;
 bool report_config = false;
 bool report_child_pid = false;
 bool report_child_tty = false;
@@ -7088,8 +7089,8 @@ main(int argc, char *argv[])
           when 'm':
             report_moni = true;
           when 'f':
-            list_fonts(true);
-            exit(0);
+            report_fonts = true;
+            // defer list_fonts to after loading temporary fonts
           when 'R':
             list_printers();
             exit(0);
@@ -7229,6 +7230,33 @@ main(int argc, char *argv[])
       when 'P':
         set_arg_option("ConPTY", optarg);
     }
+  }
+
+  // Provide temporary fonts
+static int dynfonts = 0;
+  void add_font(wchar * fn)
+  {
+    int n = AddFontResourceExW(fn, FR_PRIVATE, 0);
+    if (n) {
+      if (report_fonts) {
+        if (!dynfonts)
+          printf("Adding dynamic fonts:\n");
+        printf("   %ls (%d)\n", fn, n);
+      }
+      dynfonts += n;
+    }
+    else
+      printf("Failed to add font %ls\n", fn);
+  }
+  handle_file_resources(W("fonts/*"), add_font);
+  //printf("Added %d fonts\n", dynfonts);
+
+  if (report_fonts) {
+    if (dynfonts)
+      printf(" - Added %d fonts\n", dynfonts);
+    printf("Available monospace fonts:\n");
+    list_fonts(true);
+    exit(0);
   }
 
   copy_config("main after -o", &file_cfg, &cfg);
@@ -7730,19 +7758,6 @@ main(int argc, char *argv[])
     .lpszClassName = wclass,
   });
 
-
-  // Provide temporary fonts
-static int dynfonts = 0;
-  void add_font(wchar * fn)
-  {
-    int n = AddFontResourceExW(fn, FR_PRIVATE, 0);
-    if (n)
-      dynfonts += n;
-    else
-      printf("Failed to add font %ls\n", fn);
-  }
-  handle_file_resources(W("fonts/*"), add_font);
-  //printf("Added %d fonts\n", dynfonts);
 
   // Initialise the fonts, thus also determining their width and height.
   if (per_monitor_dpi_aware && pGetDpiForMonitor) {

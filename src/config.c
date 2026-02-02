@@ -3865,7 +3865,7 @@ fontenum(const ENUMLOGFONTW *lpelf, const NEWTEXTMETRICW *lpntm, DWORD fontType,
     fn = renewn(fn, wcslen(fn) + 1);
 
     if (pdata->report)
-      printf("%03ld %ls|%ls [2m[%ls|%ls][0m\n", (long int)lfp->lfWeight, fn, st, lfp->lfFaceName, lpelf->elfStyle);
+      printf("   %03ld %ls|%ls [2m[%ls|%ls][0m\n", (long int)lfp->lfWeight, fn, st, lfp->lfFaceName, lpelf->elfStyle);
     else
       enterfontlist(fn, lfp->lfWeight, st);
   }
