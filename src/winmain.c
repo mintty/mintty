@@ -319,7 +319,7 @@ is_win_dark_mode(void)
 
 
 // WSL path conversion, using wsl.exe
-static char *
+char *
 wslwinpath(string path)
 {
   char * wslpath(char * path)
@@ -329,14 +329,21 @@ wslwinpath(string path)
     // wslpath -w fails in some cases during pathname postprocessing
     // ~ needs to be unquoted to be expanded by sh
     // other paths should be quoted; pathnames with quotes are not handled
-    if (*path == '~')
-      wslcmd = asform("wsl -d %ls sh -c 'wslpath -m ~ 2>/dev/null'", wslname);
+    if (wslname && *wslname)
+      if (*path == '~')
+        wslcmd = asform("wsl -d %ls sh -c 'wslpath -m ~ 2>/dev/null'", wslname);
+      else
+        wslcmd = asform("wsl -d %ls sh -c 'wslpath -m \"%s\" 2>/dev/null'", wslname, path);
     else
-      wslcmd = asform("wsl -d %ls sh -c 'wslpath -m \"%s\" 2>/dev/null'", wslname, path);
+      if (*path == '~')
+        wslcmd = asform("wsl sh -c 'wslpath -m ~ 2>/dev/null'");
+      else
+        wslcmd = asform("wsl sh -c 'wslpath -m \"%s\" 2>/dev/null'", path);
     FILE * wslpopen = popen(wslcmd, "r");
     char line[MAX_PATH + 1];
     char * got = fgets(line, sizeof line, wslpopen);
     pclose(wslpopen);
+    //printf("<%s> -> [WSL %ls] <%s>\n", wslcmd, wslname, line);
     free(wslcmd);
     if (!got)
       return 0;
@@ -7230,6 +7237,7 @@ main(int argc, char *argv[])
         set_arg_option("ConPTY", optarg);
     }
   }
+  //printf("WSL <%ls>\n", wslname);
 
   // change to home directory if requested
   if (start_home) {

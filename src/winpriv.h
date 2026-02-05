@@ -166,6 +166,7 @@ extern bool get_scroll_lock(void);
 extern void sync_scroll_lock(bool locked);
 extern void win_keyclick(void);
 
+extern char * wslwinpath(string path);
 extern wchar * dewsl(wchar * wpath);
 extern void shell_exec(wstring wpath);
 extern void win_init_drop_target(void);
