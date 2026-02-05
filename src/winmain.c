@@ -6985,8 +6985,7 @@ main(int argc, char *argv[])
 #endif
       when '~':
         start_home = true;
-        chdir(home);
-        trace_dir(asform("~: %s", home));
+        // defer chdir to after options handling in case of -~ --WSL...
       when '': {
         int res = chdir(optarg);
         trace_dir(asform("^D: %s", optarg));
@@ -7229,6 +7228,19 @@ main(int argc, char *argv[])
       }
       when 'P':
         set_arg_option("ConPTY", optarg);
+    }
+  }
+
+  // change to home directory if requested
+  if (start_home) {
+    if (support_wsl) {
+      char * home = wslwinpath("~");
+      chdir(home);
+      trace_dir(asform("~: %s", home));
+    }
+    else {
+      chdir(home);
+      trace_dir(asform("~: %s", home));
     }
   }
 
