@@ -33,6 +33,7 @@
 .ft 1
 ..
 .char ^ \(ha
+.char ~ \(ti
 .TH mintty 1 mintty
 
 .ad l
@@ -392,7 +393,7 @@ Provide the root filesystem folder to adjust path conversion properly
 for the respective WSL installation.
 
 .TQ
-\fB\-\(ti\fP
+\fB\-~\fP
 Start in the user's home directory. Affects also WSL sessions.
 
 .TQ
@@ -1352,13 +1353,13 @@ So using \fBApply\fP then \fBCancel\fP, local changes can be applied
 In configuration files, settings are stored as \fINAME\fP=\fIVALUE\fP pairs,
 with one per line.  By default, they are read from any file of 
 \fI/etc/minttyrc\fP, \fI$APPDATA/mintty/config\fP, 
-\fI\(ti/.config/mintty/config\fP, \fI\(ti/.minttyrc\fP, in this order.
+\fI~/.config/mintty/config\fP, \fI~/.minttyrc\fP, in this order.
 Additional configuration files can be specified using the
 \fB\-c\fP/\fB\-\-config\fP or \fB\-C\fP/\fB\-\-loadconfig\fP command line options.
 These are read in order after the default config files, 
 with settings in later files overriding those in earlier ones.
 Configuration changes are saved to the last writable file 
-read by default or \fI\(ti/.minttyrc\fP if none is given, 
+read by default or \fI~/.minttyrc\fP if none is given, 
 or (with precedence) to a configuration file specified with 
 \fB\-c\fP/\fB\-\-config\fP or \fB\-\-configdir\fP.
 Individual settings can also be specified on the command line using the 
@@ -1394,7 +1395,7 @@ Additional resource files are used for colour schemes (options
 wave files (option \fBBellFile\fP, subdirectory \fIsounds\fP), 
 and localization translation files (option \fBLanguage\fP, subdirectory \fIlang\fP) 
 within the mintty resource directories \fI/usr/share/mintty\fP, 
-\fI$APPDATA/mintty\fP, \fI\(ti/.config/mintty\fP, \fI\(ti/.mintty\fP, 
+\fI$APPDATA/mintty\fP, \fI~/.config/mintty\fP, \fI~/.mintty\fP, 
 or as specified with command line option \fB\-\-configdir\fP.
 Emoji icons are additionally looked up in \fI/usr/share/emojis\fP 
 to support common emoji data installed by distinct packages.
@@ -2892,7 +2893,7 @@ or the process ID respectively.
 Example, using only a timestamp and placing the logs in the home directory:
 .ul
 .ex
-Log=\(ti/mintty.%Y\-%m\-%d_%H\-%M\-%S.log
+Log=~/mintty.%Y\-%m\-%d_%H\-%M\-%S.log
 ./ul
 
 If the log file name is a relative path name, it is relative from the 
@@ -2934,7 +2935,7 @@ Examples:
 .ul
 .dd
 .ex
-SaveFilename=\(ti/mintty.%Y\-%m\-%d_%H\-%M\-%S
+SaveFilename=~/mintty.%Y\-%m\-%d_%H\-%M\-%S
 .dd
 .ex
 SaveFilename=$USERPROFILE/Pictures/mintty/%Y\-%m\-%d_%H\-%M\-%S
@@ -3480,7 +3481,7 @@ Supported actions are described as follows:
 .en
 \fB\`\fP\fIcommand\fP\fB\`\fP (**): enters the output of the command
 .en
-\fInumber\fP (***): enters the escape sequence CSI\fInumber\fP[;\fImod\fP]\(ti
+\fInumber\fP (***): enters the escape sequence CSI\fInumber\fP[;\fImod\fP]~
 .en
 \fBfullscreen\fP (*): switches to fullscreen mode
 .en
@@ -3580,7 +3581,7 @@ Supported actions are described as follows:
 .en
 \fBtek\-reset\fP: Tek mode RESET
 .en
-\fBtek\-page\fP: Tek mode PAGE key (\(tisoft reset)
+\fBtek\-page\fP: Tek mode PAGE key (~soft reset)
 .en
 \fBtek\-copy\fP: Tek mode COPY key (image "hard" copy to file)
 .en
@@ -3992,7 +3993,7 @@ The highlighting colours of search matches can be configured.
 .TQ
 \fBBackground image or texture\fP (Background=)
 With this option, an image can be chosen as background.
-With an image file name, absolute (with an optional \fB\(ti\fP prefix) 
+With an image file name, absolute (with an optional \fB~\fP prefix) 
 or relative to the current terminal foreground process, 
 the option uses the image as a background picture, with variations 
 as indicated by a prefix character to the filename:
@@ -4433,7 +4434,7 @@ Examples:
 SessionCommands=big:\-w max;Ubuntu:\-\-WSL=Ubuntu;mybox:ssh mybox
 .en
 .ex
-SessionCommands=mycolours:\-C \(ti/.minttyrc.mycolours
+SessionCommands=mycolours:\-C ~/.minttyrc.mycolours
 ./ul
 
 \fINote:\fP Control characters need to be embedded verbatim; there is no escape notation.
@@ -4484,7 +4485,7 @@ Examples:
 TaskCommands=big:\-w max;Ubuntu:\-\-WSL=Ubuntu;mybox:ssh mybox
 .en
 .ex
-TaskCommands=mycolours:\-C \(ti/.minttyrc.mycolours
+TaskCommands=mycolours:\-C ~/.minttyrc.mycolours
 ./ul
 
 \fINote:\fP Control characters need to be embedded verbatim; there is no escape notation.
