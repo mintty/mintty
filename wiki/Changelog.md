@@ -18,6 +18,9 @@ Touch screen handling
 
 Window handling
   * Enable terminal rewrap on resize by default.
+
+Other
+  * The "About" display includes the mintty process ID.
   * Enable saving image and HTML dumps to home directory, also in WSL (mintty/wsltty#372).
 
 Configuration
