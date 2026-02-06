@@ -18,6 +18,7 @@ Touch screen handling
 
 Window handling
   * Enable terminal rewrap on resize by default.
+  * Enable saving image and HTML dumps to home directory, also in WSL (mintty/wsltty#372).
 
 Configuration
   * New option ExportHTMLUnwrapped (#1336).

@@ -329,16 +329,24 @@ wslwinpath(string path)
     // wslpath -w fails in some cases during pathname postprocessing
     // ~ needs to be unquoted to be expanded by sh
     // other paths should be quoted; pathnames with quotes are not handled
+    //
+    // this used to be wrapped into a WSL `sh -c` but for obscure reason, 
+    // invoking wsl directly here injected some nasty escape sequences, 
+    // among them a device attributes request, which would embed the 
+    // response after exiting mintty if invoked from another terminal -
+    // to prevent this, the whole invocation could be wrapped into another 
+    // outer `sh -c`; fortunately, it turns out the both `sh` 
+    // wrappers are not needed (anymore)
     if (wslname && *wslname)
       if (*path == '~')
-        wslcmd = asform("wsl -d %ls sh -c 'wslpath -m ~ 2>/dev/null'", wslname);
+        wslcmd = asform("wsl -d %ls wslpath -m ~ 2>/dev/null", wslname);
       else
-        wslcmd = asform("wsl -d %ls sh -c 'wslpath -m \"%s\" 2>/dev/null'", wslname, path);
+        wslcmd = asform("wsl -d %ls wslpath -m \"%s\" 2>/dev/null", wslname, path);
     else
       if (*path == '~')
-        wslcmd = asform("wsl sh -c 'wslpath -m ~ 2>/dev/null'");
+        wslcmd = asform("wsl wslpath -m ~ 2>/dev/null");
       else
-        wslcmd = asform("wsl sh -c 'wslpath -m \"%s\" 2>/dev/null'", path);
+        wslcmd = asform("wsl wslpath -m \"%s\" 2>/dev/null", path);
     FILE * wslpopen = popen(wslcmd, "r");
     char line[MAX_PATH + 1];
     char * got = fgets(line, sizeof line, wslpopen);
@@ -7242,6 +7250,7 @@ main(int argc, char *argv[])
   // change to home directory if requested
   if (start_home) {
     if (support_wsl) {
+      // set WSL home as reference for relative save and log filenames
       char * home = wslwinpath("~");
       chdir(home);
       trace_dir(asform("~: %s", home));

@@ -832,7 +832,7 @@ save_filename(char * suf)
   // expand initial ~ or $variable
   char * sep;
   if (*pat == '~' && pat[1] == '/') {
-    char * pat1 = asform("%s%s", home, pat + 1);
+    char * pat1 = asform("%s%s", support_wsl ? wslwinpath("~") : home, pat + 1);
     free(pat);
     pat = pat1;
   }
