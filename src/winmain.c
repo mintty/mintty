@@ -4840,8 +4840,6 @@ static struct {
                static int pan_x, pan_y;
                int x = gi.ptsLocation.x;
                int y = gi.ptsLocation.y;
-               // should we scale by finger distance?
-               //int finger_delta = gi.ullArguments;
 
                if (gi.dwFlags & GF_BEGIN) {
                  // remember position touched, for subsequent delta
@@ -4849,6 +4847,9 @@ static struct {
                  pan_y = y;
                }
                else {  // regardless of whether (gi.dwFlags & GF_END) or not
+                 static int finger_delta = 400;
+                 if (gi.ullArguments)
+                   finger_delta = gi.ullArguments;
                  POINT wpos = {.x = x, .y = y};
                  ScreenToClient(wnd, &wpos);
                  int height, width;
@@ -4862,14 +4863,15 @@ static struct {
                  // heuristic adjustment of scrolling speed
                  if (term.on_alt_screen)
                    delta *= 2;
-                 if (!term.mouse_mode)
-                   delta *= 2;
+                 if (term.mouse_mode)
+                   delta /= 2;
                  if (!(gi.dwFlags & GF_INERTIA))
                    delta *= 2;
+                 delta = delta * finger_delta / 400;
 
                  if (horiz) {
                    // experimental; check speed scaling
-                   horscroll(delta / 10);
+                   horscroll(delta / 20);
                  }
                  else if (delta && wpos.y >= 0 && wpos.y < height) {
                    if (wpos.x >= 0 && wpos.x < width)
@@ -8177,6 +8179,7 @@ static int dynfonts = 0;
     }
   }
 
+#if WINVER >= 0x0601
   // Set up touch screen behaviour.
   // The PAN gesture will be handled like mouse scroll events.
   if (cfg.touch_scroll && cfg.touch_scroll > 1) {
@@ -8189,6 +8192,7 @@ static int dynfonts = 0;
     gc.dwWant = cfg.touch_scroll;
     SetGestureConfig(wnd, 0, uiGcs, &gc, sizeof(GESTURECONFIG));
   }
+#endif
 
   configure_taskbar(app_id);
 

@@ -687,6 +687,11 @@ terminal in an unusable state. In that case, resetting the terminal's state
 via the \fBReset\fP command in the menu or the \fBAlt+F8\fP keyboard shortcut
 may help.
 
+.SS Touch screen support
+
+Mintty supports touch screen gestures for scrolling vertically or horizontally, 
+also in application mouse modes. Setting \fBTouchScroll\fP can configure details.
+
 .SS Scrolling and the scrollback buffer
 
 Mintty has a scrollback buffer that can hold up to 10000 lines in the default
@@ -1204,7 +1209,6 @@ shortcut override mode.
 
 .TQ
 .B Embedding Sixel pixel graphics
-
 The Sixel graphics support feature facilitates a range of applications 
 that integrate graphic images in the terminal, animated graphics, and even 
 video and interactive gaming applications.
@@ -1219,7 +1223,6 @@ in order to prevent Windows handle resource exhaustion.
 
 .TQ
 .B Displaying ReGIS vector graphics
-
 The ReGIS vector graphics support feature completes feature compatibility 
 with DEC VT340 and xterm.
 Details on ReGIS features (limitations, modifications, extensions) are 
