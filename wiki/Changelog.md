@@ -18,6 +18,7 @@ Touch screen handling
 
 Window handling
   * Enable terminal rewrap on resize by default.
+  * Declare per-monitor high DPI support in manifest (#1339).
 
 Other
   * The "About" display includes the mintty process ID.
