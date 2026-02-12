@@ -27,6 +27,7 @@ Window handling
 Other
   * The "About" display includes the mintty process ID.
   * Enable saving image and HTML dumps to home directory, also in WSL (mintty/wsltty#372).
+  * Wiki: configuration example for text-to-speech output (~#1350).
 
 Configuration
   * New option ExportHTMLUnwrapped (#1336).

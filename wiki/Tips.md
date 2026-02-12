@@ -201,9 +201,9 @@ for WSL interaction:
 * Terminal types for Options menu are offered as they exist on WSL.
 * Shortcut start directory fallback handling.
 * Handling of option GuardNetworkPaths.
-* Handling of option ExitCommands..
-* Handling of option DropCommands..
-* Handling of option UserCommands..
+* Handling of option ExitCommands.
+* Handling of option DropCommands.
+* Handling of options UserCommands / CtxMenuFunctions.
 * Display of start or exit error messages.
 * Handling of foreground working directory.
 
@@ -1691,6 +1691,15 @@ consider to reduce ambiguities. Note that a future (or currently patched)
 version of the `uniq` tool is needed to cover non-ASCII keyboard shortcuts.
 
 
+## Text-to-speech ##
+
+To support speech output of a text selection, configure a key combination 
+to invoke a speech generation program:
+```
+KeyFunctions=F12:`espeak "$MINTTY_SELECT"`
+```
+
+
 ## Character information display ##
 
 Diagnostic display of current character information can be toggled 
@@ -1706,7 +1715,7 @@ and the character information output simply overwrite each other.
 
 Mintty supports a few extension features:
 * Application-specific drag-and-drop transformations (option `DropCommands`)
-* User-defined commands and filters for context menu (option `UserCommands`)
+* User-defined commands and filters for context menu (options `UserCommands` / `CtxMenuFunctions`)
 * User-defined functions for key combinations (option `KeyFunctions`)
 * User-defined function entries for system menu (option `SysMenuFunctions`)
 
