@@ -1,5 +1,5 @@
 // wintext.c (part of mintty)
-// Copyright 2008-22 Andy Koppe, 2015-2025 Thomas Wolff
+// Copyright 2008-22 Andy Koppe, 2015-2026 Thomas Wolff
 // Adapted from code from PuTTY-0.60 by Simon Tatham and team.
 // Licensed under the terms of the GNU General Public License v3 or later.
 
@@ -4258,8 +4258,8 @@ skip_drawing:;
     int heavypenwidth = penwidth + 2;
     // adjust heavy parts in mixed light/heavy boxes:
     int heavydelta = min(line_width, 2);
-#define use_extpen
-#ifdef use_extpen
+
+    // create common Box Drawing resources
     LOGBRUSH brush = (LOGBRUSH){BS_SOLID, fg, 0};
     DWORD style = PS_GEOMETRIC | PS_SOLID;
     HPEN roundpen = ExtCreatePen(style, penwidth, &brush, 0, 0);
@@ -4267,13 +4267,19 @@ skip_drawing:;
       style |= PS_ENDCAP_SQUARE;  // skipped for DEC Technical sum segments
     HPEN pen = ExtCreatePen(style, penwidth, &brush, 0, 0);
     HPEN heavypen = ExtCreatePen(style, heavypenwidth, &brush, 0, 0);
-#else
-    HPEN pen = CreatePen(PS_SOLID, penwidth, fg);
-    HPEN heavypen = CreatePen(PS_SOLID, heavypenwidth, fg);
-#endif
     HBRUSH br = CreateSolidBrush(fg);
-    // preload default pen for some performance
+    // save pen and preload default pen for some performance
     HPEN oldpen = SelectObject(dc, pen);
+    HPEN curpen = pen;
+
+    // set pen on demand
+    void setpen(HPEN newpen)
+    {
+      if (newpen != curpen) {
+        SelectObject(dc, newpen);
+        curpen = newpen;
+      }
+    }
 
 #define dl 0x50
 #define dh 0x51
@@ -4345,8 +4351,8 @@ skip_drawing:;
           x1 += xi;
           x2 += xi;
           if (heavy)
-            SelectObject(dc, heavypen);
-          if (y3 == -2) {  // diagonals ╲ ╱ ╳
+            setpen(heavypen);
+          else if (y3 == -2) {  // diagonals ╲ ╱ ╳
             // without adjustment, the diagonals appear clipped from right,
             // widh adjustment both sides, they appear clipped from left,
             // with adjustment by penwidth / 2, alignment appears bad;
@@ -4354,8 +4360,10 @@ skip_drawing:;
             y2 -= max(penwidth / 3, 1);
             x2 -= max(penwidth / 3, 1);
             // also the square pen appears wrong with the diagonals
-            SelectObject(dc, roundpen);
+            setpen(roundpen);
           }
+          else
+            setpen(pen);
 
           // draw the line back again to compensate for the missing endpoint
           //Polyline(dc, (POINT[]){{x1, y1}, {x2, y2}, {x1, y1}}, 3);
@@ -4364,10 +4372,7 @@ skip_drawing:;
           // draw the line back again to compensate for the missing endpoint
           if (y3 > -3)  // skip for dashed line segments
             LineTo(dc, x1, y1);
-
-          if (heavy || y3 == -2)
-            SelectObject(dc, pen);
-          }
+        }
       }
 
       boxline(_x1, _y1, _x2, _y2);
@@ -4414,13 +4419,15 @@ skip_drawing:;
           yc = char_height / 2 - r;
           a = 270;
       }
+      setpen(pen);
       MoveToEx(dc, xi + x1, y0 + y1, null);
       AngleArc(dc, xi + xc, y0 + yc, r, a, 90);
       LineTo(dc, xi + x2, y0 + y2);
     }
 
+    setclipr(xi, yclip, len);
     for (int i = 0; i < len; i++) {
-      setclipr(xi, yclip, 1);
+      //setclipr(xi, yclip, 1);
 
       switch (origtext[i]) {
         // Box Drawing (U+2500-U+257F)
@@ -4530,10 +4537,11 @@ skip_drawing:;
                    rectsolid(0, 4, 4, 8, 0x7);
       }
 
-      clearclipr();
+      //clearclipr();
 
       xi += char_width;
     }
+    clearclipr();
 
     // remove Box Drawing resources
     SelectObject(dc, oldpen);

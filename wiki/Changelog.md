@@ -10,6 +10,9 @@ Terminal features
 Graphics support
   * ReGIS vector graphics support.
 
+Character rendering
+  * Optimise self-drawn Box Drawing characters for some speed-up (#1349).
+
 Keyboard handling
   * Fix sticky modifier while in IME input mode (#1345).
 
