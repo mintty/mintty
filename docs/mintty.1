@@ -1938,6 +1938,18 @@ This option enables self-drawn graphics for the Box Drawing range U+2500..U+257F
 in order to achieve unbroken box drawing, as most fonts do not include 
 proper box drawing glyphs.
 
+Self-drawn graphics may render a bit slower, particularly on slower machines.
+If you disable them to render graphic characters from font, it is a 
+good idea to configure a suitable secondary font for them:
+.ex
+  BoxDrawing=0
+  FontChoice=|Box Drawing:2
+  Font2=DejaVu Sans Mono
+.ee
+.br
+See option \fBFontChoice\fP, also for how to use a secondary font to 
+provide "Powerline" symbols.
+
 .TQ
 \fBLocale\fP (Locale=)
 The locale setting consists of a lowercase two-letter or three-letter language
