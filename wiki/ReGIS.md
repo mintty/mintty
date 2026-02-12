@@ -52,6 +52,6 @@ ReGIS features are supported with the following modifications:
 * T"...^J..." gets a ^M inserted unless `stty -onlcr` was set during output.
 * S(T) time delay is accelerated by 4 like in xterm.
 * @ macrographs are supported.
-* # begins a comment to the end of the line.
+* \# begins a comment to the end of the line.
 * Options ReGISFont, ReGISTension, ReGISGrid. Curve tension can be configured.
 
