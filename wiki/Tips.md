@@ -485,6 +485,28 @@ stty -ixon
 ```
 
 
+## Terminal mode broken ##
+
+A terminal may yield broken output if terminal modes got changed.
+This is a common problem of all terminals and may affect all kinds 
+of mode-dependent character display, as modified by auto-wrap, 
+scrolling region and origin modes, inverse video, hidden cursor, 
+various ways of changing the character encoding, and others.
+Likewise, the terminal line settings may have been changed for some 
+application-specific reason and not properly changed back.
+These problem may arise particularly after
+* binary output to the screen
+* buggy output
+* incomplete output (e.g. after output of a file containing a ^Z with a DOS/Windows cmd tool like type or copy without /B)
+* irregular termination of an application
+
+To fix the state and restore proper behaviour, do one of the following:
+* reset most terminal attributes with a Soft Terminal Reset `echo -e '\e[!p'`
+* reset terminal attributes with a Full Reset `echo -e '\ec'`
+* restore interactive terminal line settings with `stty sane`
+* combine the above with `reset`
+
+
 ## Readline configuration ##
 
 Keyboard input for the **[bash](http://www.gnu.org/software/bash)** shell and other programs that use the **[readline](http://tiswww.case.edu/php/chet/readline/rltop.html)** library can be configured with the so-called **[inputrc](http://tiswww.case.edu/php/chet/readline/readline.html#SEC9)** file. Unless overridden by setting the _INPUTRC_ variable, this is located at _~/.inputrc_. It consists of bindings of keycodes to readline commands, whereby comments start with a hash character. See its manual for details.
