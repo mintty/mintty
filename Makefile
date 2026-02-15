@@ -140,7 +140,9 @@ $(src): $(arch_files)
 	rm -rf $(name_ver)
 	mkdir -p $(name_ver)
 	#cp -ax --parents $^ $(name_ver)
-	cp -dl --parents $^ $(name_ver)
+	# cp -l fail with mysterious "cannot create hard link..."
+	#cp -dl --parents $^ $(name_ver)
+	cp -d --parents $^ $(name_ver)
 	rm -f $@
 	tar czf $@ --exclude="*~" $(TARUSER) $(name_ver)
 	rm -rf $(name_ver)
