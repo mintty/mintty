@@ -1,5 +1,5 @@
 // child.c (part of mintty)
-// Copyright 2008-11 Andy Koppe, 2015-2025 Thomas Wolff
+// Copyright 2008-11 Andy Koppe, 2015-2026 Thomas Wolff
 // Licensed under the terms of the GNU General Public License v3 or later.
 
 #include "child.h"
@@ -223,6 +223,27 @@ toggle_logging()
     open_logfile(true);
 }
 
+#ifdef debug_log_filter
+static void
+printline(char * tag, char * s, int len)
+{
+  printf("[%s] [2m»[m", tag);
+  while (len > 0) {
+    if ((*s & 0xE0) == 0)
+      printf("[7m^%c[m", *s + 0x40);
+    else if (*s == 0x7F)
+      printf("[7m^?[m");
+    else
+      printf("%c", *s);
+    s ++;
+    len --;
+  }
+  printf("[2m«[m\n");
+}
+#else
+#define printline(tag, s, len)	
+#endif
+
 static void
 term_log(char * s, uint len)
 {
@@ -230,8 +251,11 @@ static char buf[999];
 static uint bufi = 0;
 static char state = 0;
 
+  printline("log", s, len);
+
   void term_log_flush()
   {
+    printline("log-flush", buf, bufi);
     write(log_fd, buf, bufi);
     bufi = 0;
   }
@@ -244,6 +268,9 @@ static char state = 0;
     }
     else if (c == '\e' && !state)
       term_log_flush();
+    else {
+      printline("not-flush", buf, bufi);
+    }
 
     buf[bufi++] = c;
 
@@ -270,7 +297,7 @@ static char state = 0;
         state = 0;
       }
     }
-    else if (state == 'c') { // CSI
+    else if (state == 'c') { // CSI (ESC [)
       if (c >= '@') { // CSI terminator
         state = 0;
         char * csi = &buf[2];
@@ -312,17 +339,18 @@ static char state = 0;
 #endif
       }
     }
-    else if (state == 'o') { // OSC
+    else if (state == 'o') { // OSC (ESC ])
       if (c == '' || (c == '\\' && buf[bufi - 1] == '\e')) { // ST or BEL
         state = 0;
         int num = -1, numq1 = -1, numq2 = -1;
-        if (2 == sscanf(&buf[2], "%u;%u;%n", &num, &numq2, &len)) {
-          if (buf[2 + len] != '?')
+        int slen = 0;
+        if (2 == sscanf(&buf[2], "%u;%u;%n", &num, &numq2, &slen)) {
+          if (buf[2 + slen] != '?')
             numq2 = -1;
         }
         else {
-          sscanf(&buf[2], "%u;%n", &num, &len);
-          if (buf[2 + len] == '?')
+          sscanf(&buf[2], "%u;%n", &num, &slen);
+          if (buf[2 + slen] == '?')
             numq1 = num;
         }
 #ifdef debug_log_filter
@@ -344,7 +372,7 @@ static char state = 0;
 #endif
       }
     }
-    else if (state == 'd') { // DCS
+    else if (state == 'd') { // DCS (ESC P)
       if (c == '\\' && buf[bufi - 1] == '\e') { // ST
         state = 0;
         if (!strncmp(&buf[2], "$q", 2) || !strncasecmp(&buf[2], "+q", 2))
@@ -354,12 +382,12 @@ static char state = 0;
   }
 
   if (log_fd >= 0 && logging) {
-    if (!cfg.log_filter) {
+    if (!cfg.log_filter)
       write(log_fd, s, len);
-      return;
+    else {
+      for (uint i = 0; i < len; i++)
+        term_log_char(s[i]);
     }
-    for (uint i = 0; i < len; i++)
-      term_log_char(s[i]);
   }
 }
 
