@@ -1,3 +1,5 @@
+### 3.8.2 (15 February 2026) ###
+
 Terminal features
   * Change HTML print/export to write unwrapped lines by default (#1336).
   * New escape sequence variation CSI 10 ; 8 i to print scrollback and screen (#1336).
