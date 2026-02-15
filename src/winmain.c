@@ -233,6 +233,8 @@ static BOOL (WINAPI * pGetLayeredWindowAttributes)(HWND, COLORREF *, BYTE *, DWO
 #if WINVER >= 0x0601
 static BOOL (WINAPI * pGetGestureInfo)(HGESTUREINFO, GESTUREINFO *) = 0;
 static BOOL (WINAPI * pCloseGestureInfoHandle)(HGESTUREINFO) = 0;
+static BOOL (WINAPI * pGetGestureConfig)(HWND, DWORD, DWORD, UINT*, GESTURECONFIG*, UINT) = 0;
+static BOOL (WINAPI * pSetGestureConfig)(HWND, DWORD, UINT, GESTURECONFIG*, UINT) = 0;
 #endif
 
 
@@ -622,6 +624,10 @@ load_dwm_funcs(void)
       (void *)GetProcAddress(user32, "GetGestureInfo");
     pCloseGestureInfoHandle =
       (void *)GetProcAddress(user32, "CloseGestureInfoHandle");
+    pGetGestureConfig =
+      (void *)GetProcAddress(user32, "GetGestureConfig");
+    pSetGestureConfig =
+      (void *)GetProcAddress(user32, "SetGestureConfig");
 #endif
   }
   if (uxtheme) {
@@ -8182,15 +8188,15 @@ static int dynfonts = 0;
 #if WINVER >= 0x0601
   // Set up touch screen behaviour.
   // The PAN gesture will be handled like mouse scroll events.
-  if (cfg.touch_scroll && cfg.touch_scroll > 1) {
+  if (pSetGestureConfig && cfg.touch_scroll && cfg.touch_scroll > 1) {
     GESTURECONFIG gc;
     UINT uiGcs = 1;
     ZeroMemory(&gc, sizeof(gc));
     gc.dwID  = GID_PAN;
-    GetGestureConfig(wnd, 0, 0, &uiGcs, &gc, sizeof(GESTURECONFIG));
+    pGetGestureConfig(wnd, 0, 0, &uiGcs, &gc, sizeof(GESTURECONFIG));
     //printf("gc pan %d %02X %02X\n", gc.dwID, gc.dwWant, gc.dwBlock);
     gc.dwWant = cfg.touch_scroll;
-    SetGestureConfig(wnd, 0, uiGcs, &gc, sizeof(GESTURECONFIG));
+    pSetGestureConfig(wnd, 0, uiGcs, &gc, sizeof(GESTURECONFIG));
   }
 #endif
 

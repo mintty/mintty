@@ -1,3 +1,6 @@
+Other
+  * Restore Windows XP compatibility.
+
 ### 3.8.2 (15 February 2026) ###
 
 Terminal features
