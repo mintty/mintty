@@ -1,5 +1,6 @@
 Other
   * Restore Windows XP compatibility.
+  * Fix WSL home dir conversion (option -~).
 
 ### 3.8.2 (15 February 2026) ###
 

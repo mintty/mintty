@@ -340,15 +340,9 @@ wslwinpath(string path)
     // outer `sh -c`; fortunately, it turns out the both `sh` 
     // wrappers are not needed (anymore)
     if (wslname && *wslname)
-      if (*path == '~')
-        wslcmd = asform("wsl -d %ls wslpath -m ~ 2>/dev/null", wslname);
-      else
-        wslcmd = asform("wsl -d %ls wslpath -m \"%s\" 2>/dev/null", wslname, path);
+      wslcmd = asform("wsl -d %ls wslpath -m '%s' 2>/dev/null", wslname, path);
     else
-      if (*path == '~')
-        wslcmd = asform("wsl wslpath -m ~ 2>/dev/null");
-      else
-        wslcmd = asform("wsl wslpath -m \"%s\" 2>/dev/null", path);
+      wslcmd = asform("wsl wslpath -m '%s' 2>/dev/null", path);
     FILE * wslpopen = popen(wslcmd, "r");
     char line[MAX_PATH + 1];
     char * got = fgets(line, sizeof line, wslpopen);
