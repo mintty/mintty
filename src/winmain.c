@@ -320,6 +320,78 @@ is_win_dark_mode(void)
 }
 
 
+/*
+   Capture output of cmd, using Windows CreateProcess
+   - variants with Posix functions work
+     - with delay (forkpty)
+     - not in standalone deployment (fork)
+     - not at all (popen)
+ */
+static char *
+cmd_out_capture_start_process(char * cmd)
+{
+  HANDLE readPipe, writePipe;
+  SECURITY_ATTRIBUTES sa;
+  ZeroMemory(&sa, sizeof(sa));
+  sa.nLength = sizeof(sa);
+  sa.bInheritHandle = TRUE;
+  // Create pipe for stdout
+  if (!CreatePipe(&readPipe, &writePipe, &sa, 0))
+    return 0;
+
+  // Ensure read handle is not inherited
+  SetHandleInformation(readPipe, HANDLE_FLAG_INHERIT, 0);
+
+  STARTUPINFOW si;
+  ZeroMemory(&si, sizeof(si));
+  si.cb = sizeof(si);
+  si.dwFlags = STARTF_USESTDHANDLES;
+  //si.dwFlags = STARTF_USESTDHANDLES | STARTF_USESHOWWINDOW;
+  //si.wShowWindow = SW_HIDE;
+
+  si.hStdOutput = writePipe;
+  si.hStdError  = writePipe;  // optional: capture stderr too
+  si.hStdInput = GetStdHandle(STD_INPUT_HANDLE);  // not needed here
+
+  PROCESS_INFORMATION pi;
+  ZeroMemory(&pi, sizeof(pi));
+
+  wchar * wcmd = cs__mbstowcs(cmd);  // support non-ASCII paths
+  bool res = CreateProcessW(NULL, wcmd,
+                            NULL, NULL,
+                            TRUE,  // inherit handles
+                            CREATE_NO_WINDOW,
+                            NULL, NULL,
+                            &si, &pi);
+  free(wcmd);
+  if (!res) {
+    CloseHandle(readPipe);
+    CloseHandle(writePipe);
+    return 0;
+  }
+
+  CloseHandle(writePipe);  // parent doesn't write
+
+  // Read output
+  static char buffer[MAX_PATH + 1];
+  DWORD bytesRead;
+  // we need only one line of output
+  ReadFile(readPipe, buffer, sizeof(buffer) - 1, &bytesRead, NULL);
+
+  CloseHandle(readPipe);
+
+  WaitForSingleObject(pi.hProcess, INFINITE);
+  CloseHandle(pi.hProcess);
+  CloseHandle(pi.hThread);
+
+  if (bytesRead > 0) {
+    buffer[bytesRead] = 0;
+    return buffer;
+  }
+  else
+    return 0;
+}
+
 // WSL path conversion, using wsl.exe
 char *
 wslwinpath(string path)
@@ -339,26 +411,43 @@ wslwinpath(string path)
     // to prevent this, the whole invocation could be wrapped into another 
     // outer `sh -c`; fortunately, it turns out the both `sh` 
     // wrappers are not needed (anymore)
-    if (wslname && *wslname)
-      wslcmd = asform("wsl -d %ls wslpath -m '%s' 2>/dev/null", wslname, path);
+    bool specdist = wslname && *wslname;
+    // handle ~ unquoted so the shell can expand it
+    // paths beginning with ~/ are handled below
+    if (*path == '~')
+      wslcmd = asform("wsl %s %ls wslpath -m ~", 
+                      specdist ? "-d" : "", specdist ? wslname : W(""));
     else
-      wslcmd = asform("wsl wslpath -m '%s' 2>/dev/null", path);
+      wslcmd = asform("wsl %s %ls wslpath -m '%s'", 
+                      specdist ? "-d" : "", specdist ? wslname : W(""),
+                      path);
+
+#ifdef use_popen_for_wslpath
+#warning the popen version interprets ~ host-side (not WSL-side)
+#warning the popen version fails standalone
     FILE * wslpopen = popen(wslcmd, "r");
-    char line[MAX_PATH + 1];
-    char * got = fgets(line, sizeof line, wslpopen);
-    pclose(wslpopen);
+    char * got = 0;
+    if (wslpopen) {
+      static char line[MAX_PATH + 1];
+      got = fgets(line, sizeof line, wslpopen);
+      pclose(wslpopen);
+    }
+#else
+    char * got = cmd_out_capture_start_process(wslcmd);
+#endif
     //printf("<%s> -> [WSL %ls] <%s>\n", wslcmd, wslname, line);
     free(wslcmd);
     if (!got)
       return 0;
+
     // adjust buffer
-    int len = strlen(line);
-    if (line[len - 1] == '\n')
-      line[len - 1] = 0;
+    int len = strlen(got);
+    if (len && got[len - 1] == '\n')
+      got[len - 1] = 0;
     // return path string
-    if (*line)
-      return strdup(line);
-    else  // file does not exist
+    if (*got)
+      return strdup(got);
+    else
       return 0;
   }
 
@@ -385,11 +474,13 @@ wslwinpath(string path)
       else
         abspath = strdup(path);
       trace_guard(("wslwinpath abspath %s\n", abspath));
+#ifdef reject_relative_path
       if (*abspath != '/') {
         // failed to determine an absolute path
         free(abspath);
         return 0;
       }
+#endif
     }
     else
       abspath = strdup(path);
@@ -7249,12 +7340,26 @@ main(int argc, char *argv[])
   }
   //printf("WSL <%ls>\n", wslname);
 
+#ifdef debug_wslwinpath
+  show_info(wslwinpath("~"));
+  show_info(wslwinpath("~/abc"));
+  show_info(wslwinpath("/ab/cd"));
+  show_info(wslwinpath("/ö€"));
+  show_info(wslwinpath("/a b/c d"));
+  show_info(wslwinpath("a b/c d") ?: "NULL");
+  show_info(wslwinpath("ab/cd") ?: "NULL");
+  show_info(wslwinpath("ö€") ?: "NULL");
+#endif
+
   // change to home directory if requested
   if (start_home) {
     if (support_wsl) {
       // set WSL home as reference for relative save and log filenames
       char * home = wslwinpath("~");
-      chdir(home);
+      // starting the WSL session in home dir is achieved below by parameters
+      // here we change the terminal working dir for file saving
+      if (home)
+        chdir(home);
       trace_dir(asform("~: %s", home));
     }
     else {
