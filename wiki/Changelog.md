@@ -1,6 +1,7 @@
 Other
   * Restore Windows XP compatibility.
   * Fix WSL home dir conversion (option -~).
+  * Make reading from clipboard more reliable (https://cygwin.com/pipermail/cygwin/2026-February/259438.html).
 
 ### 3.8.2 (15 February 2026) ###
 

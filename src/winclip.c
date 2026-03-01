@@ -1,5 +1,5 @@
 // winclip.c (part of mintty)
-// Copyright 2008-23 Andy Koppe, 2018-2025 Thomas Wolff
+// Copyright 2008-23 Andy Koppe, 2018-2026 Thomas Wolff
 // Adapted from code from PuTTY-0.60 by Simon Tatham and team.
 // Licensed under the terms of the GNU General Public License v3 or later.
 
@@ -1324,7 +1324,11 @@ static void
 do_win_paste(bool do_path)
 {
   //printf("OpenClipboard win_paste\n");
-  if (!OpenClipboard(null))
+  // according to Windows doc, OpenClipboard(null) should be sufficient 
+  // for reading from the clipboard, but reportedly this may fail
+  // (https://cygwin.com/pipermail/cygwin/2026-February/259438.html)
+  // so let's make it more reliable
+  if (!OpenClipboard(wnd))
     return;
 
   if (cfg.input_clears_selection)
@@ -1353,7 +1357,8 @@ do_win_paste(bool do_path)
 char *
 get_clipboard(void)
 {
-  if (!OpenClipboard(null))
+  // let's make this more reliable, see above
+  if (!OpenClipboard(wnd))
     return 0;
 
   HGLOBAL data;
