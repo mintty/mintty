@@ -1,5 +1,5 @@
 // wininput.c (part of mintty)
-// Copyright 2008-23 Andy Koppe, 2015-2025 Thomas Wolff
+// Copyright 2008-23 Andy Koppe, 2015-2026 Thomas Wolff
 // Licensed under the terms of the GNU General Public License v3 or later.
 
 #include "winpriv.h"
@@ -907,7 +907,6 @@ static alt_state_t old_alt_state;
 static int alt_code;
 static bool alt_uni;
 
-static bool lctrl;  // Is left Ctrl pressed?
 static int lctrl_time = 0;
 static int ralt_time = 0;
 static int is_lctrl = 0;
@@ -919,7 +918,7 @@ get_mods(void)
 {
   inline bool is_key_down(uchar vk) { return GetKeyState(vk) & 0x80; }
   lctrl_time = 0;
-  lctrl = is_key_down(VK_LCONTROL) && (lctrl || !is_key_down(VK_RMENU));
+  bool lctrl = is_key_down(VK_LCONTROL) && (is_lctrl || !is_key_down(VK_RMENU));
   bool super = super_key && is_key_down(super_key);
   bool hyper = hyper_key && is_key_down(hyper_key);
   return
@@ -2568,9 +2567,13 @@ static LONG last_key_time = 0;
     last_key_time = message_time;
 
   if (key == VK_PROCESSKEY) {
+#ifdef debug_virtual_key_codes
+    printf("  - PROCESSKEY (%02X)\n", ImmGetVirtualKey(wnd));
+#endif
     TranslateMessage(
       &(MSG){.hwnd = wnd, .message = WM_KEYDOWN, .wParam = wp, .lParam = lp}
     );
+    win_key_reset();  // #1353
     return true;
   }
 
@@ -2605,6 +2608,7 @@ static LONG last_key_time = 0;
     }
   }
 
+  bool lctrl;
   // Distinguish real LCONTROL keypresses from fake messages sent for AltGr.
   // It's a fake if the next message is an RMENU with the same timestamp.
   // Or, as of buggy TeamViewer, if the RMENU comes soon after (#783).
@@ -4017,6 +4021,8 @@ win_key_up(WPARAM wp, LPARAM lp)
   uint key = wp;
 #ifdef debug_virtual_key_codes
   printf("  win_key_up %02X (down %02X) %s\n", key, last_key_down, vk_name(key));
+  if (key == VK_PROCESSKEY)
+    printf("  - PROCESSKEY (%02X)\n", ImmGetVirtualKey(wnd));
 #endif
 
 #ifdef debug_altgr
