@@ -4021,9 +4021,14 @@ win_key_up(WPARAM wp, LPARAM lp)
   uint key = wp;
 #ifdef debug_virtual_key_codes
   printf("  win_key_up %02X (down %02X) %s\n", key, last_key_down, vk_name(key));
-  if (key == VK_PROCESSKEY)
+#endif
+
+  if (key == VK_PROCESSKEY) {
+#ifdef debug_virtual_key_codes
     printf("  - PROCESSKEY (%02X)\n", ImmGetVirtualKey(wnd));
 #endif
+    win_key_reset();  // #1353
+  }
 
 #ifdef debug_altgr
   if (send_test_vks(false, key))
