@@ -1,3 +1,6 @@
+Keyboard handling
+  * After IME option switch, reset Control state to avoid input misinterpretation (#1353).
+
 Other
   * Restore Windows XP compatibility.
   * Fix WSL home dir conversion (option -~).

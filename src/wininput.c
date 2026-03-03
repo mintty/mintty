@@ -2573,7 +2573,12 @@ static LONG last_key_time = 0;
     TranslateMessage(
       &(MSG){.hwnd = wnd, .message = WM_KEYDOWN, .wParam = wp, .lParam = lp}
     );
-    win_key_reset();  // #1353
+    // if IME options are switched (#1353), 
+    // the Control key state managed by mintty may get confused 
+    // (as some key release events are not passed to mintty) 
+    // and subsequent letters could be interpreted as if Control-modified,
+    // so we reset the modifier state here (and on key release below)
+    win_key_reset();
     return true;
   }
 
@@ -4027,7 +4032,8 @@ win_key_up(WPARAM wp, LPARAM lp)
 #ifdef debug_virtual_key_codes
     printf("  - PROCESSKEY (%02X)\n", ImmGetVirtualKey(wnd));
 #endif
-    win_key_reset();  // #1353
+    // reset modifier state after potential IME switch (#1353, see above)
+    win_key_reset();
   }
 
 #ifdef debug_altgr
