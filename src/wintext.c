@@ -4882,6 +4882,119 @@ win_check_glyphs(wchar *wcs, uint num, cattrflags attr)
   ReleaseDC(wnd, dc);
 }
 
+/* Check availability of characters in the current font.
+ * Zeroes each of the characters in the input array that isn't available.
+ * Rather than the GDI function GetGlyphIndices which is not capable 
+   of handling non-BMP characters, we use a DirectWrite function for this.
+ */
+bool
+dw_check_glyphs(xchar * xcs, uint num, cattrflags attr)
+{
+#if CYGWIN_VERSION_DLL_MAJOR >= 3000
+#define COBJMACROS
+#include <dwrite.h>
+static const IID MY_IID_IDWriteFactory =
+{ 0xb859ee5a, 0xd838, 0x4b5b,
+  { 0xa2, 0xe8, 0x1a, 0xdc, 0x7d, 0x93, 0xdb, 0x48 } };
+
+  int findex = (attr & FONTFAM_MASK) >> ATTR_FONTFAM_SHIFT;
+  if (findex > 10)
+    findex = 0;
+
+  struct fontfam * ff = &fontfamilies[findex];
+
+  HFONT f = font4(ff, attr);
+
+  HDC dc = GetDC(wnd);
+  SelectObject(dc, f);
+
+  HRESULT hr;
+  bool ok = false;
+  UINT16 glyphIndex[num];
+
+  IDWriteFactory * factory = 0;
+  IDWriteGdiInterop * interop = 0;
+  IDWriteFontFace * fontFace = 0;
+
+  hr = DWriteCreateFactory(
+         DWRITE_FACTORY_TYPE_SHARED,
+         //&IID_IDWriteFactory1,
+         //__uuidof(IDWriteFactory),
+         &MY_IID_IDWriteFactory,
+         (IUnknown**)&factory
+  );
+  if (FAILED(hr))
+    goto cleanup;
+
+  hr = IDWriteFactory_GetGdiInterop(factory, &interop);
+  if (FAILED(hr))
+    goto cleanup;
+
+  hr = IDWriteGdiInterop_CreateFontFaceFromHdc(
+         interop,
+         dc,
+         &fontFace
+  );
+  if (FAILED(hr)) goto cleanup;
+
+  hr = IDWriteFontFace_GetGlyphIndices(
+         fontFace,
+         xcs, num,
+         glyphIndex
+  );
+  if (!SUCCEEDED(hr))
+    goto cleanup;
+
+  // recheck for characters affected by FontChoice
+  for (uint i = 0; i < num; i++) {
+    uchar cf = scriptfont(xcs[i]);
+    cf &= 0xF;  // mask glyph shift / glyph centering flag
+#ifdef debug_scriptfonts
+    if (xcs[i] && cf)
+      printf("scriptfont %04X: %d\n", xcs[i], cf);
+#endif
+    if (cf && cf <= 10) {
+      struct fontfam * ff = &fontfamilies[cf];
+      f = font4(ff, attr);
+      SelectObject(dc, f);
+      IDWriteFontFace * fontFace = 0;
+      hr = IDWriteGdiInterop_CreateFontFaceFromHdc(
+             interop,
+             dc,
+             &fontFace
+      );
+      if (SUCCEEDED(hr)) {
+        hr = IDWriteFontFace_GetGlyphIndices(
+               fontFace,
+               &xcs[i], 1,
+               &glyphIndex[i]
+        );
+        IDWriteFontFace_Release(fontFace);
+      }
+    }
+  }
+
+  ok = true;
+  for (uint i = 0; i < num; i++)
+    if (!glyphIndex[i])
+      xcs[i] = 0;
+
+cleanup:
+  if (fontFace)
+    IDWriteFontFace_Release(fontFace);
+  if (interop)
+    IDWriteGdiInterop_Release(interop);
+  if (factory)
+    IDWriteFactory_Release(factory);  //factory->lpVtbl->Release(factory);
+
+  ReleaseDC(wnd, dc);
+  return ok;
+#else
+  (void)xcs, (void)num, (void)attr;
+  return false;
+#endif
+}
+
 wchar
 get_errch(wchar *wcs, cattrflags attr)
 {

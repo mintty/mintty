@@ -445,12 +445,18 @@ so if both reporting modes are enabled, only one report is sent.
 
 ## Font glyph coverage enquiry ##
 
-Fonts vary widely in their Unicode coverage, i.e. they usually miss glyphs for many characters. The following sequence can be used to enquire about support for a specified list of characters.
+Fonts vary widely in their Unicode coverage, i.e. they usually miss glyphs for many characters. 
+The following sequence can be used to enquire about support for a specified list of characters.
 
 > `^[]7771;?;`_char0_`;`_char1_...`^G`
 
-Characters shall be specified with their decimal Unicode codepoint. Any number of characters can be given. Mintty replies with the same sequence, except that the question mark is replaced with an exclamation mark and that codes for characters that the current font does not have a glyph for are omitted.
-The function only works for characters in the Unicode BMP, smaller than U+10000.
+Characters shall be specified with their decimal Unicode codepoint. 
+Any number of characters can be given. 
+Mintty replies with the same sequence, except that the question mark is 
+replaced with an exclamation mark and that codes for characters that the 
+current font does not have a glyph for are omitted.
+From mintty 3.8.3, the function works for all characters, 
+also beyond the Unicode BMP, so for characters greater than U+FFFF.
 
 
 ## Wide characters ##

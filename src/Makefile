@@ -132,13 +132,12 @@ scriptlib=-lusp10
 #downldlib="${SYSTEMROOT}/System32/urlmon.dll"
 downldlib=
 ifneq ($(platform), msys)
-  emojilib=-lgdiplus
+  emojilib = -lGdiPlus
+  scriptlib += -lDWrite
 endif
 extralibs=$(scriptlib) $(downldlib) $(emojilib) -lshlwapi
 LDFLAGS := -L$(shell $(CC) -print-file-name=w32api) -static-libgcc
 LDLIBS := -mwindows $(extralibs) -lcomctl32 -limm32 -lwinmm -lwinspool -lole32 -luuid -lmpr
-#override LDFLAGS += -L$(shell $(CC) -print-file-name=w32api) -static-libgcc
-#override LDLIBS += -mwindows $(extralibs) -lcomctl32 -limm32 -lwinmm -lwinspool -lole32 -luuid
 
 ifdef DEBUG
 #  CPPFLAGS += -Wno-trampolines

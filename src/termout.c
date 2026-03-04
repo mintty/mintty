@@ -4815,19 +4815,25 @@ do_cmd(void)
     when 7771: {  // Enquire about font support for a list of characters
       if (*s++ != '?')
         return;
+      xchar xcs[term.cmd_len];
       wchar wcs[term.cmd_len];
       uint n = 0;
       while (*s) {
         if (*s++ != ';')
           return;
-        wcs[n++] = strtoul(s, &s, 10);
+        ulong c = strtoul(s, &s, 10);
+        xcs[n] = c;
+        wcs[n] = c;
+        n++;
       }
-      win_check_glyphs(wcs, n, term.curs.attr.attr);
+      bool dw = dw_check_glyphs(xcs, n, term.curs.attr.attr);
+      if (!dw)
+        win_check_glyphs(wcs, n, term.curs.attr.attr);
       s = term.cmd_buf;
       for (size_t i = 0; i < n; i++) {
         *s++ = ';';
-        if (wcs[i])
-          s += sprintf(s, "%u", wcs[i]);
+        if (dw ? xcs[i] : wcs[i])
+          s += sprintf(s, "%u", xcs[i]);
       }
       *s = 0;
       child_printf("\e]7771;!%s%s", term.cmd_buf, osc_fini());

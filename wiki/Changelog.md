@@ -1,3 +1,6 @@
+Terminal features
+  * Font glyph coverage enquiry also works beyond the Unicode BMP (~#1352).
+
 Keyboard handling
   * After IME option switch, reset Control state to avoid input misinterpretation (#1353).
 
