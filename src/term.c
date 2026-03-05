@@ -1,5 +1,5 @@
 // term.c (part of mintty)
-// Copyright 2008-2023 Andy Koppe, 2016-2025 Thomas Wolff
+// Copyright 2008-2023 Andy Koppe, 2016-2026 Thomas Wolff
 // Adapted from code from PuTTY-0.60 by Simon Tatham and team.
 // Licensed under the terms of the GNU General Public License v3 or later.
 
@@ -135,6 +135,11 @@ tblink_cb(void)
 {
   term.tblinker = !term.tblinker;
   term_schedule_tblink();
+
+  // ensure blinking graphics are redisplayed;
+  // this could be controlled more fine-grained but seems to be sufficient
+  force_imgs = true;
+
   win_update(false);
 }
 
@@ -152,6 +157,11 @@ tblink2_cb(void)
 {
   term.tblinker2 = !term.tblinker2;
   term_schedule_tblink2();
+
+  // ensure blinking graphics are redisplayed;
+  // this could be controlled more fine-grained but seems to be sufficient
+  force_imgs = true;
+
   win_update(false);
 }
 
