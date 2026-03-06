@@ -5,10 +5,16 @@ Terminal features
 Keyboard handling
   * After IME option switch, reset Control state to avoid input misinterpretation (#1353).
 
+Window handling
+  * Drag-and-drop onto terminal or Options sets window focus (#1354).
+
 Other
   * Restore Windows XP compatibility.
   * Fix WSL home dir conversion (option -~).
   * Make reading from clipboard more reliable (https://cygwin.com/pipermail/cygwin/2026-February/259438.html).
+
+Configuration
+  * New option DropFocus (#1354).
 
 ### 3.8.2 (15 February 2026) ###
 

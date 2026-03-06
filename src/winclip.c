@@ -1514,6 +1514,12 @@ dt_drop(IDropTarget *this, IDataObject *obj,
       when CF_UNICODETEXT: paste_unicode_text(data);
       when CF_HDROP: paste_hdrop(data);
     }
+
+    if (cfg.drop_focus & 1) {
+      // raise window to focus if enabled for terminal window:
+      SetForegroundWindow(wnd);
+      // these do not work: BringWindowToTop SetActiveWindow SetFocus
+    }
   }
   else {
     // support drag-and-drop to certain input fields
@@ -1550,6 +1556,12 @@ dt_drop(IDropTarget *this, IDataObject *obj,
       // this will only work with the DIALOG_CLASS target
       SendMessage(h, WM_USER, (WPARAM)widget, (LPARAM)drop);
       free(drop);
+    }
+
+    if (cfg.drop_focus & 2) {
+      // raise window to focus if enabled for Options dialog:
+      SetForegroundWindow(wnd);
+      // these do not work: BringWindowToTop SetActiveWindow SetFocus
     }
   }
   return 0;

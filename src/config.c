@@ -154,6 +154,7 @@ const config default_cfg = {
   .appmouse_pointer = W("arrow"),
   .pixmouse_pointer = W("cross"),
   .touch_scroll = 1,
+  .drop_focus = 3,
   // Selection
   .input_clears_selection = true,
   .copy_on_select = true,
@@ -492,6 +493,7 @@ options[] = {
   {"AppMousePointer", OPT_WSTRING, offcfg(appmouse_pointer)},
   {"PixMousePointer", OPT_WSTRING, offcfg(pixmouse_pointer)},
   {"TouchScroll", OPT_INT, offcfg(touch_scroll)},
+  {"DropFocus", OPT_INT, offcfg(drop_focus)},
 
   // Selection
   {"ClearSelectionOnInput", OPT_BOOL, offcfg(input_clears_selection)},
