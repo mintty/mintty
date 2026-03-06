@@ -288,6 +288,7 @@ winimg_new(imglist **ppimg, char * id, unsigned char * pixels, uint len,
     img->id = 0;
     img->cwidth = cell_width;
     img->cheight = cell_height;
+    img->attr |= 1;  // indicate initial display
   }
   else if (len) {  // Image (iTerm2 protocol)
     img->id = id ? strdup(id) : 0;
@@ -899,6 +900,9 @@ static bool previously_selected = false;
           if (img->len < 0) {  // Draw ReGIS graphics
             // extract ReGIS DCS parameter
             int regarg = -1 - img->len;
+            // check initial rendering
+            bool first_draw = img->attr & 1;
+            img->attr &= ~1;
 
             // width of the ReGIS background pad,
             // rounded up to cell size and scaled with a zoomed window
@@ -995,7 +999,7 @@ static bool previously_selected = false;
             //printf("pad %d/%d draw %d/%d\n", padwidth, padheight, rwidth, rheight);
 
             // scale while drawing
-            regis_draw(rdc, scale, rwidth, rheight, regarg, img->pixels, flush);
+            regis_draw(rdc, scale, rwidth, rheight, regarg, img->pixels, first_draw, flush);
 
 #ifdef zoom_transform
             if (coord_transformed2)

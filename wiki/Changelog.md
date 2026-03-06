@@ -1,5 +1,6 @@
 Terminal features
   * Font glyph coverage enquiry also works beyond the Unicode BMP (~#1352).
+  * Suppress ReGIS delay command on graphics refresh.
   * Ensure refresh of blinking graphics (broken since 3.7.9).
 
 Keyboard handling

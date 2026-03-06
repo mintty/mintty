@@ -923,7 +923,7 @@ setblue(COLORREF * colr, int val)
    The only additional storage is the list of defined "macrographs".
  */
 void
-regis_draw(HDC dc, float scale, int rwidth, int rheight, int rmode, uchar * regis, flush_fn flush)
+regis_draw(HDC dc, float scale, int rwidth, int rheight, int rmode, uchar * regis, bool first_draw, flush_fn flush)
 {
 
 static bool regis_init_done = false;
@@ -1888,20 +1888,22 @@ static struct macro {
           when 'T': { // Time Delay
             r++;
             int ticks = scannum(&r);  // 1/60 seconds
+            if (first_draw) {
 #ifdef use_gdiplus
-            // reduce window stalling on long delays:
-            gp(GdipFlush(gr, FlushIntentionFlush));  // not strictly needed
+              // reduce window stalling on long delays:
+              gp(GdipFlush(gr, FlushIntentionFlush));  // not strictly needed
 #endif
-            // just flushing graphics here does not work as we're 
-            // rendering on a temporary DC;
-            // so we need to invoke a flushing callback
-            flush();
+              // just flushing graphics here does not work as we're 
+              // rendering on a temporary DC;
+              // so we need to invoke a flushing callback
+              flush();
 
-            // the actual delay
-            if (ticks >= 0 && ticks <= 32767) {
-              long us = ticks * 1000000 / 60;
-              us /= 4;  // reproduce xterm acceleration
-              usleep(us);
+              // the actual delay
+              if (ticks >= 0 && ticks <= 32767) {
+                long us = ticks * 1000000 / 60;
+                us /= 4;  // reproduce xterm acceleration
+                usleep(us);
+              }
             }
           }
 #ifdef support_screen_coordinates_control
