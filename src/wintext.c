@@ -4891,18 +4891,19 @@ bool
 dw_check_glyphs(xchar * xcs, uint num, cattrflags attr)
 {
 #if CYGWIN_VERSION_DLL_MAJOR >= 3000
+
 #define COBJMACROS
 #include <dwrite.h>
+
 static const IID MY_IID_IDWriteFactory =
-{ 0xb859ee5a, 0xd838, 0x4b5b,
-  { 0xa2, 0xe8, 0x1a, 0xdc, 0x7d, 0x93, 0xdb, 0x48 } };
+  { 0xb859ee5a, 0xd838, 0x4b5b,
+    { 0xa2, 0xe8, 0x1a, 0xdc, 0x7d, 0x93, 0xdb, 0x48 } };
 
   int findex = (attr & FONTFAM_MASK) >> ATTR_FONTFAM_SHIFT;
   if (findex > 10)
     findex = 0;
 
   struct fontfam * ff = &fontfamilies[findex];
-
   HFONT f = font4(ff, attr);
 
   HDC dc = GetDC(wnd);
@@ -4912,37 +4913,36 @@ static const IID MY_IID_IDWriteFactory =
   bool ok = false;
   UINT16 glyphIndex[num];
 
-  IDWriteFactory * factory = 0;
-  IDWriteGdiInterop * interop = 0;
+  // singular DWrite objects
+  static IDWriteFactory * factory = 0;
+  static IDWriteGdiInterop * interop = 0;
+
+  // case-by-case DWrite object
   IDWriteFontFace * fontFace = 0;
 
-  hr = DWriteCreateFactory(
-         DWRITE_FACTORY_TYPE_SHARED,
-         //&IID_IDWriteFactory1,
-         //__uuidof(IDWriteFactory),
-         &MY_IID_IDWriteFactory,
-         (IUnknown**)&factory
-  );
+  if (!factory) {
+    hr = DWriteCreateFactory(
+           DWRITE_FACTORY_TYPE_SHARED,
+           //&IID_IDWriteFactory,  // does not link in cygwin
+           &MY_IID_IDWriteFactory,
+           (IUnknown**)&factory
+    );
+    if (FAILED(hr))
+      goto cleanup;
+  }
+
+  if (!interop) {
+    hr = IDWriteFactory_GetGdiInterop(factory, &interop);
+    if (FAILED(hr))
+      goto cleanup;
+  }
+
+  hr = IDWriteGdiInterop_CreateFontFaceFromHdc(interop, dc, &fontFace);
   if (FAILED(hr))
     goto cleanup;
 
-  hr = IDWriteFactory_GetGdiInterop(factory, &interop);
+  hr = IDWriteFontFace_GetGlyphIndices(fontFace, xcs, num, glyphIndex);
   if (FAILED(hr))
-    goto cleanup;
-
-  hr = IDWriteGdiInterop_CreateFontFaceFromHdc(
-         interop,
-         dc,
-         &fontFace
-  );
-  if (FAILED(hr)) goto cleanup;
-
-  hr = IDWriteFontFace_GetGlyphIndices(
-         fontFace,
-         xcs, num,
-         glyphIndex
-  );
-  if (!SUCCEEDED(hr))
     goto cleanup;
 
   // recheck for characters affected by FontChoice
@@ -4958,37 +4958,35 @@ static const IID MY_IID_IDWriteFactory =
       f = font4(ff, attr);
       SelectObject(dc, f);
       IDWriteFontFace * fontFace = 0;
-      hr = IDWriteGdiInterop_CreateFontFaceFromHdc(
-             interop,
-             dc,
-             &fontFace
-      );
+      hr = IDWriteGdiInterop_CreateFontFaceFromHdc(interop, dc, &fontFace);
       if (SUCCEEDED(hr)) {
-        hr = IDWriteFontFace_GetGlyphIndices(
-               fontFace,
-               &xcs[i], 1,
-               &glyphIndex[i]
-        );
+        hr = IDWriteFontFace_GetGlyphIndices(fontFace, &xcs[i], 1, &glyphIndex[i]);
         IDWriteFontFace_Release(fontFace);
       }
     }
   }
 
   ok = true;
+  // indicate missing glyphs in parameter array
   for (uint i = 0; i < num; i++)
     if (!glyphIndex[i])
       xcs[i] = 0;
 
 cleanup:
+  // drop font object
   if (fontFace)
     IDWriteFontFace_Release(fontFace);
+  // keep singular objects
+#ifdef dont_keep_dwrite_singulars
   if (interop)
     IDWriteGdiInterop_Release(interop);
   if (factory)
     IDWriteFactory_Release(factory);  //factory->lpVtbl->Release(factory);
+#endif
 
   ReleaseDC(wnd, dc);
   return ok;
+
 #else
   (void)xcs, (void)num, (void)attr;
   return false;
