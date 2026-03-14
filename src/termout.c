@@ -5813,8 +5813,9 @@ term_do_write(const char *buf, uint len, bool fix_status)
         else if (c >= '0' && c <= '9') {
           uint i = term.csi_argc - 1;
           if (i < lengthof(term.csi_argv)) {
-            term.csi_argv[i] = 10 * term.csi_argv[i] + c - '0';
-            if ((int)term.csi_argv[i] < 0)
+            if (term.csi_argv[i] <= (UINT_MAX - (uint)(c - '0')) / 10)
+              term.csi_argv[i] = 10 * term.csi_argv[i] + (uint)(c - '0');
+            else
               term.csi_argv[i] = INT_MAX;  // capture overflow
             term.csi_argv_defined[i] = 1;
           }
@@ -5873,9 +5874,10 @@ term_do_write(const char *buf, uint len, bool fix_status)
       when OSC_NUM:
         switch (c) {
           when '0' ... '9':  /* OSC command number */
-            term.cmd_num = term.cmd_num * 10 + c - '0';
-            if (term.cmd_num < 0)
-              term.cmd_num = -99;  // prevent wrong valid param
+            if (term.cmd_num <= (INT_MAX - (c - '0')) / 10)
+              term.cmd_num = term.cmd_num * 10 + (c - '0');
+            else
+              term.cmd_num = INT_MAX;  // prevent wrong valid param
           when ';':
             term.state = CMD_STRING;
           when '\a':
@@ -5991,7 +5993,10 @@ term_do_write(const char *buf, uint len, bool fix_status)
             //printf("DCS param %c\n", c);
             if (term.csi_argc < 2) {
               uint i = term.csi_argc;
-              term.csi_argv[i] = 10 * term.csi_argv[i] + c - '0';
+              if (term.csi_argv[i] <= (UINT_MAX - (uint)(c - '0')) / 10)
+                term.csi_argv[i] = 10 * term.csi_argv[i] + (uint)(c - '0');
+              else
+                term.csi_argv[i] = UINT_MAX;  // cap on overflow
             }
           when ';' or ':':  /* DCS parameter separator */
             //printf("DCS param sep %c\n", c);
