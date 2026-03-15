@@ -3481,6 +3481,23 @@ do_win_adapt_term_size(bool sync_size_with_font, bool scale_font_with_size, bool
     term_height -= SEARCHBAR_HEIGHT;
   }
 
+  if (IsZoomed(wnd)) {
+    // ensure window will be maximised after changed monitor dimensions, e.g.
+    // - after changing DPI/zoom factor
+    // - after moving window to other monitor (git-for-windows/git#6085)
+    // avoid complete (and error-prone) refactoring of window resizing code;
+    // as a workaround, clone the essential code of win_maximise(1):
+
+   /* Resize ourselves to exactly cover the nearest monitor. */
+    MONITORINFO mi;
+    get_my_monitor_info(&mi);
+    RECT fr = mi.rcMonitor;
+    // set window size
+    SetWindowPos(wnd, HWND_TOP, fr.left, fr.top,
+                 fr.right - fr.left, fr.bottom - fr.top,
+                 SWP_FRAMECHANGED | SWP_NOACTIVATE | SWP_NOZORDER);
+  }
+
   if (scale_font_with_size && term.cols != 0 && term.rows != 0) {
     // calc preliminary size (without font scaling), as below
     // should use term_height rather than rows; calc and store in term_resize

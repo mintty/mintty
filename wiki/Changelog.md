@@ -8,6 +8,7 @@ Keyboard handling
 
 Window handling
   * Drag-and-drop onto terminal or Options sets window focus (#1354).
+  * Keep window maximised after changing monitor dimensions (git-for-windows/git#6085).
 
 Other
   * Restore Windows XP compatibility.
