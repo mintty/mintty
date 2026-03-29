@@ -3135,7 +3135,9 @@ void trace_line(char * tag, termchar * chars)
 #define at_cursor_pos(i, j)	((i == term.curs.y) && !((term.curs.x - j) >> 1))
 
 #define IGNWIDTH TATTR_EXPAND | TATTR_NARROW | TATTR_SINGLE | TATTR_CLEAR
-#define IGNEMOJATTR (TATTR_WIDE | ATTR_FGMASK | TATTR_COMBINING | IGNWIDTH)
+#define IGNEMOJTATTR TATTR_WIDE | TATTR_COMBINING
+#define IGNEMOJCATTR ATTR_BOLD | FONTFAM_MASK
+#define IGNEMOJATTR (IGNWIDTH | IGNEMOJTATTR | ATTR_FGMASK | IGNEMOJCATTR)
 
 static bool
 is_comcom(wchar ch)
@@ -3577,6 +3579,9 @@ term_paint(void)
               d[i].attr.attr &= ~ATTR_FGMASK;
               d[i].attr.attr |= TATTR_EMOJI;
               d[i].attr.truefg = em;
+              // clear font attributes of subsequent emoji components
+              // which would otherwise spoil emoji rendering
+              d[i].attr.attr &= ~FONTFAM_MASK;
             }
           }
         }
