@@ -2,6 +2,7 @@ Terminal features
   * Font glyph coverage enquiry also works beyond the Unicode BMP (~#1352).
   * Suppress ReGIS delay command on graphics refresh.
   * Ensure refresh of blinking graphics (broken since 3.7.9).
+  * Fix emoji sequence rendering in context of font or changing attributes.
 
 Keyboard handling
   * After IME option switch, reset Control state to avoid input misinterpretation (#1353).
