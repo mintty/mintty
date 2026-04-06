@@ -472,6 +472,13 @@ Fonts in the resource subdirectory \fIfonts\fP of the config directory
 are installed dynamically and can be used for configured or interactively 
 changed font selection. This is especially useful for a portable installation.
 
+.SS Font selection
+
+Different fonts can be selected by different criteria. Mintty supports 
+explicit alternative font selection (using SGR character attributes), 
+script-dependent alternative font selection (option FontChoice), 
+glyph-support-dependent font substitution (option FontSubst), and more.
+
 .SS Bidirectional rendering
 
 In addition to its default implicit bidirectional rendering with automatic 
@@ -1688,6 +1695,27 @@ Examples:
   Font3=MesloLGS NF
 .br
   FontChoice=Greek:3;|Greek Extended:4
+.ee
+.en
+\fBFont substitution sequence checked by glyph support\fP (FontSubst=):
+With this setting, a sequence of alternative fonts can be specified for 
+substitution whenever a character is not contained in the current font.
+The value is a list of comma-separated alternative font numbers.
+
+With the following setting, CJK characters not supported in the current font 
+will be taken from the Jigmo fonts instead, which provide CJK glyphs 
+for Unicode planes 1, 2, 3.
+
+Example:
+.ex
+.br
+  FontSubst=1,2,3
+.br
+  Font1=Jigmo1
+.br
+  Font2=Jigmo2
+.br
+  Font3=Jigmo3
 .ee
 .en
 \fBFont sample text\fP (FontSample=):

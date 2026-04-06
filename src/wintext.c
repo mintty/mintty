@@ -133,6 +133,7 @@ struct fontfam {
   int shift;
   struct charpropcache * cpcache[FONT_BOLDITAL + 1];
   uint cpcachelen[FONT_BOLDITAL + 1];
+  bool cached;  // font object cache maintained in dw_has_glyph
   wchar errch;
   int fw_norm;
   int fw_bold;
@@ -641,11 +642,12 @@ win_init_fontfamily(HDC dc, int findex)
   trace_resize(("--- init_fontfamily\n"));
 
   for (uint i = 0; i < FONT_BOLDITAL; i++) {
-    if (ff->fonts[i])
+    if (ff->fonts[i] && ff->cpcache[i])
       delete(ff->cpcache[i]);
     ff->cpcache[i] = 0;
     ff->cpcachelen[i] = 0;
   }
+  ff->cached = false;
   for (uint i = 0; i < FONT_MAXNO; i++) {
     if (ff->fonts[i]) {
       DeleteObject(ff->fonts[i]);
@@ -4882,6 +4884,18 @@ win_check_glyphs(wchar *wcs, uint num, cattrflags attr)
   ReleaseDC(wnd, dc);
 }
 
+#if CYGWIN_VERSION_DLL_MAJOR >= 3000
+#define use_dwrite
+#endif
+
+#ifdef use_dwrite
+#define COBJMACROS
+#include <dwrite.h>
+static const IID MY_IID_IDWriteFactory =
+  { 0xb859ee5a, 0xd838, 0x4b5b,
+    { 0xa2, 0xe8, 0x1a, 0xdc, 0x7d, 0x93, 0xdb, 0x48 } };
+#endif
+
 /* Check availability of characters in the current font.
  * Zeroes each of the characters in the input array that isn't available.
  * Rather than the GDI function GetGlyphIndices which is not capable 
@@ -4890,14 +4904,7 @@ win_check_glyphs(wchar *wcs, uint num, cattrflags attr)
 bool
 dw_check_glyphs(xchar * xcs, uint num, cattrflags attr)
 {
-#if CYGWIN_VERSION_DLL_MAJOR >= 3000
-
-#define COBJMACROS
-#include <dwrite.h>
-
-static const IID MY_IID_IDWriteFactory =
-  { 0xb859ee5a, 0xd838, 0x4b5b,
-    { 0xa2, 0xe8, 0x1a, 0xdc, 0x7d, 0x93, 0xdb, 0x48 } };
+#ifdef use_dwrite
 
   int findex = (attr & FONTFAM_MASK) >> ATTR_FONTFAM_SHIFT;
   if (findex > 10)
@@ -4945,26 +4952,27 @@ static const IID MY_IID_IDWriteFactory =
   if (FAILED(hr))
     goto cleanup;
 
-  // recheck for characters affected by FontChoice
-  for (uint i = 0; i < num; i++) {
-    uchar cf = scriptfont(xcs[i]);
-    cf &= 0xF;  // mask glyph shift / glyph centering flag
+  if (!(attr & DATTR_STARTRUN))
+    // recheck for characters affected by FontChoice
+    for (uint i = 0; i < num; i++) {
+      uchar cf = scriptfont(xcs[i]);
+      cf &= 0xF;  // mask glyph shift / glyph centering flag
 #ifdef debug_scriptfonts
-    if (xcs[i] && cf)
-      printf("scriptfont %04X: %d\n", xcs[i], cf);
+      if (xcs[i] && cf)
+        printf("scriptfont %04X: %d\n", xcs[i], cf);
 #endif
-    if (cf && cf <= 10) {
-      struct fontfam * ff = &fontfamilies[cf];
-      f = font4(ff, attr);
-      SelectObject(dc, f);
-      IDWriteFontFace * fontFace = 0;
-      hr = IDWriteGdiInterop_CreateFontFaceFromHdc(interop, dc, &fontFace);
-      if (SUCCEEDED(hr)) {
-        hr = IDWriteFontFace_GetGlyphIndices(fontFace, &xcs[i], 1, &glyphIndex[i]);
-        IDWriteFontFace_Release(fontFace);
+      if (cf && cf <= 10) {
+        struct fontfam * ff = &fontfamilies[cf];
+        f = font4(ff, attr);
+        SelectObject(dc, f);
+        IDWriteFontFace * fontFace = 0;
+        hr = IDWriteGdiInterop_CreateFontFaceFromHdc(interop, dc, &fontFace);
+        if (SUCCEEDED(hr)) {
+          hr = IDWriteFontFace_GetGlyphIndices(fontFace, &xcs[i], 1, &glyphIndex[i]);
+          IDWriteFontFace_Release(fontFace);
+        }
       }
     }
-  }
 
   ok = true;
   // indicate missing glyphs in parameter array
@@ -4992,6 +5000,108 @@ cleanup:
   return false;
 #endif
 }
+
+/* Check availability of single character in the current font.
+ * Use a DirectWrite function for this.
+ */
+bool
+dw_has_glyph(xchar xc, cattrflags attr)
+{
+#ifdef has_glyph_use_check_glyphs
+  // defer to glyph checking function, with large performance impact
+  xchar c1 = xc;
+  dw_check_glyphs(&c1, 1, attr | DATTR_STARTRUN);
+  return c1;
+#endif
+
+#ifdef use_dwrite
+
+  int findex = (attr & FONTFAM_MASK) >> ATTR_FONTFAM_SHIFT;
+  if (findex > 10)
+    findex = 0;
+  uchar cf = scriptfont(xc);
+  cf &= 0xF;  // mask glyph shift / glyph centering flag
+#ifdef debug_scriptfonts
+  if (xc && cf)
+    printf("scriptfont %04X: %d\n", xc, cf);
+#endif
+  if (cf && cf <= 10)
+    findex = cf;
+
+  struct fontfam * ff = &fontfamilies[findex];
+  bool ok = false;
+
+  HRESULT hr;
+
+  // singular DWrite objects
+  static IDWriteFactory * factory = 0;
+  static IDWriteGdiInterop * interop = 0;
+
+  if (!factory) {
+    hr = DWriteCreateFactory(
+           DWRITE_FACTORY_TYPE_SHARED,
+           //&IID_IDWriteFactory,  // does not link in cygwin
+           &MY_IID_IDWriteFactory,
+           (IUnknown**)&factory
+    );
+    if (FAILED(hr))
+      goto cleanup;
+  }
+
+  if (!interop) {
+    hr = IDWriteFactory_GetGdiInterop(factory, &interop);
+    if (FAILED(hr))
+      goto cleanup;
+  }
+
+  // cache font objects used for detection
+  // the flag in the fontfamilies struct indicates the need to refresh
+  static IDWriteFont * font[11] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+  if (!ff->cached) {
+    // drop previous font object
+    if (font[findex]) {
+      IDWriteFont_Release(font[findex]);
+      font[findex] = 0;
+    }
+
+    int w = (attr & ATTR_BOLD) ? ff->fw_bold : ff->fw_norm;
+    int i = attr & ATTR_ITALIC;
+    LOGFONTW lf = {font_height, 0, 0, 0, w, i, false, false,
+        DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
+        get_font_quality(), FIXED_PITCH | FF_DONTCARE,
+        W("")};
+    wcsncpy(lf.lfFaceName, ff->name, LF_FACESIZE);
+    hr = IDWriteGdiInterop_CreateFontFromLOGFONT(interop, &lf, &font[findex]);
+    if (FAILED(hr))
+      goto cleanup;
+    ff->cached = true;
+    //printf("CreateFontFromLOGFONT [%d] (%ls)\n", findex, ff->name);
+  }
+  BOOL ex;
+  hr = IDWriteFont_HasCharacter(font[findex], xc, &ex);
+  //printf("HasCharacter (ok %d): %d\n", SUCCEEDED(hr), ex);
+  if (FAILED(hr))
+    ok = true;  // could not detect -> do not trigger fallback
+  else
+    ok = ex;
+
+cleanup:
+  // keep singular objects
+#ifdef dont_keep_dwrite_singulars
+  if (interop)
+    IDWriteGdiInterop_Release(interop);
+  if (factory)
+    IDWriteFactory_Release(factory);  //factory->lpVtbl->Release(factory);
+#endif
+
+  return ok;
+
+#else
+  (void)xc, (void)attr;
+  return true;  // cannot detect -> do not trigger fallback
+#endif
+}
+
 
 wchar
 get_errch(wchar *wcs, cattrflags attr)

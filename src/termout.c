@@ -1481,7 +1481,7 @@ write_ucschar(wchar hwc, wchar wc, int width)
   cattrflags attr = term.curs.attr.attr;
   ucschar c = hwc ? combine_surrogates(hwc, wc) : wc;
 
-  // determine alternative font
+  // determine alternative font configured as script-specific secondary font
   uchar cf = scriptfont(c);
   // handle configured glyph shift
   uint glyph_shift = cf >> 4;  // extract glyph shift / glyph centering flag
@@ -1502,6 +1502,46 @@ write_ucschar(wchar hwc, wchar wc, int width)
   if (glyph_shift)
     term.curs.attr.attr |= ATTR_GLYPHSHIFT;
 #endif
+
+  // check glyph, switch to alternative font if configured for substitution
+  // 4 approaches were considered and test:
+  // 1. check here with the glyph checking function dw_check_glyphs;
+  //    this raises a huge performance penalty
+  // 2. do it in the rendering loop (term_paint) instead;
+  //    while fast in user response, that increases 
+  //    CPU consumption significantly without further optimisation
+  // 3. check here with single-character glyph checking function HasCharacter;
+  //    small performance penalty; cache detection font objects to avoid it
+  // 4. check here against a list of supported character ranges;
+  //    determined from the font once on-demand in the checking function;
+  //    not fully implemented as approach 3. turns out well
+  // for further optimisation, only non-ASCII characters are checked
+  string fs = cfg.font_subst;
+  if (*fs && c > 0x7F) {
+    cattrflags substattr = term.curs.attr.attr;
+    bool ok = dw_has_glyph(c, term.curs.attr.attr);
+    while (!ok) {
+      if (ok)
+        break;
+      int fn, len;
+      if (sscanf(fs, "%d%n", &fn, &len) > 0) {
+        if (fn > 0 && fn <= 10) {
+          substattr &= ~FONTFAM_MASK;
+          substattr |= ((cattrflags)fn << ATTR_FONTFAM_SHIFT);
+          ok = dw_has_glyph(c, substattr);
+          if (ok) {
+            term.curs.attr.attr = substattr;
+            break;
+          }
+        }
+        fs += len;
+        while (*fs == ' ' || *fs == ',' || *fs == ';')
+          fs ++;
+      }
+      else
+        break;
+    }
+  }
 
   // Auto-expanded glyphs
   if (width == 2

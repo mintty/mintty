@@ -4,6 +4,9 @@ Terminal features
   * Ensure refresh of blinking graphics (broken since 3.7.9).
   * Fix emoji sequence rendering in context of font or changing attributes.
 
+Character rendering
+  * Font substitution mechanism checks glyph coverage and selects suitable alternative font (#1352).
+
 Keyboard handling
   * After IME option switch, reset Control state to avoid input misinterpretation (#1353).
   * User-defined key assignments (setting KeyFunctions) stay in effect in shortcut override mode (~#1351).
@@ -19,6 +22,7 @@ Other
 
 Configuration
   * New option DropFocus (#1354).
+  * New option FontSubst (#1352).
 
 ### 3.8.2 (15 February 2026) ###
 

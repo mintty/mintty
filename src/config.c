@@ -90,6 +90,7 @@ const config default_cfg = {
   .fontfams[10] = {.name = W(""), .weight = 400, .isbold = false},
   .fontfams[11] = {.name = W("Courier New"), .weight = 400, .isbold = false},
   .font_choice = W(""),
+  .font_subst = "",
   .font_sample = W(""),
   .show_hidden_fonts = false,
   .font_smoothing = FS_DEFAULT,
@@ -398,6 +399,7 @@ options[] = {
   // Text
   {"Font", OPT_WSTRING, offcfg(font.name)},
   {"FontChoice", OPT_WSTRING, offcfg(font_choice)},
+  {"FontSubst", OPT_STRING, offcfg(font_subst)},
   {"FontSample", OPT_WSTRING, offcfg(font_sample)},
   {"FontSize", OPT_INT | OPT_LEGACY, offcfg(font.size)},
   {"FontHeight", OPT_INT, offcfg(font.size)},
