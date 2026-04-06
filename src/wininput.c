@@ -2957,10 +2957,13 @@ C	M	+C	+A	"	"
       return true;
   }
 
-  bool allow_shortcut = true;
+  // check whether to skip shortcut handling (DECSET 7783)
+  // but do not skip user-defined functions (#1351)
+  bool allow_shortcut = !term.shortcut_override;
 
-  if (!term.shortcut_override && old_alt_state <= ALT_ALONE) {
+  if (old_alt_state <= ALT_ALONE) {
     // user-defined shortcuts
+    // do not disable them in shortcut override mode (DECSET 7783) (#1351)
     //test: W("-:'foo';A+F3:;A+F5:flipscreen;A+F9:\"f9\";C+F10:\"f10\";p:paste;d:`date`;o:\"oo\";ö:\"öö\";€:\"euro\";~:'tilde';[:'[[';µ:'µµ'")
     if (*cfg.key_commands) {
       /* Look up a function tag for either of
@@ -3067,7 +3070,7 @@ C	M	+C	+A	"	"
           }
         }
 #ifdef debug_def_keys
-        printf("key %04X <%s>\n", *wbuf, tag);
+        printf("key %04X <%s>\n", *wbuf, tag ?: "null");
 #endif
 
         if (wlen < 0) {

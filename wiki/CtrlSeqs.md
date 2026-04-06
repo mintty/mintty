@@ -116,6 +116,8 @@ applications like text editors to adapt it to the current input target.
 ## Shortcut override mode ##
 
 When shortcut override mode is on, all shortcut key combinations are sent to the application instead of triggering window commands.
+Escape sequences in modifyOtherKeys mode and (since 3.8.3) user-defined 
+key assignments configured with option KeyFunctions stay in effect.
 
 | **sequence**  | **override** |
 |:--------------|:-------------|

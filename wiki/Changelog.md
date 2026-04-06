@@ -6,6 +6,7 @@ Terminal features
 
 Keyboard handling
   * After IME option switch, reset Control state to avoid input misinterpretation (#1353).
+  * User-defined key assignments (setting KeyFunctions) stay in effect in shortcut override mode (~#1351).
 
 Window handling
   * Drag-and-drop onto terminal or Options sets window focus (#1354).
