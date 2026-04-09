@@ -1514,8 +1514,8 @@ write_ucschar(wchar hwc, wchar wc, int width)
     term.curs.attr.attr |= ATTR_GLYPHSHIFT;
 #endif
 
-  // check glyph, switch to alternative font if configured for substitution
-  // 4 approaches were considered and test:
+  // check glyph, switch to alternative font if configured for substitution;
+  // 4 approaches were considered and tested:
   // 1. check here with the glyph checking function dw_check_glyphs;
   //    this raises a huge performance penalty
   // 2. do it in the rendering loop (term_paint) instead;
