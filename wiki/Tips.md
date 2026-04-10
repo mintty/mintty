@@ -775,6 +775,8 @@ function to other keys, e.g.
 * `KeyFunctions=CapsLock:compose`
 * `KeyFunctions=NumLock:compose`
 
+Since 3.8.3, shortcut override mode no longer disables a user-assigned Compose key.
+
 For a separate compose key solution, the most seamless and stable 
 **Compose Key for Windows** is 
 **[WinCompose](https://github.com/SamHocevar/wincompose)**.
