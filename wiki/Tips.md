@@ -1638,7 +1638,19 @@ gnuplot -e "splot [x=-3:3] [y=-3:3] sin(x) * cos(y)"
 ```
 
 Note that gnuplot uses black text on default background for captions 
-and coordinates so better not run it in a terminal with dark background.
+and coordinates so better not run it in a terminal with dark background, 
+or configure gnuplot to set an explicit background. The following 
+configuration is suggested in file `~/.gnuplot`:
+```
+set terminal sixel scroll truecolor background rgbcolor("bisque")
+```
+Some suitable moderate background colours are antiquewhite, 
+beige, light-gray, honeydew, gray, lemonchiffon, khaki, bisque, slategray.
+Further useful configuration options:
+```
+set termoption font "Comic Sans MS"
+#set termoption fontscale 1.0
+```
 
 ### ReGIS vector graphics ###
 
