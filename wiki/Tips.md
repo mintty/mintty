@@ -1020,14 +1020,34 @@ specifications preceding over the more general script specifications.
 FontChoice=Greek:3;|Greek Extended:4
 ```
 
+### Font substitution ###
+
+For character glyphs missing in the selected font, mintty can check 
+a configured sequence of other fonts to substitute.
+The sequence also refers to configured alternative fonts 
+(like secondary fonts configured with FontChoice, but using other criteria).
+
+With the following example setting, CJK characters not supported in 
+the current font will be taken from the Jigmo fonts instead, which 
+provide CJK glyphs for Unicode planes 1, 2, 3.
+```
+FontSubst=1,2,3
+Font1=Jigmo
+Font2=Jigmo2
+Font3=Jigmo3
+```
+
 ### Box Drawing characters ###
 
 For Box Drawing characters (U+2500..U+257F), most fonts do not provide 
-proper glyphs for seamless box drawing. The following font configuration 
-would fix that. However, self-drawn graphics may render a bit slower, 
+proper glyphs for seamless box drawing. Mintty handles this by drawing 
+those characters itself (and also some other graphic characters, from 
+VT100 and VT52 line drawing graphic characters, DEC Technical characters, 
+and Powerline symbols in the private range).
+However, self-drawn graphics may render a bit slower, 
 particularly on slower machines.
 The following combination of settings would disable self-drawing for 
-box charcters and also configure a suitable secondary font for them.
+box characters and also configure a suitable secondary font for them.
 ```
 BoxDrawing=no
 FontChoice=|Box Drawing:3
