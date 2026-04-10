@@ -1022,6 +1022,9 @@ specifications preceding over the more general script specifications.
 FontChoice=Greek:3;|Greek Extended:4
 ```
 
+Note that setting FontSubst may be a better choice to configure 
+font substitution as automatically determined by glyph coverage:
+
 ### Font substitution ###
 
 For character glyphs missing in the selected font, mintty can check 
