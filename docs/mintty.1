@@ -1550,6 +1550,15 @@ The line cursor is displayed with the width set in the Accessibility Options
 control panel / Ease of Access Center, mouse panel or Optimize visual display.
 
 .TQ
+\fBCursor size\fP (CursorSize=0)
+This option sets the default width of underscore and vertical line cursors, 
+using values as defined for the dynamic cursor size escape sequence 
+\fIhttps://github.com/mintty/mintty/wiki/CtrlSeqs#cursor\-size\fP, 
+which would in turn override the configured default.
+The default (value 0) determines a suitable size based on the 
+system-configured caret width.
+
+.TQ
 \fBCursor blink\fP (CursorBlinks=yes)
 If enabled, the cursor blinks at the rate set in the Keyboard control panel.
 

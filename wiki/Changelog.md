@@ -14,6 +14,7 @@ Keyboard handling
 Window handling
   * Drag-and-drop onto terminal or Options sets window focus (#1354).
   * Keep window maximised after changing monitor dimensions (git-for-windows/git#6085).
+  * Default width of line-style cursors can now be configured (#1360).
 
 Other
   * Restore Windows XP compatibility.
@@ -23,6 +24,7 @@ Other
 Configuration
   * New option DropFocus (#1354).
   * New option FontSubst (#1352).
+  * New option CursorSize (#1360).
 
 ### 3.8.2 (15 February 2026) ###
 

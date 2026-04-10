@@ -917,6 +917,8 @@ blinking interval in milliseconds.
 
 Note: There is one space character before the `q`.
 
+### Cursor size ###
+
 Furthermore, the following Linux console sequence can be used to set the 
 size of the active underscore cursor.
 (Note that the second and third parameters from the Linux sequence are not 

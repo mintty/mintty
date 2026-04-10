@@ -73,6 +73,7 @@ typedef struct {
   bool blurred;
   bool opaque_when_focused;
   char cursor_type;
+  int cursor_size;
   bool cursor_blinks;
   int config_themes;
   // Text

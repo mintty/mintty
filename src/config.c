@@ -74,6 +74,7 @@ const config default_cfg = {
   .blurred = false,
   .opaque_when_focused = false,
   .cursor_type = CUR_LINE,
+  .cursor_size = 0,
   .cursor_blinks = true,
   .config_themes = 1,
   // Text
@@ -393,6 +394,7 @@ options[] = {
 #endif
   {"OpaqueWhenFocused", OPT_BOOL, offcfg(opaque_when_focused)},
   {"CursorType", OPT_CURSOR, offcfg(cursor_type)},
+  {"CursorSize", OPT_CURSOR, offcfg(cursor_size)},
   {"CursorBlinks", OPT_BOOL, offcfg(cursor_blinks)},
   {"ConfigThemes", OPT_INT, offcfg(config_themes)},
 

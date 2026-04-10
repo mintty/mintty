@@ -4661,7 +4661,7 @@ skip_drawing:;
   if (has_cursor && phase < 2) {
     int cursor_size(int cell_size)
     {
-      switch (term.cursor_size) {
+      switch (term.cursor_size ?: cfg.cursor_size) {
         when 1: return -2;                // invisible
         when 2: return line_width - 1;    // underscore
         when 3: return cell_size / 3 - 1; // ⅓
