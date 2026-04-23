@@ -8419,11 +8419,16 @@ static int dynfonts = 0;
   }
 
   // Grab the focus into the window.
-  /* Do this before even showing the window in order to evade the 
+  /* Do this before even showing the window in order to evade the
      focus delay enforced by child_create() (#1113).
      (This makes the comment below obsolete but let's keep it just in case.)
+     Skip when the window is hidden (-w hide): there is nothing for the
+     user to type into, and focusing a hidden top-level window on a newly
+     started process triggers spurious foreground activation in embedding
+     hosts.
   */
-  SetFocus(wnd);
+  if (cfg.window)
+    SetFocus(wnd);
 
   // Create child process.
   /* We could move this below SetFocus() or win_init_drop_target() 
@@ -8446,7 +8451,9 @@ static int dynfonts = 0;
   ShowWindow(wnd, show_cmd);
   // and grab focus again, just in case and for Windows 11
   // (https://github.com/mintty/mintty/issues/1113#issuecomment-1210278957)
-  SetFocus(wnd);
+  // Skip when hidden (-w hide) to avoid spurious foreground activation.
+  if (cfg.window)
+    SetFocus(wnd);
 #endif
 
   // Cloning fullscreen window
@@ -8647,7 +8654,9 @@ static int dynfonts = 0;
   ShowWindow(wnd, show_cmd);
   // and grab focus again, just in case and for Windows 11
   // (https://github.com/mintty/mintty/issues/1113#issuecomment-1210278957)
-  SetFocus(wnd);
+  // Skip when hidden (-w hide) to avoid spurious foreground activation.
+  if (cfg.window)
+    SetFocus(wnd);
 
   is_init = true;
   // tab management: secure transparency appearance by hiding other tabs
