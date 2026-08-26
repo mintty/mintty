@@ -797,7 +797,7 @@ rgbToHsl(float r, float g, float b)
   if (maxcolor == 2)
     h = 4 + (r - g) / (max - min);
 
-// ifnanf() is not available on 32-bit platforms.
+// isnanf() is not available on 32-bit platforms.
 #ifdef i386
   if (isnan(h))
 #else
