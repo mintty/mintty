@@ -6,6 +6,7 @@ Terminal features
 
 Window handling
   * Tweak keep-window-maximised fix not to resize the terminal incorrectly (#1370).
+  * Fix handling of DropCommands invalid trailing % format (#1384).
 
 Keyboard handling
   * Tweak keyclick, avoid initial phantom click sound.

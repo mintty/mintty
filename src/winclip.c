@@ -1249,20 +1249,34 @@ paste_hdrop(HDROP drop)
       char * paste = matchconf(drops, fg_prog);
       if (paste) {
         char * format = strchr(paste, '%');
-        if (format && strchr("swSW", *(++format)) && !strchr(format, '%')) {
+        // apply path conversion if we
+        //	find a % formatter
+        //	with a subsequent formatting letter (not NUL)
+        //	with a subsequent formatting letter (as specified in manual)
+        //	with no further formatter in pattern
+        if (format
+            && *(++format)  // not NUL (#1384)
+            && strchr("swSW", *format)
+            && !strchr(format, '%')
+           )
+        {
+          // convert path from clipboard into buf
           switch (*format) {
-            when 's': bufpaths(true, false);
-            when 'S': bufpaths(true, true);
-            when 'w': bufpaths(false, false);
-            when 'W': bufpaths(false, true);
+            when 's': bufpaths(true, false);  // POSIX path
+            when 'S': bufpaths(true, true);   // POSIX path, quoted if needed
+            when 'w': bufpaths(false, false); // Windows path
+            when 'W': bufpaths(false, true);  // Windows path, quoted if needed
           }
+          // unify placeholder for use as sprintf format
           *format = 's';
+
           char * pastebuf = newn(char, strlen(paste) + strlen(buf) + 1);
           sprintf(pastebuf, paste, buf);
           child_send(pastebuf, strlen(pastebuf));
           free(pastebuf);
         }
         else
+          // simply paste the configured drop pattern
           child_send(paste, strlen(paste));
         free(drops);  // also frees paste which points into drops
         free(fg_prog);
