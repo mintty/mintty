@@ -4656,7 +4656,10 @@ term_paint(void)
   term.cursor_invalid = false;
 
 #ifdef debug_term_paint_timing
-  printf("term_paint chunks %d %ldms\n", out_text_count, mtime() - t0);
+static ulong tprev = 0;
+  ulong t1 = mtime();
+  printf("term_paint chunks %d used %ldms delta %ldms\n", out_text_count, t1 - t0, t1 - tprev);
+  tprev = t1;
 #endif
 }
 
