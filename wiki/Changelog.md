@@ -3,6 +3,7 @@ Terminal features
   * Move private DECSCUSR 7, 8 box style to 11, 12.
   * Fix crash on invalid CYM(K) colour settings via SGR (#1382).
   * Fix DECRQSS SGR reporting (#1383).
+  * Do not scroll images outside a DECSTBM scrolling region (#1381).
 
 Window handling
   * Tweak keep-window-maximised fix not to resize the terminal incorrectly (#1370).

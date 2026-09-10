@@ -2133,6 +2133,8 @@ disp_do_scroll(int topscroll, int botscroll, int scrolllines)
 void
 term_do_scroll(int topline, int botline, int lines, bool sb)
 {
+  //printf("term_do_scroll %d..%d %d sb %d\n", topline, botline, lines, sb);
+
   if (term.hovering) {
     term.hovering = false;
     win_update(true);
@@ -2229,15 +2231,28 @@ term_do_scroll(int topline, int botline, int lines, bool sb)
 
     // Move graphics if within the scroll region
     for (imglist * cur = term.imgs.first; cur; cur = cur->next) {
-      if (cur->top - term.virtuallines >= topline) {
+      long long int imgtop = cur->top - term.virtuallines;
+      if (imgtop >= topline && imgtop < botline)
         cur->top += lines;
-      }
     }
   }
-  else {
+  else {  // Move up lines
     int seltop = topline;
 
+    // adjust image anchor positions
     term.virtuallines += lines;
+
+    // Move graphics: this is by default achieved by setting their 
+    // top relative to term.virtuallines; however:
+    // images outside a DECSTBM scrolling region must not be scrolled (#1381),
+    // so compensate for their implicit movement, 
+    // but only within the visible screen area 
+    // (scrollback positions need to be handled separately)
+    for (imglist * cur = term.imgs.first; cur; cur = cur->next) {
+      long long int imgtop = cur->top - term.virtuallines + lines;
+      if (imgtop >= 0 && (imgtop < topline || imgtop >= botline))
+        cur->top += lines;
+    }
 
     // Only push lines into the scrollback when scrolling off the top of the
     // normal screen and scrollback is actually enabled.
