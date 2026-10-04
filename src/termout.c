@@ -4815,6 +4815,7 @@ do_cmd(void)
 
   switch (term.cmd_num) {
     when 0 or 2: win_set_title(s);  // ignore icon title
+    when 21: win_set_title(s);  // DECSWT (VT520, xterm 411)
     when 4:   do_colour_osc(true, 4, false);
     when 5:   do_colour_osc(true, 5, false);
     when 6 or 106: {
