@@ -5552,7 +5552,27 @@ term_do_write(const char *buf, uint len, bool fix_status)
             if (term.emoji_width && term.curs.x && hwc == 0xD83C && wc >= 0xDFFB && wc <= 0xDFFF)
               width = 0;
 
+            cattrflags asav = term.curs.attr.attr;
+
+            // detect and mark non-BMP self-drawn characters
+            xchar xc = combine_surrogates(hwc, wc);
+            if ((cfg.box_drawing & 0x1)
+                && xc >= 0x1CC00
+                &&
+                (
+                 // Symbols for Legacy Computing Supplement
+                 xc <= 0x1CEBF
+                 // Symbols for Legacy Computing
+                 || (xc >= 0x1FB00 && xc <= 0x1FBFF)
+                )
+               )
+            {
+              term.curs.attr.attr &= ~FONTFAM_MASK;
+              term.curs.attr.attr |= (cattrflags)11 << ATTR_FONTFAM_SHIFT;
+            }
+
             write_ucschar(hwc, wc, width);
+            term.curs.attr.attr = asav;
           }
           else
             write_error();

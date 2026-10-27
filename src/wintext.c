@@ -3415,6 +3415,7 @@ win_text(int tx, int ty, wchar *text, int len, cattr attr, cattr *textattr, usho
   }
 
   wchar * origtext = 0;
+  wchar * realtext = text;  // for use in character property detection
   if (boxpower || boxcoded || dectcs) {
     // keep orig text in separate ref
     origtext = text;
@@ -3443,7 +3444,7 @@ win_text(int tx, int ty, wchar *text, int len, cattr attr, cattr *textattr, usho
   int ulen = 0;
   for (int i = 0; i < len; i++) {
     ulen++;
-    if (char1ulen(&text[i]) == 2)
+    if (char1ulen(&realtext[i]) == 2)
       i++;  // skip low surrogate;
   }
 
@@ -4435,7 +4436,14 @@ skip_drawing:;
     for (int i = 0; i < len; i++) {
       //setclipr(xi, yclip, 1);
 
-      switch (origtext[i]) {
+      xchar xc = origtext[i];
+      if (is_high_surrogate(xc) && i + 1 < len && is_low_surrogate(origtext[i + 1])) {
+        xc = combine_surrogates(xc, origtext[i + 1]);
+      }
+      else if (is_low_surrogate(xc)) {
+        continue;  // also skip double char_width increment
+      }
+      switch (xc) {
         // Box Drawing (U+2500-U+257F)
         // ─━│┃┄┅┆┇┈┉┊┋┌┍┎┏┐┑┒┓└┕┖┗┘┙┚┛├┝┞┟┠┡┢┣┤┥┦┧┨┩┪┫┬┭┮┯┰┱┲┳┴┵┶┷┸┹┺┻┼┽┾┿
         // ╀╁╂╃╄╅╆╇╈╉╊╋╌╍╎╏═║╒╓╔╕╖╗╘╙╚╛╜╝╞╟╠╡╢╣╤╥╦╧╨╩╪╫╬╭╮╯╰╱╲╳╴╵╶╷╸╹╺╻╼╽╾╿
@@ -4541,6 +4549,10 @@ skip_drawing:;
         when 0x259F: rectsolid(4, 4, 8, 8, 0xF);
                    rectsolid(4, 0, 8, 4, 0xE);
                    rectsolid(0, 4, 4, 8, 0x7);
+
+        // Symbols for Legacy Computing (U+1FB00-U+1FBFF)
+        // Symbols for Legacy Computing Supplement (U+1CC00-U+1CEBF)
+        //when ...
       }
 
       //clearclipr();
