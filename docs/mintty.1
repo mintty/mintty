@@ -1999,9 +1999,26 @@ no mechanism to affect ligature transformation in more detail.
 
 .TQ
 \fBBox Drawing\fP (BoxDrawing=1)
-This option enables self-drawn graphics for the Box Drawing range U+2500..U+257F, 
+This option enables self-drawn graphics for geometric symbols, 
 in order to achieve unbroken box drawing, as most fonts do not include 
 proper box drawing glyphs.
+The value is bitmask composed of the following values:
+.RS
+\fB1\fP : enable self-drawing of all geometric symbol ranges as below
+.br
+\fB2\fP : Box Drawing (U+2500..U257F)
+.br
+\fB4\fP : Block Elements (U+2580-U+259F)
+.br
+\fB8\fP : Powerline symbols (U+E0B0-U+E0BF, in the Private Use Area)
+.br
+\fB16\fP : Symbols for Legacy Computing (U+1FB00-U+1FBFF and Supplement U+1CC00-U+1CEBF)
+.RE
+
+A negative even value can be used to specifically disable certain ranges:
+.RS
+\fB-8\fP : disable self-drawn Powerline symbols, enable all others
+.RE
 
 Self-drawn graphics may render a bit slower, particularly on slower machines.
 If you disable them to render graphic characters from font, it is a 

@@ -6,12 +6,19 @@ Terminal features
   * Do not scroll images outside a DECSTBM scrolling region (#1381).
   * OSC 21 Set Window Title (DECSWT, vt520, xterm 411).
 
+Character rendering
+  * Implement self-drawn non-BMP block symbols for legacy computing (#935).
+  * Configure self-drawn symbol ranges more specifically (#1388).
+
 Window handling
   * Tweak keep-window-maximised fix not to resize the terminal incorrectly (#1370).
   * Fix handling of DropCommands invalid trailing % format (#1384).
 
 Keyboard handling
   * Tweak keyclick, avoid initial phantom click sound.
+
+Configuration
+  * More distinct values for setting BoxDrawing (#1388).
 
 ### 3.8.3 (09 June 2026) ###
 

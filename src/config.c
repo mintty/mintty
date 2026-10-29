@@ -628,7 +628,7 @@ options[] = {
   {"Padding", OPT_INT, offcfg(padding)},
   {"Ligatures", OPT_INT, offcfg(ligatures)},
   {"LigaturesSupport", OPT_INT, offcfg(ligatures_support)},
-  {"BoxDrawing", OPT_BOOL, offcfg(box_drawing)},
+  {"BoxDrawing", OPT_INT, offcfg(box_drawing)},
   {"HandleDPI", OPT_INT, offcfg(handle_dpichanged)},
   {"CheckVersionUpdate", OPT_INT, offcfg(check_version_update)},
   {"WordChars", OPT_STRING, offcfg(word_chars)},

@@ -259,7 +259,7 @@ typedef struct {
   int padding;
   int ligatures;
   int ligatures_support;
-  bool box_drawing;
+  int box_drawing;
   int handle_dpichanged;
   int check_version_update;
   string word_chars;
