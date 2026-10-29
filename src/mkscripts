@@ -15,7 +15,7 @@ fi
 
 getranges () {
 	egrep '^[^#]' Scripts.txt
-	egrep "(Arrows|Mathematical Operators|Technical|Enclosed Alphanumerics|Pictographs|Control Pictures|Optical|Box Drawing|Miscellaneous.*Symbols|Block Elements|Geometric Shapes|Dingbats|Tiles|Cards|Emoticons|Transport|Alchemical|Chess)" Blocks.txt |
+	egrep "(Arrows|Mathematical Operators|Technical|Enclosed Alphanumerics|Pictographs|Control Pictures|Optical|Box Drawing|Miscellaneous.*Symbols|Block Elements|Geometric Shapes|Dingbats|Tiles|Cards|Emoticons|Transport|Alchemical|Chess|Legacy Computing)" Blocks.txt |
 	sed -e "s,;.*, ; PictoSymbols,"
 	cat <</eou
 3030..3037; CJK # CJK Symbols and Punctuation

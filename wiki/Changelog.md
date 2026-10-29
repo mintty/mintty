@@ -9,6 +9,7 @@ Terminal features
 Character rendering
   * Implement self-drawn non-BMP block symbols for legacy computing (#935).
   * Configure self-drawn symbol ranges more specifically (#1388).
+  * Add Symbols for Legacy Computing to FontChoice block group PictoSymbols.
 
 Window handling
   * Tweak keep-window-maximised fix not to resize the terminal incorrectly (#1370).
