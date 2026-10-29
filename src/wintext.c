@@ -4247,6 +4247,64 @@ skip_drawing:;
       if (db)
         linedraw(cl, cb, cr, cb, colmix(db));
     }
+    void rectdraw12(char l, char t, char r, char b, char sol, colour c)
+    {
+      // solid 0b1111 top right bottom left
+      int cl = char_width * l;
+      int ct = char_height * t;
+      int cr = char_width * r;
+      int cb = char_height * b;
+      int dl = cl % 12;
+      int dt = ct % 12;
+      int dr = cr % 12;
+      int db = cb % 12;
+      cl /= 12;
+      ct /= 12;
+      cr /= 12;
+      cb /= 12;
+      //printf("25XX <%d%%%d %d%%%d %d%%%d %d%%%d\n", cl, dl, ct, dt, cr, dr, cb, db);
+      int cl_ = cl;
+      int ct_ = ct;
+      int cr_ = cr;
+      int cb_ = cb;
+      if (dl) {
+        if (sol & 0x1)
+          dl = 0;
+        else
+          cl_++;
+      }
+      if (dt) {
+        if (sol & 0x8)
+          dt = 0;
+        else
+          ct_++;
+      }
+      if (dr) {
+        if (sol & 0x4) {
+          dr = 0;
+          cr_++;
+        }
+      }
+      if (db) {
+        if (sol & 0x2) {
+          db = 0;
+          cb_++;
+        }
+      }
+      //printf("25XX >%d%%%d %d%%%d %d%%%d %d%%%d\n", cl, dl, ct, dt, cr, dr, cb, db);
+      //printf("Rect %d %d %d %d\n", xi + cl_, y0 + ct_, xi + cr_, y0 + cb_);
+      HBRUSH br = CreateSolidBrush(c);
+      FillRect(dc, &(RECT){xi + cl_, y0 + ct_, xi + cr_, y0 + cb_}, br);
+      DeleteObject(br);
+      if (dl)
+        linedraw(cl, ct, cl, cb, colmix(8 - dl));
+      if (dt)
+        linedraw(cl, ct, cr, ct, colmix(8 - dt));
+      if (dr)
+        linedraw(cr, ct, cr, cb, colmix(dr));
+      if (db)
+        linedraw(cl, cb, cr, cb, colmix(db));
+    }
     inline void rect(char l, char t, char r, char b)
     {
       rectdraw(l, t, r, b, 0, fg);
@@ -4551,8 +4609,130 @@ skip_drawing:;
                    rectsolid(0, 4, 4, 8, 0x7);
 
         // Symbols for Legacy Computing (U+1FB00-U+1FBFF)
+        when 0x1FB00 ... 0x1FB3B:  // sextants
+          static char sextantslist[] = {
+            0b100000, 0b010000, 0b110000, 0b001000, 0b101000, 0b011000,
+            0b111000, 0b000100, 0b100100, 0b010100, 0b110100, 0b001100,
+            0b101100, 0b011100, 0b111100, 0b000010, 0b100010, 0b010010,
+            0b110010, 0b001010, 0b011010, 0b111010, 0b000110, 0b100110,
+            0b010110, 0b110110, 0b001110, 0b101110, 0b011110, 0b111110,
+            0b000001, 0b100001, 0b010001, 0b110001, 0b001001, 0b101001,
+            0b011001, 0b111001, 0b000101, 0b100101, 0b110101, 0b001101,
+            0b101101, 0b011101, 0b111101, 0b000011, 0b100011, 0b010011,
+            0b110011, 0b001011, 0b101011, 0b011011, 0b111011, 0b000111,
+            0b100111, 0b010111, 0b110111, 0b001111, 0b101111, 0b011111
+          };
+          char sextants = sextantslist[xc - 0x1FB00];
+          // rectdraw12(left, top, right, bottom, 0xF, fg);
+          if (sextants & 0b100000)
+            rectdraw12(0, 0, 6, 4, 0xF, fg);
+          if (sextants & 0b010000)
+            rectdraw12(6, 0, 12, 4, 0xF, fg);
+          if (sextants & 0b001000)
+            rectdraw12(0, 4, 6, 8, 0xF, fg);
+          if (sextants & 0b000100)
+            rectdraw12(6, 4, 12, 8, 0xF, fg);
+          if (sextants & 0b000010)
+            rectdraw12(0, 8, 6, 12, 0xF, fg);
+          if (sextants & 0b000001)
+            rectdraw12(6, 8, 12, 12, 0xF, fg);
+
         // Symbols for Legacy Computing Supplement (U+1CC00-U+1CEBF)
-        //when ...
+        when 0x1CC21 ... 0x1CC2F:  // separated quadrants
+          static char sepquadrantslist[] = {
+            0b1000, 0b0100, 0b1100, 0b0010, 0b1010,
+            0b0110, 0b1110, 0b0001, 0b1001, 0b0101,
+            0b1101, 0b0011, 0b1011, 0b0111, 0b1111
+          };
+          char sepquadrants = sepquadrantslist[xc - 0x1CC21];
+          // rectdraw12(left, top, right, bottom, 0xF, fg);
+          if (sepquadrants & 0b1000)
+            rectdraw12(2, 1, 4, 5, 0xF, fg);
+          if (sepquadrants & 0b0100)
+            rectdraw12(8, 1, 10, 5, 0xF, fg);
+          if (sepquadrants & 0b0010)
+            rectdraw12(2, 7, 4, 11, 0xF, fg);
+          if (sepquadrants & 0b0001)
+            rectdraw12(8, 7, 10, 11, 0xF, fg);
+        when 0x1CD00 ... 0x1CDE5:  // octants
+          static char octantslist[] = {
+            0x20, 0x60, 0xE0, 0x10, 0x90, 0xD0, 0x30, 0xB0, 
+            0x70, 0x08, 0x88, 0x48, 0xC8, 0xA8, 0x68, 0xE8, 
+            0x18, 0x98, 0x58, 0xD8, 0x38, 0xB8, 0x78, 0xF8, 
+            0x04, 0x84, 0x44, 0xC4, 0x24, 0xA4, 0x64, 0xE4, 
+            0x94, 0x54, 0xD4, 0x34, 0xB4, 0x74, 0xF4, 0x0C, 
+            0x8C, 0x4C, 0xCC, 0x2C, 0xAC, 0x6C, 0xEC, 0x1C, 
+            0x9C, 0x5C, 0xDC, 0x3C, 0xBC, 0x7C, 0x82, 0x42, 
+            0xC2, 0x22, 0xA2, 0x62, 0xE2, 0x12, 0x92, 0x52, 
+            0xD2, 0x32, 0xB2, 0x72, 0xF2, 0x8A, 0x4A, 0xCA, 
+            0x2A, 0x6A, 0xEA, 0x1A, 0x9A, 0xDA, 0x3A, 0xBA, 
+            0x7A, 0x06, 0x86, 0x46, 0xC6, 0x26, 0xA6, 0x66, 
+            0xE6, 0x16, 0x96, 0x56, 0xD6, 0x36, 0xB6, 0x76, 
+            0xF6, 0x0E, 0x8E, 0x4E, 0xCE, 0x2E, 0xAE, 0x6E, 
+            0xEE, 0x1E, 0x9E, 0x5E, 0xDE, 0x3E, 0xBE, 0x7E, 
+            0xFE, 0x81, 0x41, 0xC1, 0x21, 0xA1, 0x61, 0xE1, 
+            0x11, 0x91, 0x51, 0xD1, 0x31, 0xB1, 0x71, 0xF1, 
+            0x09, 0x89, 0x49, 0xC9, 0x29, 0xA9, 0x69, 0xE9, 
+            0x19, 0x99, 0x59, 0xD9, 0x39, 0xB9, 0x79, 0xF9, 
+            0x85, 0x45, 0xC5, 0x25, 0x65, 0xE5, 0x15, 0x95, 
+            0xD5, 0x35, 0xB5, 0x75, 0x0D, 0x8D, 0x4D, 0xCD, 
+            0x2D, 0xAD, 0x6D, 0xED, 0x1D, 0x9D, 0x5D, 0xDD, 
+            0x3D, 0xBD, 0x7D, 0xFD, 0x83, 0x43, 0xC3, 0x23, 
+            0xA3, 0x63, 0xE3, 0x13, 0x93, 0x53, 0xD3, 0x33, 
+            0xB3, 0x73, 0xF3, 0x0B, 0x8B, 0x4B, 0xCB, 0x2B, 
+            0xAB, 0x6B, 0xEB, 0x1B, 0x9B, 0x5B, 0xDB, 0x3B, 
+            0xBB, 0x7B, 0xFB, 0x07, 0x87, 0x47, 0xC7, 0x27, 
+            0xA7, 0x67, 0xE7, 0x17, 0x97, 0x57, 0xD7, 0x37, 
+            0xB7, 0x77, 0xF7, 0x8F, 0x4F, 0xCF, 0x2F, 0x6F, 
+            0xEF, 0x1F, 0x9F, 0xDF, 0xBF, 0x7F
+          };
+          char octants = octantslist[xc - 0x1CD00];
+          // rectdraw12(left, top, right, bottom, 0xF, fg);
+          if (octants & 0x80)
+            rectdraw12(0, 0, 6, 3, 0xF, fg);
+          if (octants & 0x40)
+            rectdraw12(6, 0, 12, 3, 0xF, fg);
+          if (octants & 0x20)
+            rectdraw12(0, 3, 6, 6, 0xF, fg);
+          if (octants & 0x10)
+            rectdraw12(6, 3, 12, 6, 0xF, fg);
+          if (octants & 0x08)
+            rectdraw12(0, 6, 6, 9, 0xF, fg);
+          if (octants & 0x04)
+            rectdraw12(6, 6, 12, 9, 0xF, fg);
+          if (octants & 0x02)
+            rectdraw12(0, 9, 6, 12, 0xF, fg);
+          if (octants & 0x01)
+            rectdraw12(6, 9, 12, 12, 0xF, fg);
+        when 0x1CE51 ... 0x1CE8F:  // separated sextants
+          static char sepsextantslist[] = {
+            0b100000, 0b010000, 0b110000, 0b001000, 0b101000, 0b011000,
+            0b111000, 0b000100, 0b100100, 0b010100, 0b110100, 0b001100,
+            0b101100, 0b011100, 0b111100, 
+            0b000010, 0b100010, 0b010010, 0b110010, 0b001010, 0b101010, 
+            0b011010, 0b111010, 0b000110, 0b100110, 0b010110, 0b110110, 
+            0b001110, 0b101110, 0b011110, 0b111110, 
+            0b000001, 0b100001, 0b010001, 0b110001,
+            0b001001, 0b101001, 0b011001, 0b111001, 0b000101, 0b100101,
+            0b010101, 0b110101, 0b001101, 0b101101, 0b011101, 0b111101,
+            0b000011, 0b100011, 0b010011, 0b110011, 0b001011, 0b101011,
+            0b011011, 0b111011, 0b000111, 0b100111, 0b010111, 0b110111,
+            0b001111, 0b101111, 0b011111, 0b111111
+          };
+          char sepsextants = sepsextantslist[xc - 0x1CE51];
+          // rectdraw12(left, top, right, bottom, 0xF, fg);
+          if (sepsextants & 0b100000)
+            rectdraw12(2, 1, 4, 3, 0xF, fg);
+          if (sepsextants & 0b010000)
+            rectdraw12(8, 1, 10, 3, 0xF, fg);
+          if (sepsextants & 0b001000)
+            rectdraw12(2, 5, 4, 7, 0xF, fg);
+          if (sepsextants & 0b000100)
+            rectdraw12(8, 5, 10, 7, 0xF, fg);
+          if (sepsextants & 0b000010)
+            rectdraw12(2, 9, 4, 11, 0xF, fg);
+          if (sepsextants & 0b000001)
+            rectdraw12(8, 9, 10, 11, 0xF, fg);
       }
 
       //clearclipr();

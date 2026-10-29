@@ -5526,6 +5526,14 @@ term_do_write(const char *buf, uint len, bool fix_status)
 
         term.in_mb_char = false;
 
+        // determine self-drawing configuration
+        int box_drawing = cfg.box_drawing;
+        if (box_drawing < 0 && !(box_drawing & 1))
+          box_drawing -= 2;
+
+        // save attributes to allow temporary self-drawing flags
+        cattrflags asav = term.curs.attr.attr;
+
         // Fetch previous high surrogate
         wchar hwc = term.high_surrogate;
         term.high_surrogate = 0;
@@ -5552,18 +5560,18 @@ term_do_write(const char *buf, uint len, bool fix_status)
             if (term.emoji_width && term.curs.x && hwc == 0xD83C && wc >= 0xDFFB && wc <= 0xDFFF)
               width = 0;
 
-            cattrflags asav = term.curs.attr.attr;
-
             // detect and mark non-BMP self-drawn characters
             xchar xc = combine_surrogates(hwc, wc);
-            if ((cfg.box_drawing & 0x1)
+            if ((box_drawing & 0x11)
                 && xc >= 0x1CC00
                 &&
                 (
-                 // Symbols for Legacy Computing Supplement
-                 xc <= 0x1CEBF
-                 // Symbols for Legacy Computing
-                 || (xc >= 0x1FB00 && xc <= 0x1FBFF)
+                 // Symbols for Legacy Computing Supplement (U+1CC00-U+1CEBF)
+                    (xc >= 0x1CC21 && xc <= 0x1CC2F)  // separated quadrants
+                 || (xc >= 0x1CD00 && xc <= 0x1CDE5)  // octants
+                 || (xc >= 0x1CE51 && xc <= 0x1CE8F)  // separated sextants
+                 // Symbols for Legacy Computing (U+1FB00-U+1FBFF)
+                 || (xc >= 0x1FB00 && xc <= 0x1FB3B)  // sextants
                 )
                )
             {
@@ -5576,6 +5584,7 @@ term_do_write(const char *buf, uint len, bool fix_status)
           }
           else
             write_error();
+
           continue;
         }
 
@@ -5610,15 +5619,13 @@ term_do_write(const char *buf, uint len, bool fix_status)
             return wc;
         }
 
-        cattrflags asav = term.curs.attr.attr;
-
         // Some more special graphic renderings
         // Do these before the NRCS switch below as that transforms 
         // some characters into this range which would then get 
         // doubly-transformed
-        if ((cfg.box_drawing && wc >= 0x2500 && wc <= 0x257F)
-         || (wc >= 0x2580 && wc <= 0x259F)
-         || (wc >= 0xE0B0 && wc <= 0xE0BF && wc != 0xE0B5 && wc != 0xE0B7)
+        if (((box_drawing & 0x03) && wc >= 0x2500 && wc <= 0x257F)
+         || ((box_drawing & 0x05) && wc >= 0x2580 && wc <= 0x259F)
+         || ((box_drawing & 0x09) && wc >= 0xE0B0 && wc <= 0xE0BF && wc != 0xE0B5 && wc != 0xE0B7)
            )
         {
           term.curs.attr.attr &= ~FONTFAM_MASK;
