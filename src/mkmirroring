@@ -4,7 +4,9 @@ mirroring=BidiMirroring.txt
 make $mirroring >&2
 
 sed -e "s/^\([0-9A-F]*\); *\([0-9A-F]*\).*/  {0x\1, 0x\2},/" \
-    -e t -e d $mirroring > mirroring.t
+    -e t -e d $mirroring |
+grep -v "0x[0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F]" > mirroring.t
+# filter out non-BMP codepoints which cannot be handled
 
 exit $?
 
