@@ -1,5 +1,6 @@
 Unicode and Emoji data
   * Unicode 18.0 update.
+  * Emoji update.
 
 Terminal features
   * Add DECSCUSR 7 to restore cursor style as configured (xterm 411).
