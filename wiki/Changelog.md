@@ -9,6 +9,7 @@ Terminal features
   * Fix DECRQSS SGR reporting (#1383).
   * Do not scroll images outside a DECSTBM scrolling region (#1381).
   * OSC 21 Set Window Title (DECSWT, vt520, xterm 411).
+  * Fix dimming of scrolling margins during scrollback display.
 
 Character rendering
   * Implement self-drawn non-BMP block symbols for legacy computing (#935).
