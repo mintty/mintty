@@ -10,6 +10,7 @@ Terminal features
   * Do not scroll images outside a DECSTBM scrolling region (#1381).
   * OSC 21 Set Window Title (DECSWT, vt520, xterm 411).
   * Fix dimming of scrolling margins during scrollback display.
+  * Support DECRQM 1046 as fixed in xterm 412.
 
 Character rendering
   * Implement self-drawn non-BMP block symbols for legacy computing (#935).

@@ -2857,6 +2857,8 @@ get_mode(bool privatemode, int arg)
         return 2 - term.on_alt_screen;
       when 1047:       /* alternate screen */
         return 2 - term.on_alt_screen;
+      when 1046:       /* enable/disable alternate screen switching */
+        return 2 - !cfg.disable_alternate_screen;  // as fixed in xterm 412
       when 1048:       /* save/restore cursor */
         return 4;
       when 1049:       /* cursor & alternate screen */
