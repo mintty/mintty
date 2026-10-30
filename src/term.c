@@ -3850,7 +3850,8 @@ term_paint(void)
      /* Margin indication */
       if (term.dim_margins &&
           (// in normal display:
-           i < term.marg_top || (i > term.marg_bot && i < term.rows)
+           i + term.disptop < term.marg_top
+           || (i + term.disptop > term.marg_bot && i < term.rows)
            // in status display:
            || (i >= term.rows && i < term.marg_top + term.rows)
            || (i > term.marg_bot + term.rows)
