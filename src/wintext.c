@@ -4148,7 +4148,7 @@ skip_drawing:;
       }
       DeleteObject(SelectObject(dc, oldpen));
     }
-    void trio(char x1, char y1, char x2, char y2, char x3, char y3, bool chord)
+    void trio(char x1, char y1, char x2, char y2, char x3, char y3, bool chord, colour c)
     {
       bool lefthalf = x1;
       if (chord && lefthalf) {
@@ -4162,8 +4162,8 @@ skip_drawing:;
       int _x3 = char_width * x3 / 8;
       int _y3 = char_height * y3 / 8;
 
-      HPEN oldpen = SelectObject(dc, CreatePen(PS_SOLID, 0, fg));
-      HBRUSH oldbrush = SelectObject(dc, CreateSolidBrush(fg));
+      HPEN oldpen = SelectObject(dc, CreatePen(PS_SOLID, 0, c));
+      HBRUSH oldbrush = SelectObject(dc, CreateSolidBrush(c));
       if (chord) {
         if (lefthalf)
           // Powerline left half circle U+E0B6: trichord(8, 0, 0, 4, 8, 8);
@@ -4181,13 +4181,31 @@ skip_drawing:;
       DeleteObject(SelectObject(dc, oldbrush));
       DeleteObject(SelectObject(dc, oldpen));
     }
+    void poly12(signed char pp[])
+    {
+      POINT p[5];
+      int len = 0;
+      for (int i = 0; i < 10; ) {
+        if (pp[i] < 0)
+          break;
+        p[len].x = xi + char_width * pp[i ++] / 12;
+        p[len].y = y0 + char_height * pp[i ++] / 12;
+        len ++;
+      }
+
+      HPEN oldpen = SelectObject(dc, CreatePen(PS_SOLID, 0, fg));
+      HBRUSH oldbrush = SelectObject(dc, CreateSolidBrush(fg));
+      Polygon(dc, p, len);
+      DeleteObject(SelectObject(dc, oldbrush));
+      DeleteObject(SelectObject(dc, oldpen));
+    }
     void triangle(char x1, char y1, char x2, char y2, char x3, char y3)
     {
-      trio(x1, y1, x2, y2, x3, y3, false);
+      trio(x1, y1, x2, y2, x3, y3, false, fg);
     }
     void trichord(char x1, char y1, char x2, char y2, char x3, char y3)
     {
-      trio(x1, y1, x2, y2, x3, y3, true);
+      trio(x1, y1, x2, y2, x3, y3, true, fg);
     }
     void rectdraw(char l, char t, char r, char b, char sol, colour c)
     {
@@ -4636,6 +4654,155 @@ skip_drawing:;
             rectdraw12(0, 8, 6, 12, 0xF, fg);
           if (sextants & 0b000001)
             rectdraw12(6, 8, 12, 12, 0xF, fg);
+        when 0x1FB3C ... 0x1FB6F:  // diagonal blocks
+          static signed char diagonalblocks [][10] = {
+            {0, 8, 0, 12, 6, 12, -1},
+            {0, 8, 0, 12, 12, 12, -1},
+            {0, 4, 0, 12, 6, 12, -1},
+            {0, 4, 0, 12, 12, 12, -1},
+            // U+1FB40
+            {0, 0, 0, 12, 6, 12, -1},
+            {0, 4, 0, 12, 12, 12, 12, 0, 6, 0},
+            {0, 4, 0, 12, 12, 12, 12, 0, -1},
+            {0, 8, 0, 12, 12, 12, 12, 0, 6, 0},
+            {0, 8, 0, 12, 12, 12, 12, 0, -1},
+            {0, 12, 12, 12, 12, 0, 6, 0, -1},
+            {0, 8, 0, 12, 12, 12, 12, 4, -1},
+            {6, 12, 12, 12, 12, 8, -1},
+            {0, 12, 12, 12, 12, 8, -1},
+            {6, 12, 12, 12, 12, 4, -1},
+            {0, 12, 12, 12, 12, 4, -1},
+            {6, 12, 12, 12, 12, 0, -1},
+            {0, 0, 0, 12, 12, 12, 12, 4, 6, 0},
+            {0, 0, 0, 12, 12, 12, 12, 4, -1},
+            {0, 0, 0, 12, 12, 12, 12, 8, 6, 0},
+            {0, 0, 0, 12, 12, 12, 12, 8, -1},
+            // U+1FB50
+            {0, 0, 0, 12, 12, 12, 6, 0, -1},
+            {0, 4, 0, 12, 12, 12, 12, 8, -1},
+            {0, 0, 0, 8, 6, 12, 12, 12, 12, 0},
+            {0, 0, 0, 8, 12, 12, 12, 0, -1},
+            {0, 0, 0, 4, 6, 12, 12, 12, 12, 0},
+            {0, 0, 0, 4, 12, 12, 12, 0, -1},
+            {0, 0, 6, 12, 12, 12, 12, 0, -1},
+            {0, 0, 0, 4, 6, 0, -1},
+            {0, 0, 0, 4, 12, 0, -1},
+            {0, 0, 0, 8, 6, 0, -1},
+            {0, 0, 0, 8, 12, 0, -1},
+            {0, 0, 0, 12, 6, 0, -1},
+            {0, 0, 0, 8, 12, 4, 12, 0, -1},
+            {0, 0, 0, 12, 6, 12, 12, 8, 12, 0},
+            {0, 0, 0, 12, 12, 8, 12, 0, -1},
+            {0, 0, 0, 12, 6, 12, 12, 4, 12, 0},
+            // U+1FB60
+            {0, 0, 0, 12, 12, 4, 12, 0, -1},
+            {0, 0, 0, 12, 6, 12, 12, 0, -1},
+            {6, 0, 12, 4, 12, 0, -1},
+            {0, 0, 12, 4, 12, 0, -1},
+            {6, 0, 12, 8, 12, 0, -1},
+            {0, 0, 12, 8, 12, 0, -1},
+            {6, 0, 12, 12, 12, 0, -1},
+            {0, 0, 0, 4, 12, 8, 12, 0, -1},
+            {0, 0, 6, 6, 0, 12, 12, 12, 12, 0},
+            {0, 0, 0, 12, 12, 12, 12, 0, 6, 6},
+            {0, 0, 0, 12, 12, 12, 6, 6, 12, 0},
+            {0, 0, 0, 12, 6, 6, 12, 12, 12, 0},
+            {0, 0, 0, 12, 6, 6, -1},
+            {0, 0, 6, 6, 12, 0, -1},
+            {6, 6, 12, 12, 12, 0, -1},
+            {6, 6, 0, 12, 12, 12, -1},
+          };
+          poly12(diagonalblocks[xc - 0x1FB3C]);
+        // 0x1FB70 ... 0x1FB8B:  // eighth blocks
+        when 0x1FB70: rect(1, 0, 2, 8);
+        when 0x1FB71: rect(2, 0, 3, 8);
+        when 0x1FB72: rect(3, 0, 4, 8);
+        when 0x1FB73: rect(4, 0, 5, 8);
+        when 0x1FB74: rect(5, 0, 6, 8);
+        when 0x1FB75: rect(6, 0, 7, 8);
+        when 0x1FB76: rect(0, 1, 8, 2);
+        when 0x1FB77: rect(0, 2, 8, 3);
+        when 0x1FB78: rect(0, 3, 8, 4);
+        when 0x1FB79: rect(0, 4, 8, 5);
+        when 0x1FB7A: rect(0, 5, 8, 6);
+        when 0x1FB7B: rect(0, 6, 8, 7);
+        when 0x1FB7C: rectsolid(0, 0, 1, 8, 0xFF); rectsolid(0, 7, 8, 8, 0xFF);
+        when 0x1FB7D: rectsolid(0, 0, 1, 8, 0xFF); rectsolid(0, 0, 8, 1, 0xFF);
+        when 0x1FB7E: rectsolid(0, 0, 8, 1, 0xFF); rectsolid(7, 0, 8, 8, 0xFF);
+        when 0x1FB7F: rectsolid(0, 7, 8, 8, 0xFF); rectsolid(7, 0, 8, 8, 0xFF);
+        when 0x1FB80: rect(0, 0, 8, 1); rect(0, 7, 8, 8);
+        when 0x1FB81: rect(0, 0, 8, 1); rect(0, 2, 8, 3); rect(0, 4, 8, 5); rect(0, 7, 8, 8);
+        when 0x1FB82: rect(0, 0, 8, 2);
+        when 0x1FB83: rect(0, 0, 8, 3);
+        when 0x1FB84: rect(0, 0, 8, 5);
+        when 0x1FB85: rect(0, 0, 8, 6);
+        when 0x1FB86: rect(0, 0, 8, 7);
+        when 0x1FB87: rect(7, 0, 8, 8);
+        when 0x1FB88: rect(6, 0, 8, 8);
+        when 0x1FB89: rect(4, 0, 8, 8);
+        when 0x1FB8A: rect(3, 0, 8, 8);
+        when 0x1FB8B: rect(2, 0, 8, 8);
+        // 0x1FB8C ... 0x1FB94:  // half-shaded blocks
+        when 0x1FB8C: rectsolcol(0, 0, 4, 8, 3);
+        when 0x1FB8D: rectsolcol(4, 0, 8, 8, 3);
+        when 0x1FB8E: rectsolcol(0, 0, 8, 4, 3);
+        when 0x1FB8F: rectsolcol(0, 4, 8, 8, 3);
+        when 0x1FB90: rectsolcol(0, 0, 8, 8, 5);
+        when 0x1FB91: rectsolid(0, 0, 8, 4, 0xFF); rectsolcol(0, 4, 8, 8, 5);
+        when 0x1FB92: rectsolcol(0, 0, 8, 4, 5); rectsolid(0, 4, 8, 8, 0xFF);
+        // U+1FB93 Not Assigned
+        when 0x1FB94: rectsolcol(0, 0, 4, 8, 5); rectsolid(4, 0, 8, 8, 0xFF);
+        // various
+        when 0x1FB95:  // checker board
+          for (int i = 0; i < 4; i++)
+            for (int j = 0; j < 4; j++)
+              if (i % 2 == j % 2)
+                rectsolid(2 * j, 2 * i, 2 * j + 2, 2 * i + 2, 0xFF);
+        when 0x1FB96:  // inverse checker board
+          for (int i = 0; i < 4; i++)
+            for (int j = 0; j < 4; j++)
+              if (i % 2 != j % 2)
+                rectsolid(2 * j, 2 * i, 2 * j + 2, 2 * i + 2, 0xFF);
+        when 0x1FB97: rect(0, 1, 8, 3); rect(0, 5, 8, 7);
+        when 0x1FB98: boxlines(false, 0, -6, 24, 6, -1, -1);
+                      boxlines(false, 0, 0, 24, 12, -1, -1);
+                      boxlines(false, 0, 6, 24, 18, -1, -1);
+                      boxlines(false, 0, 12, 24, 24, -1, -1);
+                      boxlines(false, 0, 18, 24, 30, -1, -1);
+        when 0x1FB99: boxlines(false, 0, 6, 24, -6, -1, -1);
+                      boxlines(false, 0, 12, 24, 0, -1, -1);
+                      boxlines(false, 0, 18, 24, 6, -1, -1);
+                      boxlines(false, 0, 24, 24, 12, -1, -1);
+                      boxlines(false, 0, 30, 24, 18, -1, -1);
+        when 0x1FB9A:
+          poly12((signed char []){0, 0, 6, 6, 12, 0, -1});
+          poly12((signed char []){6, 6, 0, 12, 12, 12, -1});
+        when 0x1FB9B:
+          poly12((signed char []){0, 0, 0, 12, 6, 6, -1});
+          poly12((signed char []){6, 6, 12, 12, 12, 0, -1});
+        // triangular medium shades
+        when 0x1FB9C:
+          trio(0, 0, 0, 8, 8, 0, false, colmix(3));
+        when 0x1FB9D:
+          trio(0, 0, 8, 8, 8, 0, false, colmix(3));
+        when 0x1FB9E:
+          trio(0, 8, 8, 8, 8, 0, false, colmix(3));
+        when 0x1FB9F:
+          trio(0, 0, 0, 8, 8, 8, false, colmix(3));
+        when 0x1FBA0 ... 0x1FBAE:  // box drawing diagonals
+          static char diaglist[] = {
+            0b1000, 0b0100, 0b0010, 0b0001, 0b1010, 0b0101, 0b0011, 0b1100,
+            0b1001, 0b0110, 0b0111, 0b1011, 0b1101, 0b1110, 0b1111
+          };
+          char diag = diaglist[xc - 0x1FBA0];
+          if (diag & 8)
+            boxlines(false, 0, 12, 12, 0, -1, -1);
+          if (diag & 4)
+            boxlines(false, 12, 0, 24, 12, -1, -1);
+          if (diag & 2)
+            boxlines(false, 12, 24, 0, 12, -1, -1);
+          if (diag & 1)
+            boxlines(false, 24, 12, 12, 24, -1, -1);
 
         // Symbols for Legacy Computing Supplement (U+1CC00-U+1CEBF)
         when 0x1CC21 ... 0x1CC2F:  // separated quadrants
@@ -4733,6 +4900,44 @@ skip_drawing:;
             rectdraw12(2, 9, 4, 11, 0xF, fg);
           if (sepsextants & 0b000001)
             rectdraw12(8, 9, 10, 11, 0xF, fg);
+        when 0x1CE90 ... 0x1CEAF:  // sixteenth and quarter blocks
+          static char sixteenthblockslist [][4] = {
+            {0, 0, 2, 2},
+            {2, 0, 4, 2},
+            {4, 0, 6, 2},
+            {6, 0, 8, 2},
+            {0, 2, 2, 4},
+            {2, 2, 4, 4},
+            {4, 2, 6, 4},
+            {6, 2, 8, 4},
+            {0, 4, 2, 6},
+            {2, 4, 4, 6},
+            {4, 4, 6, 6},
+            {6, 4, 8, 6},
+            {0, 6, 2, 8},
+            {2, 6, 4, 8},
+            {4, 6, 6, 8},
+            {6, 6, 8, 8},
+            // quarter blocks
+            {4, 6, 8, 8},
+            {2, 6, 8, 8},
+            {0, 6, 6, 8},
+            {0, 6, 4, 8},
+            {0, 4, 2, 8},
+            {0, 2, 2, 8},
+            {0, 0, 2, 6},
+            {0, 0, 2, 4},
+            {0, 0, 4, 2},
+            {0, 0, 6, 2},
+            {2, 0, 8, 2},
+            {4, 0, 8, 2},
+            {6, 0, 8, 4},
+            {6, 0, 8, 6},
+            {6, 2, 8, 8},
+            {6, 4, 8, 8},
+          };
+          char * b = sixteenthblockslist[xc - 0x1CE90];
+          rectdraw(b[0], b[1], b[2], b[3], 0, fg);
       }
 
       //clearclipr();

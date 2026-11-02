@@ -5571,9 +5571,17 @@ term_do_write(const char *buf, uint len, bool fix_status)
                  // Symbols for Legacy Computing Supplement (U+1CC00-U+1CEBF)
                     (xc >= 0x1CC21 && xc <= 0x1CC2F)  // separated quadrants
                  || (xc >= 0x1CD00 && xc <= 0x1CDE5)  // octants
-                 || (xc >= 0x1CE51 && xc <= 0x1CE8F)  // separated sextants
+                 || (xc >= 0x1CE51 && xc <= 0x1CEAF)
+                  //(xc >= 0x1CE51 && xc <= 0x1CE8F)  // separated sextants
+                  //(xc >= 0x1CE90 && xc <= 0x1CEAF)  // sixteenth and quarter blocks
                  // Symbols for Legacy Computing (U+1FB00-U+1FBFF)
-                 || (xc >= 0x1FB00 && xc <= 0x1FB3B)  // sextants
+                 || (xc >= 0x1FB00 && xc <= 0x1FBAE)
+                  //(xc >= 0x1FB00 && xc <= 0x1FB3B)  // sextants
+                  //(xc >= 0x1FB3C && xc <= 0x1FB6F)  // diagonal blocks
+                  //(xc >= 0x1FB70 && xc <= 0x1FB8B)  // eighth blocks
+                  //(xc >= 0x1FB8C && xc <= 0x1FB94)  // half-shaded blocks
+                  //(xc >= 0x1FB95 && xc <= 0x1FB9F)  // various
+                  //(xc >= 0x1FBA0 && xc <= 0x1FBAE)  // box drawing diagonals
                 )
                )
             {
