@@ -4627,6 +4627,7 @@ skip_drawing:;
                    rectsolid(0, 4, 4, 8, 0x7);
 
         // Symbols for Legacy Computing (U+1FB00-U+1FBFF)
+#if CYGWIN_VERSION_API_MINOR >= 74
         when 0x1FB00 ... 0x1FB3B:  // sextants
           static char sextantslist[] = {
             0b100000, 0b010000, 0b110000, 0b001000, 0b101000, 0b011000,
@@ -4713,6 +4714,7 @@ skip_drawing:;
             {6, 6, 0, 12, 12, 12, -1},
           };
           poly12(diagonalblocks[xc - 0x1FB3C]);
+#endif
         // 0x1FB70 ... 0x1FB8B:  // eighth blocks
         when 0x1FB70: rect(1, 0, 2, 8);
         when 0x1FB71: rect(2, 0, 3, 8);
@@ -4789,6 +4791,7 @@ skip_drawing:;
           trio(0, 8, 8, 8, 8, 0, false, colmix(3));
         when 0x1FB9F:
           trio(0, 0, 0, 8, 8, 8, false, colmix(3));
+#if CYGWIN_VERSION_API_MINOR >= 74
         when 0x1FBA0 ... 0x1FBAE:  // box drawing diagonals
           static char diaglist[] = {
             0b1000, 0b0100, 0b0010, 0b0001, 0b1010, 0b0101, 0b0011, 0b1100,
@@ -4803,8 +4806,10 @@ skip_drawing:;
             boxlines(false, 12, 24, 0, 12, -1, -1);
           if (diag & 1)
             boxlines(false, 24, 12, 12, 24, -1, -1);
+#endif
 
         // Symbols for Legacy Computing Supplement (U+1CC00-U+1CEBF)
+#if CYGWIN_VERSION_API_MINOR >= 74
         when 0x1CC21 ... 0x1CC2F:  // separated quadrants
           static char sepquadrantslist[] = {
             0b1000, 0b0100, 0b1100, 0b0010, 0b1010,
@@ -4938,6 +4943,7 @@ skip_drawing:;
           };
           char * b = sixteenthblockslist[xc - 0x1CE90];
           rectdraw(b[0], b[1], b[2], b[3], 0, fg);
+#endif
       }
 
       //clearclipr();
