@@ -218,6 +218,7 @@ const config default_cfg = {
   .log_filter = 1,
   .create_utmp = false,
   .title = W(""),
+  .pad_taskbar_icon = true,
   .daemonize = true,
   .daemonize_always = false,
   // "Hidden"
@@ -571,6 +572,7 @@ options[] = {
   {"Logging", OPT_BOOL, offcfg(logging)},
   {"LogFilter", OPT_INT, offcfg(log_filter)},
   {"Title", OPT_WSTRING, offcfg(title)},
+  {"PadTaskbarIcon", OPT_BOOL, offcfg(pad_taskbar_icon)},
   {"Utmp", OPT_BOOL, offcfg(create_utmp)},
   {"Window", OPT_WINDOW, offcfg(window)},
   {"X", OPT_INT, offcfg(x)},

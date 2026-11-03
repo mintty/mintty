@@ -3073,6 +3073,13 @@ The \fBTitle\fP setting can be used to determine the initial window title.
 If it is empty, as it is by default, the title is set to the command being run.
 
 .TQ
+\fBPad taskbar icon\fP (PadTaskbarIcon=true)
+In Windows 11, taskbar icons with text lables can have different width, 
+clipped to the text label. When window title, and accordingly taskbar 
+title which is tied to it in Windows, gets changed, this causes flipping 
+of the icon width. This is suppressed with this option.
+
+.TQ
 \fBUtmp record\fP (Utmp=no)
 If enabled, an entry for the session is written into the system's \fIutmp\fP
 file for recording logins, so that the session appears for example in the

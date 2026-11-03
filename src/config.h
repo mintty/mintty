@@ -205,6 +205,7 @@ typedef struct {
   bool logging;
   int log_filter;
   wstring title;
+  bool pad_taskbar_icon;
   bool create_utmp;
   char window;
   int x, y;

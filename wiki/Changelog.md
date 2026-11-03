@@ -20,12 +20,14 @@ Character rendering
 Window handling
   * Tweak keep-window-maximised fix not to resize the terminal incorrectly (#1370).
   * Fix handling of DropCommands invalid trailing % format (#1384).
+  * Padding taskbar title for stabilisation of its width is configurable (mintty/wsltty#379).
 
 Keyboard handling
   * Tweak keyclick, avoid initial phantom click sound.
 
 Configuration
   * More distinct values for setting BoxDrawing (#1388).
+  * New option PadTaskbarIcon (mintty/wsltty#379)..
 
 ### 3.8.3 (09 June 2026) ###
 
