@@ -363,8 +363,6 @@ term_reset(bool full)
     term.alt_wheel = false;
     term.echoing = false;
     term.bracketed_paste = false;
-    term.wide_indic = false;
-    term.wide_extra = false;
     term.disable_bidi = false;
     term.join_lam_alef = false;
     term.enable_bold_colour = cfg.bold_as_colour;
@@ -373,6 +371,9 @@ term_reset(bool full)
     term.readline_mouse_2 = cfg.clicks_place_cursor;
     term.readline_mouse_3 = cfg.clicks_place_cursor;
     term.emoji_width = cfg.emoji_width;
+    term.wide_graphics = 0;
+    term.wide_indic = false;
+    term.wide_extra = false;
   }
 
   term.virtuallines = 0;

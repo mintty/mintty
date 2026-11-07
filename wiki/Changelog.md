@@ -11,12 +11,14 @@ Terminal features
   * OSC 21 Set Window Title (DECSWT, vt520, xterm 411).
   * Fix dimming of scrolling margins during scrollback display.
   * Support DECRQM 1046 as fixed in xterm 412.
+  * New escape sequence DECSET 7720 to control wide graphics characters mode.
 
 Character rendering
   * Implement self-drawn non-BMP block symbols for legacy computing (#935).
   * Configure self-drawn symbol ranges more specifically (#1388).
   * Add Symbols for Legacy Computing to FontChoice block group PictoSymbols.
   * Fix self-drawn curves after ReGIS output.
+  * Wide graphics characters mode for Box/Block characters and Legacy Symbols (#935).
 
 Window handling
   * Tweak keep-window-maximised fix not to resize the terminal incorrectly (#1370).

@@ -2740,6 +2740,8 @@ set_modes(bool state)
           term.curs.rewrap_on_resize = state;
         when 2027 or 7769: /* Emoji 2-cell width mode */
           term.emoji_width = state;
+        when 7720: /* Wide graphic characters mode */
+          term.wide_graphics = state;
       }
     }
     else { /* SM/RM: set/reset mode */
@@ -2927,6 +2929,8 @@ get_mode(bool privatemode, int arg)
         return 2 - term.curs.rewrap_on_resize;
       when 2027 or 7769: /* Emoji 2-cell width mode */
         return 2 - term.emoji_width;
+      when 7720: /* Wide graphic characters mode */
+        return 2 - term.wide_graphics;
       otherwise:
         return 0;
     }
@@ -5595,6 +5599,8 @@ term_do_write(const char *buf, uint len, bool fix_status)
             {
               term.curs.attr.attr &= ~FONTFAM_MASK;
               term.curs.attr.attr |= (cattrflags)11 << ATTR_FONTFAM_SHIFT;
+              if (term.wide_graphics)
+                width = 2;
             }
 
             write_ucschar(hwc, wc, width);
@@ -5641,6 +5647,7 @@ term_do_write(const char *buf, uint len, bool fix_status)
         // Do these before the NRCS switch below as that transforms 
         // some characters into this range which would then get 
         // doubly-transformed
+        // - see similar condition below to apply wide graphic characters mode
         if (((box_drawing & 0x03) && wc >= 0x2500 && wc <= 0x257F)
          || ((box_drawing & 0x05) && wc >= 0x2580 && wc <= 0x259F)
          || ((box_drawing & 0x09) && wc >= 0xE0B0 && wc <= 0xE0BF && wc != 0xE0B5 && wc != 0xE0B7)
@@ -5832,6 +5839,15 @@ term_do_write(const char *buf, uint len, bool fix_status)
           // non-BMP characters (see case if is_low_surrogate(wc) above)
           if (win_char_width(wc, term.curs.attr.attr) < 2)
             term.curs.attr.attr |= TATTR_EXPAND;
+        }
+        else if (term.wide_graphics && wc >= 0x2500 &&
+            (wc <= 0x259F
+          || ((box_drawing & 0x09) && wc >= 0xE0B0 && wc <= 0xE0BF && wc != 0xE0B5 && wc != 0xE0B7)
+            )
+           )
+        {
+          // Wide graphic characters mode
+          width = 2;
         }
         else {
 #if HAS_LOCALES

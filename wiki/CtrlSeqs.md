@@ -475,6 +475,10 @@ change wide display modes for Indic and a range of long Unicode characters:
 | `^[]77119;1^G`         | Indic               |
 | `^[]77119;2^G`         | Long Unicode chars  |
 | `^[]77119;0^G`         | none                |
+| `^[[?2027h`    | emoji width mode, see below |
+| `^[[?2027l`    | disable emoji width mode    |
+| `^[[?7720h`    | wide graphic characters mode, see below |
+| `^[[?7720l`    | disable wide graphic characters         |
 
 Setting wide Indic mode, Indic characters with glyphs wider than a 
 single character cell will be displayed in double-width (like CJK characters).
@@ -635,6 +639,27 @@ modify character width:
     In emoji width mode, it also enforces single-cell width character.
   * VS16 (U+FE0F) enforces graphic emoji presentation of an emoji character.
     In emoji width mode, it also enforces double-cell width character.
+
+
+## Wide graphics characters mode ##
+
+— EXPERIMENTAL —
+
+This mode makes graphic characters from the following ranges wide:
+  * Box Drawing (U+2500-U+257F)
+  * Block Elements (U+2580-U+259F)
+  * Powerline graphics (U+E0B0-U+E0BF without U+E0B5, U+E0B7)
+  * Symbols for Legacy Computing (U+1FB00-U+1FBFF)
+  * Symbols for Legacy Computing Supplement (U+1CC00-U+1CEBF)
+
+This feature is experimental in regard of future versions:
+  * Further ranges may be added.
+  * The control sequence may be changed to allow specific range selection.
+
+| **sequence**  | **width**                                        |
+|:--------------|:-------------------------------------------------|
+| `^[[?7720h`   | wide Box and Block characters and Legacy Symbols |
+| `^[[?7720l`   | normal (ambiguous width characters may be wide)  |
 
 
 ## Background image ##

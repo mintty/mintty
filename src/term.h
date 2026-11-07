@@ -569,8 +569,6 @@ struct term {
   bool bracketed_paste;
   bool show_scrollbar;
   bool app_scrollbar;
-  bool wide_indic;
-  bool wide_extra;
   bool disable_bidi;
   bool join_lam_alef;
   bool enable_bold_colour;
@@ -600,6 +598,9 @@ struct term {
   bool save_autowrap;
   bool save_rev_wrap;
   bool emoji_width;
+  int wide_graphics;
+  bool wide_indic;
+  bool wide_extra;
 
   uint csi_argc;
   uint csi_argv[32];
