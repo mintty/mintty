@@ -4162,6 +4162,7 @@ skip_drawing:;
       int _x3 = char_width * x3 / 8;
       int _y3 = char_height * y3 / 8;
 
+      SetArcDirection(dc, AD_COUNTERCLOCKWISE);
       HPEN oldpen = SelectObject(dc, CreatePen(PS_SOLID, 0, c));
       HBRUSH oldbrush = SelectObject(dc, CreateSolidBrush(c));
       if (chord) {
@@ -4464,7 +4465,9 @@ skip_drawing:;
     }
     void boxcurve(char q)
     {
-      int x1, y1, x2, y2, xc, yc, a;
+      int x1, y1, x2, y2, xc, yc;
+      int start;
+      int sweep = 90;
       //int r = 5;
       int r = char_width / 2 + 1;
       // adjust endpoint by 1 to compensate for the missing endpoint
@@ -4476,7 +4479,7 @@ skip_drawing:;
           y2 = char_height / 2;
           xc = char_width / 2 + r;
           yc = char_height / 2 - r;
-          a = 180;
+          start = 180;
         when 2:  // lower right quarter ╭ upper left border arc
           x1 = char_width;
           y1 = char_height / 2;
@@ -4484,7 +4487,7 @@ skip_drawing:;
           y2 = char_height + 1;
           xc = char_width / 2 + r;
           yc = char_height / 2 + r;
-          a = 90;
+          start = 90;
         when 3:  // lower left quarter ╮ upper right border arc
           x1 = char_width / 2;
           y1 = char_height;
@@ -4492,7 +4495,7 @@ skip_drawing:;
           y2 = char_height / 2;
           xc = char_width / 2 - r;
           yc = char_height / 2 + r;
-          a = 0;
+          start = 0;
         when 4:  // upper left quarter ╯ lower right border arc
           x1 = 0;
           y1 = char_height / 2;
@@ -4500,11 +4503,11 @@ skip_drawing:;
           y2 = -1;
           xc = char_width / 2 - r;
           yc = char_height / 2 - r;
-          a = 270;
+          start = 270;
       }
       setpen(pen);
       MoveToEx(dc, xi + x1, y0 + y1, null);
-      AngleArc(dc, xi + xc, y0 + yc, r, a, 90);
+      AngleArc(dc, xi + xc, y0 + yc, r, start, sweep);
       LineTo(dc, xi + x2, y0 + y2);
     }
 
