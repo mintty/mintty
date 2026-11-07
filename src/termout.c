@@ -5582,6 +5582,14 @@ term_do_write(const char *buf, uint len, bool fix_status)
                   //(xc >= 0x1FB8C && xc <= 0x1FB94)  // half-shaded blocks
                   //(xc >= 0x1FB95 && xc <= 0x1FB9F)  // various
                   //(xc >= 0x1FBA0 && xc <= 0x1FBAE)  // box drawing diagonals
+                 || (xc >= 0x1FBCE && xc <= 0x1FBF9)
+                  //(xc >= 0x1FBCE && xc <= 0x1FBCF)  // third blocks
+                  //(xc >= 0x1FBD0 && xc <= 0x1FBDF)  // box drawing diagonals
+                  //(xc >= 0x1FBE0 && xc <= 0x1FBE3)  // half circle arcs
+                  //(xc >= 0x1FBE4 && xc <= 0x1FBE7)  // quarter blocks
+                  //(xc >= 0x1FBE8 && xc <= 0x1FBEB)  // half circle fills
+                  //(xc >= 0x1FBEC && xc <= 0x1FBEF)  // quarter circle fills
+                  //(xc >= 0x1FBF0 && xc <= 0x1FBF9)  // segmented digits
                 )
                )
             {

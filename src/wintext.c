@@ -4182,6 +4182,30 @@ skip_drawing:;
       DeleteObject(SelectObject(dc, oldbrush));
       DeleteObject(SelectObject(dc, oldpen));
     }
+    void arcpie(bool pie, char x1, char y1, char x2, char y2, char x3, char y3, char x4, char y4)
+    {  // top-left, bottom-right, start radial, end radial; anti-clockwise
+      int _x1 = char_width * x1 / 8;
+      int _y1 = char_height * y1 / 8;
+      int _x2 = char_width * x2 / 8;
+      int _y2 = char_height * y2 / 8;
+      int _x3 = char_width * x3 / 8;
+      int _y3 = char_height * y3 / 8;
+      int _x4 = char_width * x4 / 8;
+      int _y4 = char_height * y4 / 8;
+
+      SetArcDirection(dc, AD_COUNTERCLOCKWISE);
+      HPEN oldpen = SelectObject(dc, CreatePen(PS_SOLID, 0, fg));
+      if (pie) {
+        HBRUSH oldbrush = SelectObject(dc, CreateSolidBrush(fg));
+        Pie(dc, xi + _x1, y0 + _y1, xi + _x2, y0 + _y2,
+                xi + _x3, y0 + _y3, xi + _x4, y0 + _y4);
+        DeleteObject(SelectObject(dc, oldbrush));
+      }
+      else
+        Arc(dc, xi + _x1, y0 + _y1, xi + _x2, y0 + _y2,
+                xi + _x3, y0 + _y3, xi + _x4, y0 + _y4);
+      DeleteObject(SelectObject(dc, oldpen));
+    }
     void poly12(signed char pp[])
     {
       POINT p[5];
@@ -4769,16 +4793,30 @@ skip_drawing:;
               if (i % 2 != j % 2)
                 rectsolid(2 * j, 2 * i, 2 * j + 2, 2 * i + 2, 0xFF);
         when 0x1FB97: rect(0, 1, 8, 3); rect(0, 5, 8, 7);
-        when 0x1FB98: boxlines(false, 0, -6, 24, 6, -1, -1);
-                      boxlines(false, 0, 0, 24, 12, -1, -1);
-                      boxlines(false, 0, 6, 24, 18, -1, -1);
-                      boxlines(false, 0, 12, 24, 24, -1, -1);
-                      boxlines(false, 0, 18, 24, 30, -1, -1);
-        when 0x1FB99: boxlines(false, 0, 6, 24, -6, -1, -1);
-                      boxlines(false, 0, 12, 24, 0, -1, -1);
-                      boxlines(false, 0, 18, 24, 6, -1, -1);
-                      boxlines(false, 0, 24, 24, 12, -1, -1);
-                      boxlines(false, 0, 30, 24, 18, -1, -1);
+        when 0x1FB98: {
+                        int offset = (attr.attr & TATTR_WIDE) ? 12 : 0;
+                        boxlines(false, 0, -24, 24, -12 + offset, -1, -1);
+                        boxlines(false, 0, -18, 24, -6 + offset, -1, -1);
+                        boxlines(false, 0, -12, 24, 0 + offset, -1, -1);
+                        boxlines(false, 0, -6, 24, 6 + offset, -1, -1);
+                        boxlines(false, 0, 0, 24, 12 + offset, -1, -1);
+                        boxlines(false, 0, 6, 24, 18 + offset, -1, -1);
+                        boxlines(false, 0, 12, 24, 24 + offset, -1, -1);
+                        boxlines(false, 0, 18, 24, 30 + offset, -1, -1);
+                        boxlines(false, 0, 24, 24, 36 + offset, -1, -1);
+                      }
+        when 0x1FB99: {
+                        int offset = (attr.attr & TATTR_WIDE) ? -12 : 0;
+                        boxlines(false, 0, 0, 24, -12 + offset, -1, -1);
+                        boxlines(false, 0, 6, 24, -6 + offset, -1, -1);
+                        boxlines(false, 0, 12, 24, 0 + offset, -1, -1);
+                        boxlines(false, 0, 18, 24, 6 + offset, -1, -1);
+                        boxlines(false, 0, 24, 24, 12 + offset, -1, -1);
+                        boxlines(false, 0, 30, 24, 18 + offset, -1, -1);
+                        boxlines(false, 0, 36, 24, 24 + offset, -1, -1);
+                        boxlines(false, 0, 42, 24, 30 + offset, -1, -1);
+                        boxlines(false, 0, 48, 24, 36 + offset, -1, -1);
+                      }
         when 0x1FB9A:
           poly12((signed char []){0, 0, 6, 6, 12, 0, -1});
           poly12((signed char []){6, 6, 0, 12, 12, 12, -1});
@@ -4809,6 +4847,93 @@ skip_drawing:;
             boxlines(false, 12, 24, 0, 12, -1, -1);
           if (diag & 1)
             boxlines(false, 24, 12, 12, 24, -1, -1);
+#endif
+        // third blocks
+        when 0x1FBCE: poly12((signed char []){0, 0, 8, 0, 8, 12, 0, 12, -1});
+        when 0x1FBCF: poly12((signed char []){0, 0, 4, 0, 4, 12, 0, 12, -1});
+        // more box drawing diagonals
+        when 0x1FBD0: boxlines(false, 0, 24, 24, 12, -1, -1);
+        when 0x1FBD1: boxlines(false, 0, 12, 24, 0, -1, -1);
+        when 0x1FBD2: boxlines(false, 0, 0, 24, 12, -1, -1);
+        when 0x1FBD3: boxlines(false, 0, 12, 24, 24, -1, -1);
+        when 0x1FBD4: boxlines(false, 0, 0, 12, 24, -1, -1);
+        when 0x1FBD5: boxlines(false, 12, 0, 24, 24, -1, -1);
+        when 0x1FBD6: boxlines(false, 12, 24, 24, 0, -1, -1);
+        when 0x1FBD7: boxlines(false, 0, 24, 12, 0, -1, -1);
+        when 0x1FBD8: boxlines(false, 0, 0, 12, 12, 24, 0);
+        when 0x1FBD9: boxlines(false, 24, 0, 12, 12, 24, 24);
+        when 0x1FBDA: boxlines(false, 0, 24, 12, 12, 24, 24);
+        when 0x1FBDB: boxlines(false, 0, 0, 12, 12, 0, 24);
+        when 0x1FBDC: boxlines(false, 0, 0, 12, 24, 24, 0);
+        when 0x1FBDD: boxlines(false, 24, 0, 0, 12, 24, 24);
+        when 0x1FBDE: boxlines(false, 0, 24, 12, 0, 24, 24);
+        when 0x1FBDF: boxlines(false, 0, 0, 24, 12, 0, 24);
+        // half circle arcs
+        when 0x1FBE0: arcpie(false, 0, -4, 8, 4, 0, 0, 8, 0);
+        when 0x1FBE1: if (attr.attr & TATTR_WIDE)
+                        arcpie(false, 4, 0, 12, 8, 8, 0, 8, 8);
+                      else
+                        arcpie(false, 0, 0, 16, 8, 8, 0, 8, 8);
+        when 0x1FBE2: arcpie(false, 0, 4, 8, 12, 8, 8, 0, 8);
+        when 0x1FBE3: if (attr.attr & TATTR_WIDE)
+                        arcpie(false, -4, 0, 4, 8, 0, 8, 0, 0);
+                      else
+                        arcpie(false, -8, 0, 8, 8, 0, 8, 0, 0);
+        // quarter blocks
+        when 0x1FBE4: rectdraw(2, 0, 6, 4, 0, fg);
+        when 0x1FBE5: rectdraw(2, 4, 6, 8, 0, fg);
+        when 0x1FBE6: rectdraw(0, 2, 4, 6, 0, fg);
+        when 0x1FBE7: rectdraw(4, 2, 8, 6, 0, fg);
+        // half circle fills
+        when 0x1FBE8: arcpie(true, 0, -4, 8, 4, 0, 0, 8, 0);
+        when 0x1FBE9: if (attr.attr & TATTR_WIDE)
+                        arcpie(true, 4, 0, 12, 8, 8, 0, 8, 8);
+                      else
+                        arcpie(true, 0, 0, 16, 8, 8, 0, 8, 8);
+        when 0x1FBEA: arcpie(true, 0, 4, 8, 12, 8, 8, 0, 8);
+        when 0x1FBEB: if (attr.attr & TATTR_WIDE)
+                        arcpie(true, -4, 0, 4, 8, 0, 8, 0, 0);
+                      else
+                        arcpie(true, -8, 0, 8, 8, 0, 8, 0, 0);
+        // quarter circle fills
+        when 0x1FBEC: if (attr.attr & TATTR_WIDE)
+                        arcpie(true, 4, -4, 12, 4, 0, 0, 8, 4);
+                      else
+                        arcpie(true, 0, -4, 16, 4, 0, 0, 8, 4);
+        when 0x1FBED: if (attr.attr & TATTR_WIDE)
+                        arcpie(true, -4, 4, 4, 12, 8, 8, 0, 0);
+                      else
+                        arcpie(true, -8, 4, 8, 12, 8, 8, 0, 4);
+        when 0x1FBEE: if (attr.attr & TATTR_WIDE)
+                        arcpie(true, 4, 4, 12, 12, 8, 4, 0, 8);
+                      else
+                        arcpie(true, 0, 4, 16, 12, 8, 4, 0, 8);
+        when 0x1FBEF: if (attr.attr & TATTR_WIDE)
+                        arcpie(true, -4, -4, 4, 4, 0, 4, 8, 0);
+                      else
+                        arcpie(true, -8, -4, 8, 4, 0, 4, 8, 0);
+        // segmented digits
+#if CYGWIN_VERSION_API_MINOR >= 74
+        when 0x1FBF0 ... 0x1FBF9:
+          static char sepdigitslist[] = {
+            0b1111110, 0b0110000, 0b1101101, 0b1111001, 0b0110011,
+            0b1011011, 0b1011111, 0b1110010, 0b1111111, 0b1111011
+          };
+          char sepdigits = sepdigitslist[xc - 0x1FBF0];
+          if (sepdigits & 0b1000000)
+            boxlines(false, 6, 3, 18, 3, -1, -1);
+          if (sepdigits & 0b0100000)
+            boxlines(false, 21, 5, 21, 10, -1, -1);
+          if (sepdigits & 0b0010000)
+            boxlines(false, 21, 14, 21, 19, -1, -1);
+          if (sepdigits & 0b0001000)
+            boxlines(false, 6, 21, 18, 21, -1, -1);
+          if (sepdigits & 0b0000100)
+            boxlines(false, 3, 14, 3, 19, -1, -1);
+          if (sepdigits & 0b0000010)
+            boxlines(false, 3, 5, 3, 10, -1, -1);
+          if (sepdigits & 0b0000001)
+            boxlines(false, 6, 12, 18, 12, -1, -1);
 #endif
 
         // Symbols for Legacy Computing Supplement (U+1CC00-U+1CEBF)
