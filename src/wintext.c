@@ -4920,20 +4920,22 @@ skip_drawing:;
             0b1011011, 0b1011111, 0b1110010, 0b1111111, 0b1111011
           };
           char sepdigits = sepdigitslist[xc - 0x1FBF0];
+          int xoff = 1;
+          int qoff = 1;
           if (sepdigits & 0b1000000)
-            boxlines(false, 6, 3, 18, 3, -1, -1);
+            boxlines(false, 6 + xoff, 3, 18, 3, -1, -1);
           if (sepdigits & 0b0100000)
-            boxlines(false, 21, 5, 21, 10, -1, -1);
+            boxlines(false, 21 - xoff, 5, 21 - xoff, 10 + qoff, -1, -1);
           if (sepdigits & 0b0010000)
-            boxlines(false, 21, 14, 21, 19, -1, -1);
+            boxlines(false, 21 - xoff, 15 - qoff, 21 - xoff, 19, -1, -1);
           if (sepdigits & 0b0001000)
-            boxlines(false, 6, 21, 18, 21, -1, -1);
+            boxlines(false, 6 + xoff, 21, 18, 21, -1, -1);
           if (sepdigits & 0b0000100)
-            boxlines(false, 3, 14, 3, 19, -1, -1);
+            boxlines(false, 4 + xoff, 15 - qoff, 4 + xoff, 19, -1, -1);
           if (sepdigits & 0b0000010)
-            boxlines(false, 3, 5, 3, 10, -1, -1);
+            boxlines(false, 4 + xoff, 5, 4 + xoff, 10 + qoff, -1, -1);
           if (sepdigits & 0b0000001)
-            boxlines(false, 6, 12, 18, 12, -1, -1);
+            boxlines(false, 6 + xoff, 12, 18, 12, -1, -1);
 #endif
 
         // Symbols for Legacy Computing Supplement (U+1CC00-U+1CEBF)
