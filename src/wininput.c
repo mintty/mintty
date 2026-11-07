@@ -1481,6 +1481,14 @@ compose_down(uint key, mod_keys mods)
 }
 
 static void
+toggle_ime(uint key, mod_keys mods)
+{
+  (void)key;
+  (void)mods;
+  win_set_ime(!win_get_ime());
+}
+
+static void
 kb_select(uint key, mod_keys mods)
 {
   (void)mods;
@@ -1495,6 +1503,12 @@ kb_select(uint key, mod_keys mods)
   term.sel_end = term.sel_pos;
   term.sel_rect = mods & MDK_ALT;
   selection_pending = true;
+}
+
+static uint
+mflags_ime()
+{
+  return win_get_ime() ? MF_CHECKED : MF_UNCHECKED;
 }
 
 static uint
@@ -1891,6 +1905,7 @@ static struct function_def cmd_defs[] = {
   {"super", {.fct_key = super_down}, 0},
   {"hyper", {.fct_key = hyper_down}, 0},
   {"compose", {.fct_key = compose_down}, 0},
+  {"toggle-ime", {.fct_key = toggle_ime}, mflags_ime},
   {"kb-select", {.fct_key = kb_select}, mflags_kb_select},
   {"no-scroll", {.fct_key = no_scroll}, mflags_no_scroll},
   {"toggle-no-scroll", {.fct_key = toggle_no_scroll}, mflags_no_scroll},

@@ -25,6 +25,7 @@ Window handling
 
 Keyboard handling
   * Tweak keyclick, avoid initial phantom click sound.
+  * New user-definable function toggle-ime for IME active/open mode (#1375).
 
 Configuration
   * More distinct values for setting BoxDrawing (#1388).
