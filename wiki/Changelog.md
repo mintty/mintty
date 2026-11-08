@@ -19,6 +19,7 @@ Character rendering
   * Add Symbols for Legacy Computing to FontChoice block group PictoSymbols.
   * Fix self-drawn curves after ReGIS output.
   * Wide graphics characters mode for Box/Block characters and Legacy Symbols (#935).
+  * Fix crash condition with shadow attribute and self-drawn characters.
 
 Window handling
   * Tweak keep-window-maximised fix not to resize the terminal incorrectly (#1370).

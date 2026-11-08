@@ -5188,11 +5188,6 @@ skip_drawing:;
 
   _return:
 
-  if (origtext) {
-    // we transfered the orig text pointer to origtext, so we free text
-    free(text);
-  }
-
   show_curchar_info('w');
 
   if (has_cursor && phase < 2) {
@@ -5340,6 +5335,11 @@ skip_drawing:;
 
   if (coord_transformed)
     SetWorldTransform(dc, &old_xform);
+
+  if (origtext) {
+    // we transfered the orig text pointer to origtext, so we free text
+    free(text);
+  }
 }
 
 
