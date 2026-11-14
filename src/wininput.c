@@ -1361,6 +1361,18 @@ toggle_vt220()
 }
 
 void
+toggle_app_cursor_keys()
+{
+  term.app_cursor_keys = !term.app_cursor_keys;
+}
+
+void
+toggle_app_keypad()
+{
+  term.app_keypad = !term.app_keypad;
+}
+
+void
 toggle_auto_repeat()
 {
   term.auto_repeat = !term.auto_repeat;
@@ -1713,6 +1725,18 @@ mflags_vt220()
 }
 
 static uint
+mflags_app_cursor_keys()
+{
+  return term.app_cursor_keys ? MF_CHECKED : MF_UNCHECKED;
+}
+
+static uint
+mflags_app_keypad()
+{
+  return term.app_keypad ? MF_CHECKED : MF_UNCHECKED;
+}
+
+static uint
 mflags_auto_repeat()
 {
   return term.auto_repeat ? MF_CHECKED : MF_UNCHECKED;
@@ -1894,6 +1918,8 @@ static struct function_def cmd_defs[] = {
   {"export-html-all", {IDM_HTML_ALL}, 0},
   {"print-screen", {.fct = print_screen}, 0},
   {"toggle-vt220", {.fct = toggle_vt220}, mflags_vt220},
+  {"toggle-app-cursor-keys", {.fct = toggle_app_cursor_keys}, mflags_app_cursor_keys},
+  {"toggle-app-keypad", {.fct = toggle_app_keypad}, mflags_app_keypad},
   {"toggle-auto-repeat", {.fct = toggle_auto_repeat}, mflags_auto_repeat},
   {"toggle-bidi", {.fct = toggle_bidi}, mflags_bidi},
   {"toggle-lam-alef", {.fct = toggle_lam_alef}, mflags_lam_alef},

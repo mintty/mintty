@@ -33,6 +33,7 @@ Keyboard handling
 Configuration
   * More distinct values for setting BoxDrawing (#1388).
   * New option PadTaskbarIcon (mintty/wsltty#379)..
+  * New user-definable functions toggle-app-cursor-keys, toggle-app-keypad.
 
 ### 3.8.3 (09 June 2026) ###
 
