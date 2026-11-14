@@ -2819,6 +2819,7 @@ C	M	+C	+A	"	"
   // On ESC or Enter key, restore keyboard IME state to alphanumeric mode.
   // (#1224, #1375)
   if (cfg.key_alpha_mode && !term.on_alt_screen
+   && !term.app_cursor_keys && !term.app_keypad
    && (key == VK_RETURN || key == VK_ESCAPE) && !mods
      )
   {

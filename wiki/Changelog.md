@@ -28,6 +28,7 @@ Window handling
 
 Keyboard handling
   * Tweak keyclick, avoid initial phantom click sound.
+  * Do not reset IME (KeyAlphaMode) in full-screen applications (#1375).
   * New user-definable function toggle-ime for IME active/open mode (#1375).
 
 Configuration
